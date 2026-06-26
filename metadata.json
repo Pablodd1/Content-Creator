@@ -1,0 +1,6 @@
+{
+  "name": "UNITEC Content Engine",
+  "description": "Bilingual social media content generator and interactive 12-month calendar for UNITEC USA Design, premium architectural materials wholesaler in Miami.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
