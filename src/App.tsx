@@ -80,6 +80,26 @@ export default function App() {
   const [colombiaPort, setColombiaPort] = useState<'Cartagena' | 'Buenaventura'>('Cartagena');
   const [complianceActiveTab, setComplianceActiveTab] = useState<'admin' | 'specs' | 'colombia'>('admin');
   const [integrateColombiaHolidays, setIntegrateColombiaHolidays] = useState<boolean>(true);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+  // Periodic Autosave every 5 minutes
+  useEffect(() => {
+    const saveState = () => {
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(months));
+        localStorage.setItem(LOCAL_STORAGE_API_KEY, JSON.stringify(apiConfigs));
+        localStorage.setItem(LOCAL_STORAGE_TRAINING_KEY, JSON.stringify(trainingConfig));
+        localStorage.setItem(LOCAL_STORAGE_ANALYTICS_KEY, JSON.stringify(analyticsConfig));
+        localStorage.setItem(LOCAL_STORAGE_LANG_KEY, language);
+        setLastSaved(new Date());
+      } catch (err) {
+        console.error('Failed to auto-save application state', err);
+      }
+    };
+
+    const intervalId = setInterval(saveState, 5 * 60 * 1000);
+    return () => clearInterval(intervalId);
+  }, [months, apiConfigs, trainingConfig, analyticsConfig, language]);
 
   // Audit log of exports
   const [exportLogs, setExportLogs] = useState<{ timestamp: string; fileType: 'JSON' | 'CSV'; monthName: string }[]>(() => {
@@ -210,6 +230,50 @@ export default function App() {
       }
     }
   }, [months]);
+
+  // Global keyboard shortcuts for navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input or textarea
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      
+      if (e.key === 'ArrowRight') {
+        setActiveMonthIndex(prev => Math.min(prev + 1, months.length - 1));
+      } else if (e.key === 'ArrowLeft') {
+        setActiveMonthIndex(prev => Math.max(prev - 1, 0));
+      } else if (e.key === 'ArrowUp') {
+        if (selectedDay && months[activeMonthIndex]) {
+          const currentMonth = months[activeMonthIndex];
+          const currentIndex = currentMonth.days.findIndex(d => d.day === selectedDay.day);
+          if (currentIndex > 0) {
+            setSelectedDay(currentMonth.days[currentIndex - 1]);
+          } else if (activeMonthIndex > 0) {
+            // go to prev month, last day
+            setActiveMonthIndex(activeMonthIndex - 1);
+            const prevMonth = months[activeMonthIndex - 1];
+            setSelectedDay(prevMonth.days[prevMonth.days.length - 1]);
+          }
+        }
+      } else if (e.key === 'ArrowDown') {
+        if (selectedDay && months[activeMonthIndex]) {
+          const currentMonth = months[activeMonthIndex];
+          const currentIndex = currentMonth.days.findIndex(d => d.day === selectedDay.day);
+          if (currentIndex < currentMonth.days.length - 1) {
+            setSelectedDay(currentMonth.days[currentIndex + 1]);
+          } else if (activeMonthIndex < months.length - 1) {
+            setActiveMonthIndex(activeMonthIndex + 1);
+            const nextMonth = months[activeMonthIndex + 1];
+            setSelectedDay(nextMonth.days[0]);
+          }
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [months, activeMonthIndex, selectedDay]);
 
   // Hydrates a fresh application state with January pre-populated content
   const initializeFreshState = () => {
@@ -848,7 +912,7 @@ export default function App() {
     <div className="min-h-screen bg-[#f5f5f0] flex flex-col justify-between selection:bg-[#c9a961]/30 selection:text-[#1a1a1a]">
       {/* Printable Area - Rendered offscreen, visible strictly in @media print */}
       {printMode === 'brief' && selectedDay && selectedDay.platforms ? (
-        <div id="printable-brief" className="hidden p-8 space-y-6 bg-white text-black font-sans">
+        <div id="printable-brief" className="hidden print:block p-8 space-y-6 bg-white text-black font-sans">
           <div className="flex justify-between items-start border-b-2 border-black pb-4">
             <div>
               <h1 className="text-2xl font-bold uppercase tracking-tight">UNITEC USA Design</h1>
@@ -930,7 +994,7 @@ export default function App() {
           </div>
         </div>
       ) : printMode === 'calendar' && months[activeMonthIndex] ? (
-        <div id="printable-brief" className="hidden p-8 space-y-6 bg-white text-black font-sans">
+        <div id="printable-brief" className="hidden print:block p-8 space-y-6 bg-white text-black font-sans">
           <div className="flex justify-between items-start border-b-2 border-black pb-4">
             <div>
               <h1 className="text-2xl font-bold uppercase tracking-tight">UNITEC USA Design</h1>
@@ -1040,7 +1104,7 @@ export default function App() {
 
             {/* Action deck */}
             <div className="flex flex-wrap items-center gap-3">
-              {/* Telemetry Counter */}
+              {/* Telemetry Counter & Auto-save */}
               <div className="hidden sm:flex items-center gap-3 bg-[#262626] border border-stone-800 rounded px-3 py-1.5 text-xs font-mono">
                 <div>
                   <span className="text-stone-400 font-bold">{language === 'EN' ? 'GEN:' : 'GEN:'}</span> <strong className="text-[#c9a961]">{totalPostsGenerated}</strong>
@@ -1049,6 +1113,14 @@ export default function App() {
                 <div>
                   <span className="text-stone-400 font-bold">{language === 'EN' ? 'APPROVED:' : 'APROBADO:'}</span> <strong className="text-emerald-400">{totalPostsApproved}</strong>
                 </div>
+                {lastSaved && (
+                  <>
+                    <div className="w-px h-3 bg-stone-700" />
+                    <div>
+                      <span className="text-stone-400 font-bold">{language === 'EN' ? 'LAST SAVED:' : 'GUARDADO:'}</span> <span className="text-stone-300 ml-1">{lastSaved.toLocaleTimeString(language === 'EN' ? 'en-US' : 'es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* EN/ES Language Toggle */}

@@ -101,6 +101,40 @@ export default function HowToUseModal({ isOpen, onClose }: HowToUseModalProps) {
               </p>
             </div>
           </div>
+          
+          {/* Step 5 - Navigation */}
+          <div className="flex gap-4">
+            <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/35 font-mono text-sm font-bold">
+              5
+            </div>
+            <div>
+              <h4 className="font-bold text-[#1a1a1a] flex items-center gap-2">
+                Keyboard Shortcuts <span className="text-stone-500 font-normal">| Navegación por Teclado</span>
+              </h4>
+              <p className="mt-1 font-medium text-stone-600">
+                You can quickly navigate the scheduler using your keyboard:
+              </p>
+              <ul className="list-disc pl-5 mt-2 space-y-1 text-xs text-stone-550 font-medium">
+                <li><strong className="text-[#1a1a1a]">Left/Right Arrows (⬅️ ➡️):</strong> Navigate between months instantly.</li>
+                <li><strong className="text-[#1a1a1a]">Up/Down Arrows (⬆️ ⬇️):</strong> Select the previous or next day, seamlessly crossing month boundaries.</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Step 6 - Reports */}
+          <div className="flex gap-4">
+            <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/35 font-mono text-sm font-bold">
+              6
+            </div>
+            <div>
+              <h4 className="font-bold text-[#1a1a1a] flex items-center gap-2">
+                Printing & PDF Reports <span className="text-stone-500 font-normal">| Reportes PDF e Impresión</span>
+              </h4>
+              <p className="mt-1 font-medium text-stone-600">
+                Export professional layout briefs for stakeholders. Use <strong className="text-[#1a1a1a]">"Print Daily Brief"</strong> for a single day's specific content layout and visual prompts, or <strong className="text-[#1a1a1a]">"Print Monthly Report"</strong> for a comprehensive overview of the active month. When the print dialog opens, you can choose to "Save as PDF" to generate a digital PDF copy of the reports.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Footer */}

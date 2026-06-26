@@ -19,6 +19,7 @@ import {
   UserCheck
 } from 'lucide-react';
 import { CompanyTrainingConfig, GoogleAnalyticsConfig } from '../types';
+import VoiceInputBtn from './VoiceInputBtn';
 
 interface TrainingAnalyticsHubProps {
   trainingConfig: CompanyTrainingConfig;
@@ -176,9 +177,12 @@ export default function TrainingAnalyticsHub({
           <form onSubmit={handleSaveTrainingForm} className="space-y-4 animate-fadeIn text-left">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs uppercase tracking-wider text-stone-500 font-mono mb-1 font-bold">
-                  {isSpanish ? 'Nombre de la Empresa / Marca' : 'Company Name / Brand'}
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label htmlFor="training-company-name" className="block text-xs uppercase tracking-wider text-stone-500 font-mono font-bold">
+                    {isSpanish ? 'Nombre de la Empresa / Marca' : 'Company Name / Brand'}
+                  </label>
+                  <VoiceInputBtn lang={isSpanish ? 'es-ES' : 'en-US'} onResult={setCompanyName} />
+                </div>
                 <input
                   id="training-company-name"
                   type="text"
@@ -189,9 +193,12 @@ export default function TrainingAnalyticsHub({
                 />
               </div>
               <div>
-                <label className="block text-xs uppercase tracking-wider text-stone-500 font-mono mb-1 font-bold">
-                  {isSpanish ? 'Población / Segmento Objetivo' : 'Target Audience / Market'}
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label htmlFor="training-audience" className="block text-xs uppercase tracking-wider text-stone-500 font-mono font-bold">
+                    {isSpanish ? 'Población / Segmento Objetivo' : 'Target Audience / Market'}
+                  </label>
+                  <VoiceInputBtn lang={isSpanish ? 'es-ES' : 'en-US'} onResult={setTargetAudience} />
+                </div>
                 <input
                   id="training-audience"
                   type="text"
@@ -205,9 +212,12 @@ export default function TrainingAnalyticsHub({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs uppercase tracking-wider text-stone-500 font-mono mb-1 font-bold">
-                  {isSpanish ? 'Propuesta de Valor Principal (Valor del WPC)' : 'Primary Value Proposition'}
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label htmlFor="training-value-prop" className="block text-xs uppercase tracking-wider text-stone-500 font-mono font-bold">
+                    {isSpanish ? 'Propuesta de Valor Principal (Valor del WPC)' : 'Primary Value Proposition'}
+                  </label>
+                  <VoiceInputBtn lang={isSpanish ? 'es-ES' : 'en-US'} onResult={setValueProposition} />
+                </div>
                 <textarea
                   id="training-value-prop"
                   rows={3}
@@ -218,9 +228,12 @@ export default function TrainingAnalyticsHub({
                 />
               </div>
               <div>
-                <label className="block text-xs uppercase tracking-wider text-stone-500 font-mono mb-1 font-bold">
-                  {isSpanish ? 'Guía de Tono y Vocabulario Técnico' : 'Tone and Style Guide'}
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label htmlFor="training-tone-guide" className="block text-xs uppercase tracking-wider text-stone-500 font-mono font-bold">
+                    {isSpanish ? 'Guía de Tono y Vocabulario Técnico' : 'Tone and Style Guide'}
+                  </label>
+                  <VoiceInputBtn lang={isSpanish ? 'es-ES' : 'en-US'} onResult={setToneGuide} />
+                </div>
                 <textarea
                   id="training-tone-guide"
                   rows={3}
@@ -233,9 +246,12 @@ export default function TrainingAnalyticsHub({
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-stone-500 font-mono mb-1 font-bold">
-                {isSpanish ? 'Directrices Especiales & Palabras Claves Obligatorias' : 'Custom Corporate Guidelines'}
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label htmlFor="training-custom-guidelines" className="block text-xs uppercase tracking-wider text-stone-500 font-mono font-bold">
+                  {isSpanish ? 'Directrices Especiales & Palabras Claves Obligatorias' : 'Custom Corporate Guidelines'}
+                </label>
+                <VoiceInputBtn lang={isSpanish ? 'es-ES' : 'en-US'} onResult={setCustomGuidelines} />
+              </div>
               <textarea
                 id="training-custom-guidelines"
                 rows={2}

@@ -7,6 +7,8 @@ import { Sparkles, Edit3, Check, RefreshCw } from 'lucide-react';
 import { MonthData } from '../types';
 import { NICHES, MONTH_NAMES } from '../data/mockData';
 
+import VoiceInputBtn from './VoiceInputBtn';
+
 interface ThemeControlPanelProps {
   months: MonthData[];
   activeMonthIndex: number;
@@ -86,26 +88,38 @@ export default function ThemeControlPanel({
 
                   {/* Theme EN */}
                   <td className="py-2.5 px-3">
-                    <input
-                      id={`theme-en-input-${idx}`}
-                      type="text"
-                      value={m.themeEN}
-                      onChange={(e) => onThemeUpdate(idx, 'themeEN', e.target.value)}
-                      className="w-full bg-[#f5f5f0] border border-[#e5e5df] focus:border-[#c9a961] focus:bg-white rounded px-2 py-1 text-xs text-[#1a1a1a] outline-none font-medium"
-                      placeholder="Enter English theme name..."
-                    />
+                    <div className="flex gap-1">
+                      <input
+                        id={`theme-en-input-${idx}`}
+                        type="text"
+                        value={m.themeEN}
+                        onChange={(e) => onThemeUpdate(idx, 'themeEN', e.target.value)}
+                        className="w-full bg-[#f5f5f0] border border-[#e5e5df] focus:border-[#c9a961] focus:bg-white rounded px-2 py-1 text-xs text-[#1a1a1a] outline-none font-medium"
+                        placeholder="Enter English theme name..."
+                      />
+                      <VoiceInputBtn 
+                        lang="en-US"
+                        onResult={(text) => onThemeUpdate(idx, 'themeEN', text)}
+                      />
+                    </div>
                   </td>
 
                   {/* Theme ES */}
                   <td className="py-2.5 px-3">
-                    <input
-                      id={`theme-es-input-${idx}`}
-                      type="text"
-                      value={m.themeES}
-                      onChange={(e) => onThemeUpdate(idx, 'themeES', e.target.value)}
-                      className="w-full bg-[#f5f5f0] border border-[#e5e5df] focus:border-[#c9a961] focus:bg-white rounded px-2 py-1 text-xs text-[#1a1a1a] outline-none font-medium"
-                      placeholder="Título en español..."
-                    />
+                    <div className="flex gap-1">
+                      <input
+                        id={`theme-es-input-${idx}`}
+                        type="text"
+                        value={m.themeES}
+                        onChange={(e) => onThemeUpdate(idx, 'themeES', e.target.value)}
+                        className="w-full bg-[#f5f5f0] border border-[#e5e5df] focus:border-[#c9a961] focus:bg-white rounded px-2 py-1 text-xs text-[#1a1a1a] outline-none font-medium"
+                        placeholder="Título en español..."
+                      />
+                      <VoiceInputBtn 
+                        lang="es-ES"
+                        onResult={(text) => onThemeUpdate(idx, 'themeES', text)}
+                      />
+                    </div>
                   </td>
 
                   {/* Niche Selection */}
