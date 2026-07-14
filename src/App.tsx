@@ -912,7 +912,7 @@ export default function App() {
     <div className="min-h-screen bg-[#f5f5f0] flex flex-col justify-between selection:bg-[#c9a961]/30 selection:text-[#1a1a1a]">
       {/* Printable Area - Rendered offscreen, visible strictly in @media print */}
       {printMode === 'brief' && selectedDay && selectedDay.platforms ? (
-        <div id="printable-brief" className="hidden print:block p-8 space-y-6 bg-white text-black font-sans">
+        <div id="printable-brief" className="print-only p-8 space-y-6 bg-white text-black font-sans">
           <div className="flex justify-between items-start border-b-2 border-black pb-4">
             <div>
               <h1 className="text-2xl font-bold uppercase tracking-tight">UNITEC USA Design</h1>
@@ -994,7 +994,7 @@ export default function App() {
           </div>
         </div>
       ) : printMode === 'calendar' && months[activeMonthIndex] ? (
-        <div id="printable-brief" className="hidden print:block p-8 space-y-6 bg-white text-black font-sans">
+        <div id="printable-month" className="print-only p-8 space-y-6 bg-white text-black font-sans">
           <div className="flex justify-between items-start border-b-2 border-black pb-4">
             <div>
               <h1 className="text-2xl font-bold uppercase tracking-tight">UNITEC USA Design</h1>
@@ -1560,6 +1560,7 @@ export default function App() {
                   onBulkGenerateMonth={handleBulkGenerateMonth}
                   onExportJSON={handleExportJSON}
                   onExportCSV={handleExportCSV}
+                  onPrintCalendar={handlePrintCalendar}
                   language={language}
                   integrateColombiaHolidays={integrateColombiaHolidays}
                 />

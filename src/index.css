@@ -42,32 +42,30 @@ body {
   animation: spin 8s linear infinite;
 }
 
-/* Print CSS setup for A4 Daily Brief */
+/* Print CSS setup for A4 Daily Brief & Monthly Reports */
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+}
+
 @media print {
   body {
     background: #ffffff !important;
     color: #121212 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   
-  body * {
-    visibility: hidden;
-  }
-  
-  #printable-brief, #printable-brief * {
-    visibility: visible;
-  }
-  
-  #printable-brief {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    background: white !important;
-    color: black !important;
-    font-family: var(--font-sans) !important;
-  }
-
-  .no-print {
+  .no-print, .no-print * {
     display: none !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+  
+  .print-only {
+    display: block !important;
+    width: 100% !important;
+    position: relative !important;
   }
 }

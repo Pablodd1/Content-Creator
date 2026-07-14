@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CalendarHeart, Flame, Check, Sparkles, AlertTriangle, ChevronDown, ChevronRight, Play, Download, FileSpreadsheet } from 'lucide-react';
+import { CalendarHeart, Flame, Check, Sparkles, AlertTriangle, ChevronDown, ChevronRight, Play, Download, FileSpreadsheet, Printer } from 'lucide-react';
 import { MonthData, DayData } from '../types';
 import { MONTH_NAMES, NICHES, getColombianHolidays } from '../data/mockData';
 
@@ -16,6 +16,7 @@ interface VisualCalendarProps {
   onBulkGenerateMonth: (index: number) => void;
   onExportJSON: (index: number) => void;
   onExportCSV: (index: number) => void;
+  onPrintCalendar: () => void;
   language: 'EN' | 'ES';
   integrateColombiaHolidays?: boolean;
 }
@@ -29,6 +30,7 @@ export default function VisualCalendar({
   onBulkGenerateMonth,
   onExportJSON,
   onExportCSV,
+  onPrintCalendar,
   language,
   integrateColombiaHolidays = true
 }: VisualCalendarProps) {
@@ -151,6 +153,15 @@ export default function VisualCalendar({
             >
               <FileSpreadsheet size={13} className="text-[#c9a961]" />
               <span>{language === 'EN' ? 'Export CSV' : 'Exportar CSV'}</span>
+            </button>
+            <button
+              id="print-monthly-report-btn"
+              onClick={onPrintCalendar}
+              className="flex items-center justify-center gap-1.5 px-3 py-2 bg-[#f5f5f0] hover:bg-stone-200 text-stone-750 font-sans font-bold text-xs rounded border border-[#e5e5df] transition-all cursor-pointer shadow-sm"
+              title={language === 'EN' ? 'Print Full Monthly Planning Report (PDF)' : 'Imprimir Reporte de Planificación Mensual (PDF)'}
+            >
+              <Printer size={13} className="text-[#c9a961]" />
+              <span>{language === 'EN' ? 'Print Month' : 'Imprimir Mes'}</span>
             </button>
             <button
               id="bulk-generate-month-btn"
