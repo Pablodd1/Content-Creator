@@ -257,7 +257,8 @@ export const DEFAULT_KEY_CONFIGS = {
   perplexity: "",
   googleTrends: "",
   heygen: "",
-  invideo: ""
+  invideo: "",
+  runway: ""
 };
 
 export const COLOMBIAN_HOLIDAYS_2026: Record<string, { es: string; en: string }> = {

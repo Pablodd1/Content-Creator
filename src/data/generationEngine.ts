@@ -132,42 +132,42 @@ export function generateDailyContent(input: GenerationInput): DayData {
     customAudience ? `Optimized for ${customAudience} specifications.` : ""
   ].filter(Boolean).join(" ");
 
-  // Let's identify the material based on the niche to keep content highly specific
-  let productEN = "WPC fluted wall panels";
-  let productES = "paneles acanalados de WPC";
-  let techDetailsEN = "Class-B fire-rated, waterproof polymer composite";
-  let techDetailsES = "clasificación de fuego Clase-B, compuesto de polímero impermeable";
+  // Let's identify the material based on the niche to keep content highly specific (all related to PVC Wallpaper as requested)
+  let productEN = "luxury textured PVC wallpaper";
+  let productES = "papel tapiz de PVC texturizado de lujo";
+  let techDetailsEN = "100% waterproof, washable, self-adhesive backing with modern European patterns";
+  let techDetailsES = "100% impermeable, lavable, autoadhesivo con diseños y patrones europeos de alta gama";
 
   if (niche.includes("sustainability")) {
-    productEN = "Eco-composite WPC sustainable cladding";
-    productES = "revestimiento sostenible de WPC eco-compuesto";
-    techDetailsEN = "100% recyclable, made with 60% reclaimed FSC wood fibers";
-    techDetailsES = "100% reciclable, fabricado con 60% de fibras de madera recuperadas FSC";
+    productEN = "eco-friendly low-VOC PVC wallpaper surface";
+    productES = "papel tapiz de PVC de bajo VOC amigable con el medio ambiente";
+    techDetailsEN = "phthalate-free, certified low emissions, 100% safe for long-term luxury residences";
+    techDetailsES = "libre de ftalatos, certificado de bajas emisiones, 100% seguro para residencias de lujo";
   } else if (niche.includes("waterproof") || niche.includes("science")) {
-    productEN = "Co-extrusion waterproof PVC wall panels";
-    productES = "paneles de PVC impermeables de coextrusión";
-    techDetailsEN = "Zero moisture absorption, anti-mold defense, tropical climate stable";
-    techDetailsES = "Cero absorción de humedad, defensa antimoho, estable en climas tropicales";
+    productEN = "anti-mold waterproof PVC bathroom & kitchen wallpaper";
+    productES = "papel tapiz de PVC impermeable antimoho para cocinas y baños";
+    techDetailsEN = "zero-absorption moisture shield, washable scrub-resistant active polymers";
+    techDetailsES = "escudo contra la humedad de cero absorción, polímeros activos lavables y altamente resistentes al tallado";
   } else if (niche.includes("wallpaper") || niche.includes("trends")) {
-    productEN = "Gilded-edge SPC decorative surfaces";
-    productES = "superficies decorativas de SPC con borde dorado";
-    techDetailsEN = "High-definition marble and timber veneers, warp-resistant backing";
-    techDetailsES = "Enchapados de mármol y madera de alta definición, soporte resistente al alabeo";
+    productEN = "gilded-edge 3D textured metallic PVC wallpaper";
+    productES = "papel tapiz de PVC metálico texturizado con bordes dorados en 3D";
+    techDetailsEN = "high-definition luxurious hot-stamped gold foil patterns, tactile embossment";
+    techDetailsES = "patrones de papel dorado estampados en caliente de alta definición, relieves táctiles de lujo";
   } else if (niche.includes("construction") || niche.includes("tech")) {
-    productEN = "Quick-install click-lock SPC flooring";
-    productES = "pisos de SPC con clic de instalación rápida";
-    techDetailsEN = "Interlocking tongue-and-groove system, reduces installation labor cycles by 40%";
-    techDetailsES = "Sistema de ranura y lengüeta entrelazada, reduce los ciclos de mano de obra en 40%";
+    productEN = "heavy-duty commercial fire-retardant PVC wallpaper";
+    productES = "papel tapiz de PVC comercial de alta resistencia retardante al fuego";
+    techDetailsEN = "Class-A ASTM certified fire rating, heavy-impact tear-resistant construction";
+    techDetailsES = "clasificación contra fuego certificada ASTM Clase-A, construcción de alta densidad resistente a rasgaduras";
   } else if (niche.includes("logistics")) {
-    productEN = "Consolidated container load shipping";
-    productES = "envíos consolidados de carga de contenedor completo";
-    techDetailsEN = "Streamlined FOB Miami transit, maximum volumetric container density";
-    techDetailsES = "Tránsito eficiente FOB Miami, máxima densidad volumétrica en contenedores";
+    productEN = "bulk container load premium PVC wallpaper rolls";
+    productES = "rollos de papel tapiz de PVC premium por contenedor completo";
+    techDetailsEN = "FOB Miami direct-to-port container shipments, optimized logistics pricing";
+    techDetailsES = "despachos directos FOB Miami desde fábrica a puerto, precios logísticos optimizados por volumen";
   } else if (niche.includes("architecture")) {
-    productEN = "Premium exterior WPC facade claddings";
-    productES = "revestimientos exteriores de fachada de WPC premium";
-    techDetailsEN = "Double-layer co-extrusion technology, ASTM-tested for hurricane wind-load";
-    techDetailsES = "Tecnología de coextrusión bicapa, probado por ASTM para cargas de viento huracanado";
+    productEN = "luxury architectural grade 3D PVC wallpaper cladding";
+    productES = "revestimiento de papel tapiz de PVC en 3D de grado arquitectónico de lujo";
+    techDetailsEN = "UV-fade resistant, zero distortion, specified by high-end architects for luxury lobbies";
+    techDetailsES = "resistente a la decoloración por rayos UV, cero distorsión, especificado para vestíbulos y suites presidenciales";
   }
 
   // Define Angles

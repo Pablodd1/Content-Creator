@@ -72,6 +72,7 @@ export interface ApiKeysConfig {
   googleTrends: string;
   heygen?: string;
   invideo?: string;
+  runway?: string;
 }
 
 export interface CompanyTrainingConfig {

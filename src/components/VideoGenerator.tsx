@@ -7,27 +7,68 @@ import { useState, useEffect } from 'react';
 import { 
   Video, 
   Sparkles, 
-  User, 
-  Music, 
-  Volume2, 
-  Layers, 
-  ChevronRight, 
-  ExternalLink, 
-  Cpu, 
-  Play, 
-  Pause, 
   Download, 
   Copy, 
   Check, 
-  Clock, 
-  RefreshCw, 
   FileVideo,
   Key,
   Database,
   CheckCircle2,
-  ListRestart
+  Cpu,
+  Play
 } from 'lucide-react';
-import { DayData, MonthData, ApiKeysConfig, PlatformPosts } from '../types';
+import { DayData, MonthData, ApiKeysConfig } from '../types';
+
+interface GeneratedVideo {
+  id: string;
+  source: 'Runway';
+  title: string;
+  script: string;
+  duration: string;
+  date: string;
+  videoUrl: string;
+  posterUrl: string;
+  aspectRatio: '9:16' | '16:9';
+}
+
+const RUNWAY_COLLECTIONS = [
+  { id: 'pvc_metallic', nameES: 'Papel Tapiz PVC Metálico de Lujo', nameEN: 'Luxury Metallic Foil PVC Wallpaper', descES: 'Acabados con vetas doradas y texturas reflectivas de alta gama de unitecusadesign.com.', descEN: 'Gold leaf veins and high-end reflective foil textures from unitecusadesign.com.' },
+  { id: 'pvc_marble_3d', nameES: 'Mármol Imperial 3D impermeable', nameEN: 'Impermeable 3D Imperial Marble', descES: 'Diseño de mármol Carrara ultra-realista resistente a la humedad de unitecusadesign.com.', descEN: 'Ultra-realistic Carrara marble design with zero moisture absorption from unitecusadesign.com.' },
+  { id: 'pvc_classic_damask', nameES: 'Damasco Clásico Texturizado', nameEN: 'Textured Classic Damask PVC', descES: 'Relieves táctiles de hilo y sofisticación europea de unitecusadesign.com.', descEN: 'Tactile thread relief and traditional sophisticated accents from unitecusadesign.com.' },
+  { id: 'pvc_wood_grooves', nameES: 'Textura Acanalada de Madera PVC', nameEN: 'Natural Wood Groove Textured PVC', descES: 'Paneles acanalados de PVC lavable con apariencia de roble de unitecusadesign.com.', descEN: 'Washable PVC fluted wallpaper with realistic natural oak touch from unitecusadesign.com.' }
+];
+
+const RUNWAY_MOTIONS = [
+  { id: 'orbit_arc', nameES: 'Rotación Orbital 3D Lenta', nameEN: 'Slow 3D Orbital Arc', prompt: 'slow circular 3D orbital camera rotation around the textured details' },
+  { id: 'dolly_in', nameES: 'Dolly-In Acercamiento de Relieves', nameEN: 'Detail Dolly-In Close-Up', prompt: 'slow camera dolly-in close-up showcasing the physical embossed wallpaper texture' },
+  { id: 'slow_pan', nameES: 'Paneo Lateral Cinemático', nameEN: 'Cinematic Horizontal Pan', prompt: 'slow elegant horizontal pan from left to right revealing the interior design wall' },
+  { id: 'jib_down', nameES: 'Inclinación de Techo a Suelo', nameEN: 'Ceiling-to-Floor Jib-Down', prompt: 'slow vertical jib-down camera movement showing the full height of the wallpaper design' }
+];
+
+const SEEDED_VIDEOS: GeneratedVideo[] = [
+  {
+    id: 'vid-001',
+    source: 'Runway',
+    title: 'Runway Gen-3 • Luxury Metallic Foil PVC Wallpaper',
+    script: 'High-definition hyper-realistic Runway Gen-3 Alpha video of a luxury interior wall showcasing UNITEC USA Design\'s Luxury Metallic Foil PVC Wallpaper. Gold leaf veins and high-end reflective foil textures from unitecusadesign.com.',
+    duration: '0:10',
+    date: '2026-06-11 08:32 AM',
+    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-living-room-of-a-modern-apartment-41618-large.mp4',
+    posterUrl: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=500&q=80',
+    aspectRatio: '16:9'
+  },
+  {
+    id: 'vid-002',
+    source: 'Runway',
+    title: 'Runway Gen-3 • Impermeable 3D Imperial Marble',
+    script: 'High-definition hyper-realistic Runway Gen-3 Alpha video of a luxury interior wall showcasing UNITEC USA Design\'s Impermeable 3D Imperial Marble. Design of Carrara marble ultra-realistic resistant to moisture from unitecusadesign.com.',
+    duration: '0:10',
+    date: '2026-06-12 02:15 PM',
+    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-dining-room-of-a-modern-house-41615-large.mp4',
+    posterUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=500&q=80',
+    aspectRatio: '9:16'
+  }
+];
 
 interface VideoGeneratorProps {
   selectedDay: DayData | null;
@@ -38,71 +79,6 @@ interface VideoGeneratorProps {
   showToast: (msg: string) => void;
 }
 
-interface GeneratedVideo {
-  id: string;
-  source: 'HeyGen' | 'InVideo';
-  title: string;
-  script: string;
-  avatar?: string;
-  voiceStyle?: string;
-  musicStyle?: string;
-  substyle?: string;
-  duration: string;
-  date: string;
-  videoUrl: string;
-  posterUrl: string;
-  aspectRatio: '9:16' | '16:9';
-}
-
-const PREMADE_AVATARS = [
-  { id: 'josh_suit', nameES: 'Josué (Traje de Saco)', nameEN: 'Joshua (Full Corporate)', lang: 'ES/EN', gender: 'M' },
-  { id: 'elena_arch', nameES: 'Elena (Arquitecta de Diseños)', nameEN: 'Elena (Interior Architect)', lang: 'ES', gender: 'F' },
-  { id: 'carlos_trade', nameES: 'Carlos (Especialista en Importaciones)', nameEN: 'Carlos (Logistics Manager)', lang: 'ES', gender: 'M' },
-  { id: 'sofia_eco', nameES: 'Sofía (Asesora de WPC Ecológico)', nameEN: 'Sofia (Eco-WPC Advisor)', lang: 'ES/EN', gender: 'F' }
-];
-
-const PREMADE_VOICES = [
-  { id: 'es_warm_eng', nameES: 'Español Latino • Técnico Cálido', nameEN: 'LatAm Spanish • Warm Technical', style: 'Neutral' },
-  { id: 'es_col_sales', nameES: 'Español Colombia • Ventas Mayorista', nameEN: 'Colombian Spanish • High Conversion', style: 'Sales' },
-  { id: 'en_friendly_tech', nameES: 'Inglés Profesional • Entusiasta', nameEN: 'US English • Enthusiastic Coach', style: 'Branding' }
-];
-
-const PREMADE_MUSIC = [
-  { id: 'tech_ambient', nameES: 'Moderno Tecnológico Industrial', nameEN: 'Modern Subdued Hi-Tech', vibe: 'Corporate' },
-  { id: 'latin_groove', nameES: 'Ritmo Urbano Latino Acústico', nameEN: 'Upbeat Acoustic Latin Groove', vibe: 'Energetic' },
-  { id: 'luxury_lounge', nameES: 'Minimalista Elegante Lounge', nameEN: 'Luxury Minimalist Hotel Lounge', vibe: 'Aspirational' }
-];
-
-// Seed some initial pre-generated videos
-const SEEDED_VIDEOS: GeneratedVideo[] = [
-  {
-    id: 'vid-001',
-    source: 'HeyGen',
-    title: 'WPC Exterior Facades • Cartagena de Indias',
-    script: 'El puerto de Cartagena de Indias recibe carga consolidada de WPC con certificación contra incendios Clase-B. Asegure acabados inalterables al sol y la salinidad de la costa colombiana.',
-    avatar: 'Elena (Interior Architect)',
-    voiceStyle: 'Colombian Spanish • High Conversion',
-    duration: '0:32',
-    date: '2026-06-11 08:32 AM',
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-modern-apartment-with-wood-details-and-plants-41619-large.mp4',
-    posterUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=500&q=80',
-    aspectRatio: '16:9'
-  },
-  {
-    id: 'vid-002',
-    source: 'InVideo',
-    title: 'Sostenibilidad y Certificaciones WPC Colombia',
-    script: '¿Sabe por qué las construcciones premium en Medellín están migrando a perfiles ecológicos acanalados? Descubra la revolución del compuesto de madera-plástico UNITEC USA.',
-    musicStyle: 'Luxury Minimalist Hotel Lounge',
-    substyle: 'Cinematic Subtitles (Yellow Bold)',
-    duration: '0:45',
-    date: '2026-06-12 02:15 PM',
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-worker-installing-wooden-flooring-41804-large.mp4',
-    posterUrl: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=500&q=80',
-    aspectRatio: '9:16'
-  }
-];
-
 export default function VideoGenerator({
   selectedDay,
   selectedMonth,
@@ -111,29 +87,26 @@ export default function VideoGenerator({
   onSaveConfigs,
   showToast
 }: VideoGeneratorProps) {
-  const [activeTab, setActiveTab] = useState<'heygen' | 'invideo' | 'gallery'>('heygen');
-  const [heygenSettings, setHeygenSettings] = useState({
-    avatar: PREMADE_AVATARS[0].id,
-    voice: PREMADE_VOICES[0].id,
-    aspect: '16:9' as '16:9' | '9:16',
-    platformSource: 'instagram' as 'instagram' | 'linkedin' | 'facebook' | 'youtube'
-  });
+  const [activeTab, setActiveTab] = useState<'runway' | 'gallery'>('runway');
 
-  const [invideoSettings, setInvideoSettings] = useState({
-    music: PREMADE_MUSIC[0].id,
-    substyle: 'yellow_bold',
+  const [runwaySettings, setRunwaySettings] = useState({
+    collection: 'pvc_metallic',
+    motion: 'orbit_arc',
     aspect: '9:16' as '16:9' | '9:16',
+    duration: '10' as '5' | '10',
     customPrompt: '',
-    voiceStyle: 'EN-Coherent Female'
+    cameraSpeed: 'medium' as 'slow' | 'medium' | 'fast'
   });
 
-  // API Config settings overlay inside the pane
   const [showApiSetup, setShowApiSetup] = useState(false);
-  const [heygenKey, setHeygenKey] = useState(apiConfigs.heygen || '');
-  const [invideoKey, setInvideoKey] = useState(apiConfigs.invideo || '');
+  const [runwayKey, setRunwayKey] = useState(apiConfigs.runway || '');
   const [isKeysSaved, setIsKeysSaved] = useState(false);
 
-  // Video Gallery list
+  // Synchronize key state when prop updates
+  useEffect(() => {
+    setRunwayKey(apiConfigs.runway || '');
+  }, [apiConfigs]);
+
   const [videosList, setVideosList] = useState<GeneratedVideo[]>(() => {
     try {
       const stored = localStorage.getItem('unitec_generated_videos_v1');
@@ -144,7 +117,6 @@ export default function VideoGenerator({
     return SEEDED_VIDEOS;
   });
 
-  // Rendering State Pipeline
   const [isRendering, setIsRendering] = useState(false);
   const [renderProgress, setRenderProgress] = useState(0);
   const [renderStep, setRenderStep] = useState<string>('');
@@ -156,102 +128,73 @@ export default function VideoGenerator({
     response: string;
   } | null>(null);
 
-  // Active Video Player Mode
-  const [activePlayVideo, setActivePlayVideo] = useState<GeneratedVideo | null>(SEEDED_VIDEOS[0]);
+  const [activePlayVideo, setActivePlayVideo] = useState<GeneratedVideo | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
+
+  // Set default preview video on mount if available
+  useEffect(() => {
+    if (videosList.length > 0 && !activePlayVideo) {
+      setActivePlayVideo(videosList[0]);
+    }
+  }, [videosList, activePlayVideo]);
 
   useEffect(() => {
     localStorage.setItem('unitec_generated_videos_v1', JSON.stringify(videosList));
   }, [videosList]);
 
-  // Handle saving API configurations
   const handleSavePanelKeys = () => {
     onSaveConfigs({
       ...apiConfigs,
-      heygen: heygenKey,
-      invideo: invideoKey
+      runway: runwayKey
     });
     setIsKeysSaved(true);
     setTimeout(() => {
       setIsKeysSaved(false);
       setShowApiSetup(false);
     }, 1800);
-    showToast(language === 'EN' ? 'Video keys synced successfully' : 'Claves de API de video guardadas con éxito');
+    showToast(language === 'EN' ? 'Runway API Key synced successfully' : 'Clave de API de Runway guardada con éxito');
   };
 
-  // Get active text based on channel
-  const getSelectedPlatformText = (): string => {
-    if (!selectedDay || !selectedDay.platforms) {
-      return language === 'EN' 
-        ? "Class-B WPC internal residence fire-retarding standards cladding."
-        : "Revestimiento WPC con norma de resistencia al fuego Clase-B para residencias.";
-    }
-    const source = heygenSettings.platformSource;
-    const post = selectedDay.platforms[source];
-    return post ? post.text : '';
+  const getRunwayPromptText = (): string => {
+    if (runwaySettings.customPrompt) return runwaySettings.customPrompt;
+    
+    const chosenColl = RUNWAY_COLLECTIONS.find(c => c.id === runwaySettings.collection);
+    const chosenMotion = RUNWAY_MOTIONS.find(m => m.id === runwaySettings.motion);
+    
+    const themeText = selectedDay && selectedDay.platforms
+      ? (language === 'ES' ? selectedDay.platforms.instagram.text.substring(0, 150) + '...' : selectedDay.imagePrompt || '')
+      : (selectedMonth 
+          ? (language === 'ES' ? selectedMonth.themeES : selectedMonth.themeEN)
+          : (language === 'ES' ? 'Papel tapiz de PVC con textura europea' : 'PVC Wallpaper with European textured detail')
+        );
+
+    const basePrompt = language === 'ES'
+      ? `Video hiperrealista de Runway Gen-3 Alpha de alta definición de un muro interior decorado con el producto de UNITEC USA Design: ${chosenColl?.nameES}. Detalle visual: ${chosenColl?.descES}. Estilo de cámara: ${chosenMotion?.nameES} (${chosenMotion?.prompt}). Concepto del día: ${themeText}. El material es 100% impermeable, lavable y de calidad premium de unitecusadesign.com, con luz ambiental cálida de showroom, 8k, cinematográfico.`
+      : `High-definition hyper-realistic Runway Gen-3 Alpha video of a luxury interior wall showcasing UNITEC USA Design's ${chosenColl?.nameEN}. Visual detail: ${chosenColl?.descEN}. Camera style: ${chosenMotion?.nameEN} (${chosenMotion?.prompt}). Topic context: ${themeText}. The material is 100% waterproof, washable and premium quality from unitecusadesign.com, warm environmental showroom lighting, 8k resolution, cinematic commercial advertising.`;
+      
+    return basePrompt;
   };
 
-  const getInVideoPromptText = (): string => {
-    if (invideoSettings.customPrompt) return invideoSettings.customPrompt;
-    if (!selectedDay || !selectedMonth) {
-      return language === 'EN'
-        ? "Create an architectural showcase about standard commercial fluted paneling in Colombia."
-        : "Crea un escaparate de arquitectura comercial sobre paneles acanalados en Colombia.";
-    }
-    return language === 'EN'
-      ? `A dynamic high-conversion social clip about: ${selectedMonth.themeEN}. Specifically targeting local distributors with waterproof fluted profiles.`
-      : `Un video dinámico sobre: ${selectedMonth.themeES}. Enfocado en instaladores que buscan perfiles acanalados impermeables de alto tránsito.`;
-  };
-
-  // Perform Simulated API request with real logs for developer visibility
-  const triggerVideoGeneration = (source: 'HeyGen' | 'InVideo') => {
+  const triggerVideoGeneration = () => {
     setIsRendering(true);
     setRenderProgress(5);
     
-    const keyUsed = source === 'HeyGen' ? (heygenKey || 'KEY_SIMULATED_PROD_1e8fd3') : (invideoKey || 'KEY_SIMULATED_PROD_5c99ab');
-    
-    let endpoint = '';
-    let bodyPayload = {};
-    
-    if (source === 'HeyGen') {
-      endpoint = 'https://api.heygen.com/v2/video/generate';
-      const textScript = getSelectedPlatformText();
-      const chosenAvatar = PREMADE_AVATARS.find(a => a.id === heygenSettings.avatar);
-      const chosenVoice = PREMADE_VOICES.find(v => v.id === heygenSettings.voice);
-      
-      bodyPayload = {
-        video_inputs: [{
-          character: {
-            type: 'avatar',
-            avatar_id: chosenAvatar?.id || 'sofia_eco',
-            avatar_style: 'normal'
-          },
-          voice: {
-            type: 'text_to_speech',
-            voice_id: chosenVoice?.id || 'es_warm_eng',
-            input_text: textScript.substring(0, 500)
-          }
-        }],
-        dimension: heygenSettings.aspect === '16:9' ? { width: 1920, height: 1080 } : { width: 1080, height: 1920 }
-      };
-    } else {
-      endpoint = 'https://api.invideo.io/v1/video/generate';
-      const promptInstruction = getInVideoPromptText();
-      const chosenMusic = PREMADE_MUSIC.find(m => m.id === invideoSettings.music);
-      
-      bodyPayload = {
-        prompt: promptInstruction,
-        settings: {
-          aspect_ratio: invideoSettings.aspect,
-          subtitle_style: invideoSettings.substyle,
-          voiceover: invideoSettings.voiceStyle,
-          soundtrack: chosenMusic?.nameEN || 'tech_ambient'
-        }
-      };
-    }
+    const keyUsed = runwayKey || 'KEY_SIMULATED_PROD_7a3d2e';
+    const endpoint = 'https://api.runwayml.com/v2/batches';
+    const promptInstruction = getRunwayPromptText();
+    const bodyPayload = {
+      promptText: promptInstruction,
+      model: "gen3a_turbo",
+      seconds: parseInt(runwaySettings.duration),
+      ratio: runwaySettings.aspect === '16:9' ? '1280x720' : '720x1280',
+      options: {
+        motion: runwaySettings.motion,
+        speed: runwaySettings.cameraSpeed,
+        watermark: false
+      }
+    };
 
-    // Set Live API Inspection logs so developer can see the request layout
     setActiveApiLog({
       endpoint,
       method: 'POST',
@@ -260,93 +203,58 @@ export default function VideoGenerator({
         'Authorization': `Bearer ${keyUsed.substring(0, 12)}***`
       },
       body: JSON.stringify(bodyPayload, null, 2),
-      response: '{\n  "status": "pending",\n  "job_id": "job_' + Math.random().toString(36).substring(2, 10) + '",\n  "eta_seconds": 15,\n  "message": "Enqueued in rendering queue successfully"\n}'
+      response: '{\n  "status": "pending",\n  "job_id": "job_' + Math.random().toString(36).substring(2, 10) + '",\n  "eta_seconds": 15,\n  "message": "Enqueued in Runway Gen-3 rendering queue successfully"\n}'
     });
 
-    setRenderStep(language === 'EN' ? 'Initializing Secure Socket API Link...' : 'Estableciendo enlace de Socket seguro para la API...');
+    setRenderStep(language === 'EN' ? 'Initializing Runway Gen-3 Handshake...' : 'Estableciendo enlace seguro para Runway Gen-3...');
 
-    // Progress bar increments
     const interval = setInterval(() => {
       setRenderProgress(prev => {
         const next = prev + 15;
         if (next >= 105) {
           clearInterval(interval);
-          finalizeVideoGeneration(source);
+          finalizeVideoGeneration();
           return 100;
         }
 
-        // Change step labels based on progress percentages
         if (next < 30) {
-          setRenderStep(language === 'EN' ? `Authorizing Connection & Submitting JSON payload...` : 'Autorizando conexión y enviando paquete de datos JSON...');
+          setRenderStep(language === 'EN' ? `Authenticating Runway ML Handshake & sending prompt payload...` : 'Autenticando enlace de Runway ML y enviando parámetros...');
         } else if (next < 60) {
-          setRenderStep(language === 'EN' ? `API accepted connection. Transcoding TTS layers and frames...` : 'La API aceptó la conexión. Convirtiendo voces y fotogramas...');
+          setRenderStep(language === 'EN' ? `Runway accepted task. Initializing noise prediction grid (Gen-3)...` : 'Runway aceptó la tarea. Inicializando malla de predicción de ruido Gen-3...');
         } else if (next < 85) {
-          setRenderStep(language === 'EN' ? `Watermarking brand overlays and composing media outputs...` : 'Alineando marca de agua del puerto de destino y compilando archivo...');
+          setRenderStep(language === 'EN' ? `Synthesizing luxury PVC textures and simulating 3D lighting path...` : 'Sintetizando texturas de PVC de lujo y simulando iluminación 3D...');
         } else {
-          setRenderStep(language === 'EN' ? `API report: Job completed! Fetching render container URL results...` : 'API reporta: ¡Operación completada! Obteniendo dirección de descarga...');
+          setRenderStep(language === 'EN' ? `Runway render completed. Compiling final MP4 container...` : 'Render de Runway completado. Compilando contenedor MP4 final...');
         }
         
         return next;
       });
-    }, 900);
+    }, 800);
   };
 
-  const finalizeVideoGeneration = (source: 'HeyGen' | 'InVideo') => {
-    // Generate simulated video output
-    const isHeyGen = source === 'HeyGen';
+  const finalizeVideoGeneration = () => {
     const dayTag = selectedDay ? `Día ${selectedDay.day}` : 'Día Central';
-    const portName = selectedDay && selectedDay.day % 2 === 0 ? 'Cartagena' : 'Buenaventura';
-    
-    // Choose realistic mock stock video paths based on selection
-    const mockVideos = [
-      'https://assets.mixkit.co/videos/preview/mixkit-modern-apartment-with-wood-details-and-plants-41619-large.mp4',
-      'https://assets.mixkit.co/videos/preview/mixkit-construction-worker-measures-wood-panels-42043-large.mp4',
-      'https://assets.mixkit.co/videos/preview/mixkit-architecture-blueprint-plan-design-39908-large.mp4'
+    const runwayMockVideos = [
+      'https://assets.mixkit.co/videos/preview/mixkit-living-room-of-a-modern-apartment-41618-large.mp4',
+      'https://assets.mixkit.co/videos/preview/mixkit-dining-room-of-a-modern-house-41615-large.mp4'
     ];
-    
-    const randomVid = mockVideos[Math.floor(Math.random() * mockVideos.length)];
+    const randomVid = runwayMockVideos[Math.floor(Math.random() * runwayMockVideos.length)];
     const id = `vid-${Math.floor(Math.random() * 900) + 100}`;
+    const collObj = RUNWAY_COLLECTIONS.find(c => c.id === runwaySettings.collection);
+    const promptText = getRunwayPromptText();
     
-    let newVideo: GeneratedVideo;
+    const newVideo: GeneratedVideo = {
+      id,
+      source: 'Runway',
+      title: `Runway Gen-3 • ${collObj ? (language === 'ES' ? collObj.nameES : collObj.nameEN) : 'Luxury Texture'} (${dayTag})`,
+      script: promptText,
+      duration: `0:${runwaySettings.duration.padStart(2, '0')}`,
+      date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      videoUrl: randomVid,
+      posterUrl: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=500&q=80',
+      aspectRatio: runwaySettings.aspect
+    };
 
-    if (isHeyGen) {
-      const avatarObj = PREMADE_AVATARS.find(a => a.id === heygenSettings.avatar);
-      const voiceObj = PREMADE_VOICES.find(v => v.id === heygenSettings.voice);
-      const scriptText = getSelectedPlatformText();
-      
-      newVideo = {
-        id,
-        source: 'HeyGen',
-        title: `HeyGen Avatar • ${isSpanish ? 'Presentación de' : 'Presenter'} ${avatarObj?.nameES.split(' ')[0]} (${dayTag})`,
-        script: scriptText,
-        avatar: avatarObj?.nameES || 'Sofía de WPC',
-        voiceStyle: voiceObj?.nameES || 'Warm technical',
-        duration: '0:35',
-        date: new Date().toISOString().replace('T', ' ').substring(0, 16),
-        videoUrl: randomVid,
-        posterUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=500&q=80',
-        aspectRatio: heygenSettings.aspect
-      };
-    } else {
-      const musicObj = PREMADE_MUSIC.find(m => m.id === invideoSettings.music);
-      const promptText = getInVideoPromptText();
-      
-      newVideo = {
-        id,
-        source: 'InVideo',
-        title: `InVideo IA • ${isSpanish ? 'Clip Automatizado' : 'Prompt Render'} (${dayTag})`,
-        script: promptText,
-        musicStyle: musicObj?.nameES || 'Ambient',
-        substyle: `Style: ${invideoSettings.substyle.replace('_', ' ')}`,
-        duration: '0:40',
-        date: new Date().toISOString().replace('T', ' ').substring(0, 16),
-        videoUrl: randomVid,
-        posterUrl: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=500&q=80',
-        aspectRatio: invideoSettings.aspect
-      };
-    }
-
-    // Update API log to finished
     if (activeApiLog) {
       setActiveApiLog(prev => prev ? {
         ...prev,
@@ -354,11 +262,10 @@ export default function VideoGenerator({
           status: "success",
           completed_at: new Date().toISOString(),
           render_id: id,
-          duration_seconds: 35,
+          duration_seconds: parseInt(runwaySettings.duration),
           download_url: newVideo.videoUrl,
           meta: {
-            allocated_port: portName,
-            compliance_check: "Class-B Fire Retardant Confirmed (NSR-10 Code)"
+            compliance_check: "Premium PVC Wallpaper Verification Confirmed via Runway Gen-3"
           }
         }, null, 2)
       } : null);
@@ -368,7 +275,7 @@ export default function VideoGenerator({
     setActivePlayVideo(newVideo);
     setIsRendering(false);
     setActiveTab('gallery');
-    showToast(isSpanish ? `¡Video por IA generado con éxito! #${id}` : `AI Video generated successfully! #${id}`);
+    showToast(language === 'ES' ? `¡Video Runway Gen-3 generado con éxito! #${id}` : `Runway Gen-3 video generated successfully! #${id}`);
   };
 
   const handleCopyLink = (text: string, id: string) => {
@@ -377,7 +284,7 @@ export default function VideoGenerator({
     setTimeout(() => {
       setCopiedStates(prev => ({ ...prev, [id]: false }));
     }, 2000);
-    showToast(isSpanish ? 'Enlace del video copiado al portapapeles' : 'Video link copied to clipboard');
+    showToast(language === 'ES' ? 'Enlace del video copiado al portapapeles' : 'Video link copied to clipboard');
   };
 
   const isSpanish = language === 'ES';
@@ -386,17 +293,17 @@ export default function VideoGenerator({
     <div id="ai-video-production-studio" className="bg-white border border-[#e5e5df] rounded-xl text-[#1a1a1a] shadow-sm overflow-hidden flex flex-col">
       {/* Visual Header Banner */}
       <div className="bg-[#1a1a1a] p-5 text-white flex items-center justify-between">
-        <div className="space-y-1">
+        <div className="space-y-1 text-left">
           <div className="inline-flex items-center gap-1.5 bg-[#c9a961] text-stone-950 font-mono text-[9px] font-black uppercase px-2 py-0.5 rounded">
             <Sparkles size={9} className="animate-spin" />
-            {isSpanish ? 'IA PRO • SECTOR SECTORIAL' : 'AI PRO • ENTERPRISE CAPABILITY'}
+            {isSpanish ? 'IA PRO • DRIVER DE RENDERING' : 'AI PRO • RENDERING SYSTEM'}
           </div>
           <h3 className="text-sm font-sans font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
             <Video size={18} className="text-[#c9a961]" />
-            {isSpanish ? 'Estudio de Video por IA • HeyGen & InVideo' : 'AI Video Production • HeyGen & InVideo'}
+            {isSpanish ? 'Estudio de Video por IA Runway' : 'Runway AI Video Production Studio'}
           </h3>
           <p className="text-[10px] text-stone-400 font-sans">
-            {isSpanish ? 'Cree avatares realistas y clips técnicos bilingües directo de su planificador diario de WPC' : 'Create talking avatars and specialized technical clips synced with daily social outputs'}
+            {isSpanish ? 'Cree animaciones de texturas hiperrealistas de papel tapiz PVC de alta calidad con Runway Gen-3' : 'Generate hyper-realistic textured wallpaper animations with Runway Gen-3 Alpha'}
           </p>
         </div>
         
@@ -404,7 +311,7 @@ export default function VideoGenerator({
         <button
           id="toggle-video-api-keys-panel"
           onClick={() => setShowApiSetup(!showApiSetup)}
-          title={isSpanish ? 'Configurar claves API de HeyGen / InVideo' : 'Setup HeyGen / InVideo authentication tokens'}
+          title={isSpanish ? 'Configurar claves API de Runway' : 'Setup Runway authentication token'}
           className={`p-2 rounded border transition-all cursor-pointer flex items-center gap-1.5 ${
             showApiSetup 
               ? 'bg-[#c9a961] text-stone-950 border-[#c9a961]' 
@@ -420,42 +327,25 @@ export default function VideoGenerator({
       {showApiSetup && (
         <div className="p-4 bg-stone-900 border-b border-stone-800 text-white space-y-4 animate-fadeIn">
           <div className="flex items-center justify-between font-mono text-[10px] text-stone-400 font-bold uppercase pb-1.5 border-b border-stone-800">
-            <span className="flex items-center gap-1.5 text-[#c9a961]"><Database size={12} /> {isSpanish ? 'Parámetros de Integración de Video' : 'Video Module Handshake APIs'}</span>
-            <span className="text-emerald-500">● {isSpanish ? 'AUTORIZADO' : 'PENDING SECURE'}</span>
+            <span className="flex items-center gap-1.5 text-[#c9a961]"><Database size={12} /> {isSpanish ? 'Parámetros de Integración de Runway' : 'Runway Module Handshake APIs'}</span>
+            <span className="text-emerald-500">● {isSpanish ? 'CONECTADO' : 'ACTIVE SECURE'}</span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-sans text-stone-300 leading-relaxed">
-            <div className="space-y-1">
-              <label htmlFor="heygen-key-input" className="block text-[10px] uppercase font-mono text-[#c9a961] font-bold">
-                HeyGen REST API Token (v2)
+          <div className="text-xs font-sans text-stone-300 leading-relaxed max-w-md">
+            <div className="space-y-1 text-left">
+              <label htmlFor="runway-key-input" className="block text-[10px] uppercase font-mono text-[#c9a961] font-bold">
+                Runway Secret API Key (Gen-3)
               </label>
               <input
-                id="heygen-key-input"
+                id="runway-key-input"
                 type="password"
-                placeholder="heygen-bearer-token..."
-                value={heygenKey}
-                onChange={(e) => setHeygenKey(e.target.value)}
+                placeholder="runway-api-secret-key..."
+                value={runwayKey}
+                onChange={(e) => setRunwayKey(e.target.value)}
                 className="w-full bg-stone-950 border border-stone-800 text-white rounded px-3 py-1.5 outline-none placeholder-stone-700 font-mono focus:border-[#c9a961]"
               />
               <span className="block text-[9px] text-stone-500">
-                {isSpanish ? 'Para autorizar llamadas a https://api.heygen.com v2.' : 'Endpoints hit: https://api.heygen.com/v2/video/generate'}
-              </span>
-            </div>
-
-            <div className="space-y-1">
-              <label htmlFor="invideo-key-input" className="block text-[10px] uppercase font-mono text-[#c9a961] font-bold">
-                InVideo API Secret Key (v1)
-              </label>
-              <input
-                id="invideo-key-input"
-                type="password"
-                placeholder="invideo-ai-auth-bearer..."
-                value={invideoKey}
-                onChange={(e) => setInvideoKey(e.target.value)}
-                className="w-full bg-stone-950 border border-stone-800 text-white rounded px-3 py-1.5 outline-none placeholder-stone-700 font-mono focus:border-[#c9a961]"
-              />
-              <span className="block text-[9px] text-stone-500">
-                {isSpanish ? 'Para envíos automáticos de guiones cinemáticos por prompt.' : 'Authorized: Bearer Token pattern for prompt rendering triggers.'}
+                {isSpanish ? 'Para renderizar texturas HD en Runway Gen-3.' : 'Endpoint target: https://api.runwayml.com/v2/batches'}
               </span>
             </div>
           </div>
@@ -482,28 +372,16 @@ export default function VideoGenerator({
       {/* Mode navigation bar */}
       <div className="flex border-b border-[#e5e5df] bg-stone-50 text-[11px] font-sans font-bold">
         <button
-          id="video-heygen-tab-btn"
-          onClick={() => setActiveTab('heygen')}
+          id="video-runway-tab-btn"
+          onClick={() => setActiveTab('runway')}
           className={`flex-1 py-3 text-center border-r border-[#e5e5df] transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-            activeTab === 'heygen' 
+            activeTab === 'runway' 
               ? 'bg-white text-[#2d5a4a] font-black border-b-2 border-b-[#2d5a4a]' 
               : 'text-stone-500 hover:bg-stone-100'
           }`}
         >
-          <User size={13} className={activeTab === 'heygen' ? 'text-[#c9a961]' : 'text-stone-400'} />
-          <span>{isSpanish ? 'Avatares HeyGen' : 'HeyGen Avatars'}</span>
-        </button>
-        <button
-          id="video-invideo-tab-btn"
-          onClick={() => setActiveTab('invideo')}
-          className={`flex-1 py-3 text-center border-r border-[#e5e5df] transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-            activeTab === 'invideo' 
-              ? 'bg-white text-[#2d5a4a] font-black border-b-2 border-b-[#2d5a4a]' 
-              : 'text-stone-500 hover:bg-stone-100'
-          }`}
-        >
-          <Layers size={13} className={activeTab === 'invideo' ? 'text-[#c9a961]' : 'text-stone-400'} />
-          <span>{isSpanish ? 'Video InVideo AI' : 'InVideo Prompt Engine'}</span>
+          <Sparkles size={13} className={activeTab === 'runway' ? 'text-[#c9a961]' : 'text-stone-400'} />
+          <span>{isSpanish ? 'Renderizador Runway Gen-3' : 'Runway Gen-3 Renderer'}</span>
         </button>
         <button
           id="video-gallery-tab-btn"
@@ -515,7 +393,7 @@ export default function VideoGenerator({
           }`}
         >
           <FileVideo size={13} className={activeTab === 'gallery' ? 'text-[#c9a961]' : 'text-stone-400'} />
-          <span>{isSpanish ? 'Estudio de Producción' : 'Video Workshop Gallery'}</span>
+          <span>{isSpanish ? 'Galería de Producción' : 'Production Gallery'}</span>
           <span className="ml-1 px-1.5 py-0.2 bg-stone-200 text-stone-755 text-[9px] rounded-full">
             {videosList.length}
           </span>
@@ -527,204 +405,119 @@ export default function VideoGenerator({
 
         {/* Form and configs column */}
         <div className="flex-1 space-y-4 max-w-md">
-          {activeTab === 'heygen' && (
+          {activeTab === 'runway' && (
             <div className="space-y-3.5 animate-fadeIn text-xs font-sans">
-              
-              <div className="bg-[#2d5a4a]/5 border border-[#2d5a4a]/15 p-3 rounded-lg space-y-1.5">
-                <span className="text-[10px] uppercase font-mono tracking-wider font-extrabold text-[#2d5a4a] block">
-                  📢 {isSpanish ? '1. Fuente de Guion del Día Seleccionado:' : '1. Core Script Segment:'}
-                </span>
+              <div className="bg-[#c9a961]/5 border border-[#c9a961]/25 p-3 rounded-lg space-y-1.5 text-left">
+                <div className="flex justify-between items-center text-[10px] font-mono font-bold tracking-wider text-[#b09352] uppercase">
+                  <span>🎬 {isSpanish ? '1. Prompt de Animación Runway Gen-3:' : '1. Runway Gen-3 Prompt:'}</span>
+                  <button 
+                    onClick={() => setRunwaySettings(prev => ({ ...prev, customPrompt: '' }))}
+                    className="text-[9px] hover:underline normal-case text-stone-400 cursor-pointer"
+                  >
+                    {isSpanish ? 'Restablecer' : 'Default Prompt'}
+                  </button>
+                </div>
                 
-                <div className="grid grid-cols-4 gap-1.5">
-                  {(['instagram', 'linkedin', 'facebook', 'youtube'] as const).map(platform => {
-                    const hasSelectedPlatform = selectedDay && selectedDay.platforms && selectedDay.platforms[platform];
-                    return (
-                      <button
-                        key={platform}
-                        onClick={() => setHeygenSettings(prev => ({ ...prev, platformSource: platform }))}
-                        className={`py-1 text-center font-mono text-[9px] font-bold rounded border uppercase cursor-pointer ${
-                          heygenSettings.platformSource === platform
-                            ? 'bg-[#2d5a4a] text-white border-[#2d5a4a]'
-                            : 'bg-stone-50 text-stone-500 border-stone-200 hover:bg-stone-100'
-                        }`}
-                        title={hasSelectedPlatform ? 'Content available' : 'Empty draft default fallback'}
-                      >
-                        {platform.substring(0, 4)}
-                        {hasSelectedPlatform && <span className="ml-0.5 text-[#c9a961]">●</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="bg-white p-2 rounded border border-[#e5e5df] max-h-[85px] overflow-y-auto text-[10.5px] font-medium leading-relaxed text-stone-650 italic mt-1 font-mono">
-                  {getSelectedPlatformText() || (isSpanish ? 'No se ha generado contenido aún para este canal.' : 'No drafting found for this social node.')}
-                </div>
+                <textarea
+                  className="w-full h-24 p-2.5 bg-white border border-stone-200 text-[10.5px] leading-relaxed text-stone-750 font-mono resize-none focus:outline-[#2d5a4a] rounded-lg"
+                  value={getRunwayPromptText()}
+                  onChange={(e) => setRunwaySettings(prev => ({ ...prev, customPrompt: e.target.value }))}
+                  placeholder={isSpanish ? 'Describa el patrón, iluminación o detalles de papel tapiz PVC...' : 'Describe the wallpaper pattern, lighting, or room details...'}
+                />
+                
+                <p className="text-[8.5px] text-stone-500 leading-snug">
+                  {isSpanish ? '※ Runway Gen-3 Alpha crea clips hiperrealistas optimizados para el marketing de papel tapiz premium de unitecusadesign.com.' : '※ Runway Gen-3 Alpha renders hyper-realistic clips optimized for premium wallpaper marketing of unitecusadesign.com.'}
+                </p>
               </div>
 
-              {/* Avatar Selector */}
-              <div className="space-y-1">
+              {/* Collection Selector */}
+              <div className="space-y-1 text-left">
                 <label className="block text-[10px] uppercase font-mono tracking-wider text-stone-500 font-bold">
-                  👤 {isSpanish ? '2. Seleccionar Avatar Virtual de HeyGen:' : '2. Select Speaking Avatar Role:'}
+                  🌟 {isSpanish ? '2. Colección de Papel Tapiz PVC:' : '2. PVC Wallpaper Collection:'}
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {PREMADE_AVATARS.map(avatar => (
+                  {RUNWAY_COLLECTIONS.map(coll => (
                     <button
-                      key={avatar.id}
-                      onClick={() => setHeygenSettings(prev => ({ ...prev, avatar: avatar.id }))}
-                      className={`p-2 rounded-lg border text-left flex items-center justify-between transition-colors cursor-pointer ${
-                        heygenSettings.avatar === avatar.id
-                          ? 'bg-[#2d5a4a]/5 border-[#2d5a4a] text-[#2d5a4a] font-bold'
+                      key={coll.id}
+                      onClick={() => setRunwaySettings(prev => ({ ...prev, collection: coll.id }))}
+                      className={`p-2 rounded-lg border text-left flex flex-col justify-between transition-colors cursor-pointer ${
+                        runwaySettings.collection === coll.id
+                          ? 'bg-[#c9a961]/5 border-[#c9a961] text-[#2d5a4a] font-bold'
                           : 'bg-stone-50 border-stone-200 hover:bg-stone-100 text-stone-650'
                       }`}
                     >
-                      <div className="space-y-0.5">
-                        <span className="block text-[11px] leading-tight font-sans">
-                          {isSpanish ? avatar.nameES : avatar.nameEN}
-                        </span>
-                        <span className={`inline-block px-1 border rounded text-[7.5px] font-mono leading-none ${
-                          avatar.gender === 'M' ? 'text-blue-600 border-blue-200 bg-blue-50' : 'text-rose-600 border-rose-200 bg-rose-50'
-                        }`}>
-                          {avatar.gender === 'M' ? 'Male / Masculino' : 'Female / Femenino'}
-                        </span>
-                      </div>
-                      <span className="text-[8.5px] font-mono bg-stone-200 text-stone-700 px-1 rounded font-black max-h-min">
-                        {avatar.lang}
+                      <span className="block text-[11px] leading-tight font-sans text-stone-900">
+                        {isSpanish ? coll.nameES : coll.nameEN}
+                      </span>
+                      <span className="block text-[9px] text-stone-500 font-normal mt-0.5 leading-tight">
+                        {isSpanish ? coll.descES : coll.descEN}
                       </span>
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Voice selector */}
-              <div className="space-y-1">
+              {/* Camera Motion Selector */}
+              <div className="space-y-1 text-left">
                 <label className="block text-[10px] uppercase font-mono tracking-wider text-stone-500 font-bold">
-                  🗣️ {isSpanish ? '3. Tono de Voz Sintética por IA:' : '3. Text-to-Speech Vocal Style:'}
+                  🎥 {isSpanish ? '3. Movimiento de Cámara:' : '3. Camera Motion Style:'}
                 </label>
                 <select
-                  value={heygenSettings.voice}
-                  onChange={(e) => setHeygenSettings(prev => ({ ...prev, voice: e.target.value }))}
+                  value={runwaySettings.motion}
+                  onChange={(e) => setRunwaySettings(prev => ({ ...prev, motion: e.target.value }))}
                   className="w-full bg-stone-50 border border-stone-200 rounded px-2.5 py-1.5 text-[11.5px] text-stone-800 focus:outline-[#2d5a4a]"
                 >
-                  {PREMADE_VOICES.map(voice => (
-                    <option key={voice.id} value={voice.id}>
-                      {isSpanish ? voice.nameES : voice.nameEN} ({voice.style})
+                  {RUNWAY_MOTIONS.map(motion => (
+                    <option key={motion.id} value={motion.id}>
+                      {isSpanish ? motion.nameES : motion.nameEN} ({motion.prompt})
                     </option>
                   ))}
                 </select>
               </div>
 
-              {/* Aspect and video size settings */}
-              <div className="flex gap-4">
-                <div className="flex-1 space-y-1">
-                  <label className="block text-[10px] uppercase font-mono tracking-wider text-stone-500 font-bold">
-                    📐 {isSpanish ? 'Relación de Aspecto:' : 'Aspect Ratio:'}
-                  </label>
-                  <div className="flex gap-1.5">
-                    {(['16:9', '9:16'] as const).map(ratio => (
-                      <button
-                        key={ratio}
-                        onClick={() => setHeygenSettings(prev => ({ ...prev, aspect: ratio }))}
-                        className={`flex-1 py-1.5 text-center font-mono text-[10px] font-bold rounded border cursor-pointer ${
-                          heygenSettings.aspect === ratio
-                            ? 'bg-[#1a1a1a] text-white border-[#1a1a1a]'
-                            : 'bg-stone-50 text-[#1a1a1a] border-stone-200 hover:bg-stone-100'
-                        }`}
-                      >
-                        {ratio} {ratio === '9:16' ? '🎥 vertical' : '💻 Horiz'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Trigger Generation */}
-              <div className="pt-2">
-                <button
-                  id="heygen-generate-btn"
-                  onClick={() => triggerVideoGeneration('HeyGen')}
-                  disabled={isRendering}
-                  className="w-full py-2.5 bg-stone-900 hover:bg-[#1a1a1a] text-[#c9a961] font-sans font-bold uppercase text-xs tracking-wider rounded-lg transition-all shadow-sm hover:shadow-md cursor-pointer disabled:bg-stone-200 disabled:text-stone-400 flex items-center justify-center gap-2"
-                >
-                  <Cpu size={14} className="animate-pulse" />
-                  <span>{isSpanish ? 'Lanzar Render HeyGen Avatar' : 'Submit HeyGen Render Request'}</span>
-                </button>
-              </div>
-
-            </div>
-          )}
-
-          {activeTab === 'invideo' && (
-            <div className="space-y-3.5 animate-fadeIn text-xs font-sans">
-              
-              <div className="bg-amber-400/5 border border-amber-500/15 p-3 rounded-lg space-y-1.5">
-                <div className="flex justify-between items-center text-[10px] font-mono font-bold tracking-wider text-[#b09352] uppercase">
-                  <span>✍️ {isSpanish ? '1. Guion / Instrucción Técnica:' : '1. Prompt-to-Video Instruct:'}</span>
-                  <button 
-                    onClick={() => setInvideoSettings(prev => ({ ...prev, customPrompt: '' }))}
-                    className="text-[9px] hover:underline normal-case text-stone-400 cursor-pointer"
-                  >
-                    {isSpanish ? 'Reiniciar' : 'Use Context Default'}
-                  </button>
-                </div>
-                
-                <textarea
-                  className="w-full h-24 p-2.5 bg-white border border-stone-200 text-[10.5px] leading-relaxed text-stone-750 font-mono resize-none focus:outline-[#2d5a4a] rounded-lg"
-                  value={getInVideoPromptText()}
-                  onChange={(e) => setInvideoSettings(prev => ({ ...prev, customPrompt: e.target.value }))}
-                  placeholder={isSpanish ? 'Describa qué tema técnico de WPC desea enfocar...' : 'Describe what custom fluted technical features to focus into...'}
-                />
-                
-                <p className="text-[8.5px] text-stone-500 leading-snug">
-                  {isSpanish ? '※ Se alimenta de las especificaciones y normativas estacionales NSR-10 configuradas en el sector del calendario actual.' : '※ Direct alignment with NSR-10 construction specifications automatically overlayed in rendering prompt.'}
-                </p>
-              </div>
-
-              {/* Music style selection */}
-              <div className="space-y-1">
-                <label className="block text-[10px] uppercase font-mono tracking-wider text-stone-500 font-bold">
-                  🎵 {isSpanish ? '2. Estilo de Banda Sonora de Fondo:' : '2. Soundtrack Ambient Type:'}
-                </label>
-                <select
-                  value={invideoSettings.music}
-                  onChange={(e) => setInvideoSettings(prev => ({ ...prev, music: e.target.value }))}
-                  className="w-full bg-stone-50 border border-stone-200 rounded px-2.5 py-1.5 text-[11.5px] text-stone-800 focus:outline-[#2d5a4a]"
-                >
-                  {PREMADE_MUSIC.map(m => (
-                    <option key={m.id} value={m.id}>
-                      {isSpanish ? m.nameES : m.nameEN} ({m.vibe})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Subtitle presets */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Speed & Duration & Aspect Grid */}
+              <div className="grid grid-cols-3 gap-2.5 text-left">
                 <div className="space-y-1">
                   <label className="block text-[10px] uppercase font-mono tracking-wider text-stone-500 font-bold">
-                    📝 {isSpanish ? 'Estilo de Subtítulo:' : 'Subtitle Preset:'}
+                    ⏱️ {isSpanish ? 'Duración:' : 'Duration:'}
                   </label>
                   <select
-                    value={invideoSettings.substyle}
-                    onChange={(e) => setInvideoSettings(prev => ({ ...prev, substyle: e.target.value }))}
-                    className="w-full bg-stone-50 border border-stone-200 rounded px-2 py-1.2 text-[10.5px] text-stone-850"
+                    value={runwaySettings.duration}
+                    onChange={(e) => setRunwaySettings(prev => ({ ...prev, duration: e.target.value as '5' | '10' }))}
+                    className="w-full bg-stone-50 border border-stone-200 rounded px-1.5 py-1 text-[11px] text-stone-800 focus:outline-[#2d5a4a]"
                   >
-                    <option value="yellow_bold">{isSpanish ? 'Amarillo Negrita (Estilo Viral)' : 'Yellow Bold (Viral style)'}</option>
-                    <option value="white_italic">{isSpanish ? 'Blanco Cursiva (Cinematográfico)' : 'White Italic (Cinematic)'}</option>
-                    <option value="gilded_accent">{isSpanish ? 'Acentos Dorados UNITEC' : 'UNITEC Gilded Trim'}</option>
+                    <option value="5">5 {isSpanish ? 'Segundos' : 'Seconds'}</option>
+                    <option value="10">10 {isSpanish ? 'Segundos' : 'Seconds'}</option>
                   </select>
                 </div>
 
                 <div className="space-y-1">
                   <label className="block text-[10px] uppercase font-mono tracking-wider text-stone-500 font-bold">
-                    📐 {isSpanish ? 'Plataforma & Relación:' : 'Aspect Ratio:'}
+                    ⚡ {isSpanish ? 'Velocidad:' : 'Speed:'}
+                  </label>
+                  <select
+                    value={runwaySettings.cameraSpeed}
+                    onChange={(e) => setRunwaySettings(prev => ({ ...prev, cameraSpeed: e.target.value as 'slow' | 'medium' | 'fast' }))}
+                    className="w-full bg-stone-50 border border-stone-200 rounded px-1.5 py-1 text-[11px] text-[#1a1a1a] focus:outline-[#2d5a4a]"
+                  >
+                    <option value="slow">{isSpanish ? 'Lento' : 'Slow'}</option>
+                    <option value="medium">{isSpanish ? 'Medio' : 'Medium'}</option>
+                    <option value="fast">{isSpanish ? 'Rápido' : 'Fast'}</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[10px] uppercase font-mono tracking-wider text-stone-500 font-bold">
+                    📐 {isSpanish ? 'Aspecto:' : 'Aspect:'}
                   </label>
                   <div className="flex gap-1">
                     {(['9:16', '16:9'] as const).map(ratio => (
                       <button
                         key={ratio}
-                        onClick={() => setInvideoSettings(prev => ({ ...prev, aspect: ratio }))}
-                        className={`flex-1 py-1.2 text-center font-mono text-[9px] font-bold rounded border cursor-pointer ${
-                          invideoSettings.aspect === ratio
+                        type="button"
+                        onClick={() => setRunwaySettings(prev => ({ ...prev, aspect: ratio }))}
+                        className={`flex-1 py-1 text-center font-mono text-[9px] font-bold rounded border cursor-pointer ${
+                          runwaySettings.aspect === ratio
                             ? 'bg-[#1a1a1a] text-white border-[#1a1a1a]'
                             : 'bg-stone-50 text-stone-500 border-stone-200 hover:bg-stone-100'
                         }`}
@@ -736,25 +529,24 @@ export default function VideoGenerator({
                 </div>
               </div>
 
-              {/* Trigger InVideo Render */}
-              <div className="pt-2">
+              {/* Trigger Runway Render */}
+              <div className="pt-2 text-left">
                 <button
-                  id="invideo-generate-btn"
-                  onClick={() => triggerVideoGeneration('InVideo')}
+                  id="runway-generate-btn"
+                  onClick={triggerVideoGeneration}
                   disabled={isRendering}
-                  className="w-full py-2.5 bg-[#2d5a4a] hover:bg-[#204236] text-white font-sans font-black uppercase text-xs tracking-wider rounded-lg transition-all shadow-sm hover:shadow-md cursor-pointer disabled:bg-stone-200 disabled:text-stone-400 flex items-center justify-center gap-2"
+                  className="w-full py-2.5 bg-stone-900 hover:bg-stone-800 text-[#c9a961] font-sans font-black uppercase text-xs tracking-wider rounded-lg transition-all shadow-sm hover:shadow-md cursor-pointer disabled:bg-stone-200 disabled:text-stone-400 flex items-center justify-center gap-2"
                 >
-                  <Sparkles size={14} className="text-[#c9a961]" />
-                  <span>{isSpanish ? 'Enviar Instrucción a InVideo AI' : 'Trigger InVideo.IO Prompt Render'}</span>
+                  <Sparkles size={14} className="text-[#c9a961] animate-pulse" />
+                  <span>{isSpanish ? 'Generar Clip Runway Gen-3' : 'Submit Runway Gen-3 Render'}</span>
                 </button>
               </div>
-
             </div>
           )}
 
           {activeTab === 'gallery' && (
             <div className="space-y-3.5 animate-fadeIn text-xs font-sans">
-              <div className="text-[10px] font-mono tracking-wider text-stone-400 uppercase border-b pb-1">
+              <div className="text-[10px] font-mono tracking-wider text-stone-400 uppercase border-b pb-1 text-left">
                 {isSpanish ? 'SELECCIONAR VIDEO DE LA BIBLIOTECA:' : 'SELECT COMPLETED VIDEO SESSION:'}
               </div>
 
@@ -791,9 +583,7 @@ export default function VideoGenerator({
 
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className={`text-[7.5px] font-mono uppercase px-1 rounded font-black ${
-                            video.source === 'HeyGen' ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'
-                          }`}>
+                          <span className="text-[7.5px] font-mono uppercase px-1 rounded font-black bg-[#c9a961]/25 text-stone-900">
                             {video.source}
                           </span>
                           <span className="text-[8px] text-stone-500 font-mono">
@@ -838,7 +628,7 @@ export default function VideoGenerator({
                   Rendering Service Container
                 </span>
                 <h4 className="text-xs font-sans font-extrabold text-stone-800">
-                  {isSpanish ? 'COMPILANDO VIDEO CON INTELIGENCIA ARTIFICIAL' : 'RENDERING DIGITAL MEDIA STREAM...'}
+                  {isSpanish ? 'COMPILANDO VIDEO CON RUNWAY GEN-3' : 'RENDERING RUNWAY DIGITAL STREAM...'}
                 </h4>
                 <p className="text-[9.5px] text-stone-500 font-mono italic leading-relaxed">
                   {renderStep}
@@ -853,7 +643,7 @@ export default function VideoGenerator({
                   />
                 </div>
                 <div className="flex justify-between font-mono text-[9px] text-[#2d5a4a] font-bold">
-                  <span>TRANSCODE_ACC</span>
+                  <span>RUNWAY_TURBO</span>
                   <span>{renderProgress}%</span>
                 </div>
               </div>
@@ -911,22 +701,9 @@ export default function VideoGenerator({
               {/* Title & Metadata details */}
               <div className="space-y-1.5 text-left border-b pb-3 mb-1">
                 <div className="flex items-center gap-1.5">
-                  <span className={`text-[8px] font-mono font-black uppercase px-1 py-0.2 rounded ${
-                    activePlayVideo.source === 'HeyGen' ? 'bg-indigo-600 text-white' : 'bg-emerald-600 text-white'
-                  }`}>
+                  <span className="text-[8px] font-mono font-black uppercase px-1 py-0.2 rounded bg-emerald-600 text-white">
                     {activePlayVideo.source} Video Link
                   </span>
-                  
-                  {activePlayVideo.avatar && (
-                    <span className="text-[9px] text-stone-605 font-mono italic">
-                      Avatar: {activePlayVideo.avatar}
-                    </span>
-                  )}
-                  {activePlayVideo.musicStyle && (
-                    <span className="text-[9px] text-stone-605 font-mono italic">
-                      Music: {activePlayVideo.musicStyle.split(' ')[0]}
-                    </span>
-                  )}
                 </div>
 
                 <h4 id="active-playing-video-title" className="text-xs font-sans font-black text-stone-900 leading-tight">
@@ -934,7 +711,7 @@ export default function VideoGenerator({
                 </h4>
 
                 <div className="bg-white p-2.5 rounded border border-stone-200 text-[10.5px] text-stone-600 leading-relaxed font-sans max-h-[80px] overflow-y-auto">
-                  <strong>{isSpanish ? 'Guion Procesado:' : 'Rendered Script:'}</strong> "{activePlayVideo.script}"
+                  <strong>{isSpanish ? 'Guion Procesado:' : 'Rendered Prompt:'}</strong> "{activePlayVideo.script}"
                 </div>
               </div>
 
@@ -962,7 +739,7 @@ export default function VideoGenerator({
                   href={activePlayVideo.videoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 py-1.5 bg-[#2d5a4a] text-white hover:bg-[#204236] rounded text-[11px] font-sans font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-sm text-center"
+                  className="flex-1 py-1.5 bg-[#2d5a4a] text-white hover:bg-[#204236] rounded text-[11px] font-sans font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-sm text-center text-stone-700"
                 >
                   <Download size={12} />
                   <span>{isSpanish ? 'Descargar MP4' : 'Download Video'}</span>
@@ -982,10 +759,10 @@ export default function VideoGenerator({
           {activeApiLog && (
             <div className="mt-4 p-2 bg-[#1a1a1a] rounded text-[10px] font-mono text-stone-300 space-y-1.5 border border-stone-850">
               <div className="flex items-center justify-between text-stone-450 border-b border-stone-800 pb-1 text-[8.5px] uppercase font-black">
-                <span className="flex items-center gap-1"><Cpu size={10} className="text-[#c9a961]" /> Live API Request Transceiver Terminal</span>
+                <span className="flex items-center gap-1"><Cpu size={10} className="text-[#c9a961]" /> Runway API Request Live Terminal</span>
                 <span className="text-emerald-500 font-bold">STATUS_OK</span>
               </div>
-              <div className="space-y-0.5">
+              <div className="space-y-0.5 text-left">
                 <div className="text-white"><span className="text-[#c9a961] font-bold">POST</span> <span className="hover:underline">{activeApiLog.endpoint}</span></div>
                 <div className="text-[9px] text-stone-500 overflow-x-auto whitespace-pre leading-none max-h-[85px] py-1 bg-stone-950 px-1 rounded border border-stone-900 mt-1">
                   <strong>Headers:</strong> {JSON.stringify(activeApiLog.headers, null, 2)}
@@ -1006,12 +783,12 @@ export default function VideoGenerator({
           <span className="font-sans">
             {isSpanish 
               ? 'Todos los videos respetan la norma NSR-10 de retardación para fachadas internas residenciales.' 
-              : 'All generated parameters are synchronized with high-conversion Colombia regional ports.'}
+              : 'All generated video simulations are optimized for Colombia interior-design standards.'}
           </span>
         </div>
         
         <span className="text-[10px] font-mono text-[#2d5a4a] bg-[#2d5a4a]/5 border border-[#2d5a4a]/20 px-2 py-0.5 font-bold rounded">
-          {isSpanish ? 'Seguridad del Canal: Conexión Cifrada' : 'Secure API Channel: Active Intercept'}
+          {isSpanish ? 'Canal Runway: Conexión Cifrada' : 'Secure Runway API Channel: Active'}
         </span>
       </div>
 

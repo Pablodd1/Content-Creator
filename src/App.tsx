@@ -38,6 +38,7 @@ import DailyContentPreview from './components/DailyContentPreview';
 import VisualCalendar from './components/VisualCalendar';
 import VideoGenerator from './components/VideoGenerator';
 import TrainingAnalyticsHub from './components/TrainingAnalyticsHub';
+import UnifiedCreativeGenerator from './components/UnifiedCreativeGenerator';
 
 const LOCAL_STORAGE_KEY = 'unitec_content_engine_db_v2';
 const LOCAL_STORAGE_API_KEY = 'unitec_content_engine_api_keys';
@@ -58,10 +59,10 @@ export default function App() {
   // Default training and analytics configs
   const DEFAULT_TRAINING_CONFIG: CompanyTrainingConfig = {
     companyName: "UNITEC USA Design",
-    valueProposition: "Revestimientos de WPC de coextrusión bicapa libres de mantenimiento con certificación ASTM Clase-B",
-    toneGuide: "Autoritario, técnico, altamente profesional, libre de exageraciones de marketing ruidoso",
-    targetAudience: "Arquitectos, constructoras, mayoristas de madera y contratistas en Colombia y Florida",
-    customGuidelines: "Mencionar siempre envíos directos de contenedores FOB y centros de consolidación en Miami"
+    valueProposition: "Papel Tapiz de PVC de Alta Gama (Luxury PVC Wallpaper) y Revestimientos 3D, 100% impermeables, lavables y autoadhesivos con acabados premium y diseños europeos exclusivos (unitecusadesign.com)",
+    toneGuide: "Aspiracional, de lujo, técnico, altamente enfocado en interiorismo y diseño arquitectónico moderno",
+    targetAudience: "Diseñadores de interiores, arquitectos, constructoras, tiendas de decoración, instaladores y mayoristas en Colombia y Estados Unidos",
+    customGuidelines: "Mencionar siempre envíos directos de contenedores FOB (puertos de Cartagena/Buenaventura) y catálogo digital en www.unitecusadesign.com"
   };
 
   const DEFAULT_ANALYTICS_CONFIG: GoogleAnalyticsConfig = {
@@ -1598,7 +1599,7 @@ export default function App() {
                 />
               </div>
 
-              {/* AI Video Production Hub (HeyGen & InVideo) */}
+              {/* AI Video Production Hub (Runway Gen-3) */}
               <div id="ai-video-studio-brick" className="animate-fadeIn">
                 <VideoGenerator
                   selectedDay={selectedDay}
@@ -1638,6 +1639,14 @@ export default function App() {
                   />
                 </div>
               )}
+
+              {/* Unified Single Social Post Generator (Gemini-powered) */}
+              <div id="unified-social-post-brick" className="animate-fadeIn">
+                <UnifiedCreativeGenerator
+                  language={language}
+                  showToast={(msg) => showToast(msg)}
+                />
+              </div>
             </div>
           </div>
         </main>

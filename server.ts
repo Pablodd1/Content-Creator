@@ -6,6 +6,27 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
+import { GoogleGenAI } from '@google/genai';
+
+// Lazy-initialized Gemini client following development guidelines
+let aiClient: GoogleGenAI | null = null;
+function getGeminiClient(): GoogleGenAI {
+  if (!aiClient) {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) {
+      throw new Error('GEMINI_API_KEY environment variable is required');
+    }
+    aiClient = new GoogleGenAI({
+      apiKey: key,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        }
+      }
+    });
+  }
+  return aiClient;
+}
 
 async function startServer() {
   const app = express();
@@ -17,6 +38,60 @@ async function startServer() {
   // API Health Check Route
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
+  // Universal Social Media Post Generator endpoint
+  app.post('/api/generate-universal-post', async (req, res) => {
+    try {
+      const { title, target, objective, want, language = 'ES' } = req.body;
+      
+      if (!title && !target && !objective && !want) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Please fill out at least one of the input fields to generate content.' 
+        });
+      }
+
+      const ai = getGeminiClient();
+      
+      const systemInstruction = `You are a professional social media copywriter specialized in luxury interior design and premium PVC wallpaper marketing for unitecusadesign.com.
+Your goal is to write a single, extremely engaging, high-converting social media post that fits multiple platforms (Instagram, Facebook, LinkedIn, YouTube).
+Ensure you maintain an elegant, high-end, bilingually integrated structure or focus primarily on Spanish (Colombia targeted) with clean, professional accents.`;
+
+      const prompt = `Please generate a single creative social media post using the following details:
+- Title/Hook: "${title || 'Not specified'}"
+- Target Audience/Segment: "${target || 'Not specified'}"
+- Strategy Objective: "${objective || 'Not specified'}"
+- Specific Want/Creative Angle: "${want || 'Not specified'}"
+
+Format requirements:
+1. Write a captivating headline using the Title.
+2. Structure the body with elegant spacing and subtle bullet points.
+3. Make sure to call to action (direct to website: unitecusadesign.com).
+4. Do not over-use emojis on professional angles. Keep it sleek.
+5. Provide a block of highly relevant hashtags at the very end.
+6. Return the post in ${language === 'EN' ? 'English' : 'Spanish (with secondary English translation if requested or helpful)'}.`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.5-flash',
+        contents: prompt,
+        config: {
+          systemInstruction,
+          temperature: 0.8,
+        }
+      });
+
+      res.json({ 
+        success: true, 
+        text: response.text 
+      });
+    } catch (error: any) {
+      console.error('Gemini post generation error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error.message || 'Failed to communicate with the Gemini API. Please make sure the GEMINI_API_KEY is configured.' 
+      });
+    }
   });
 
   const distPath = path.join(process.cwd(), 'dist');
