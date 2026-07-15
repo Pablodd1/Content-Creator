@@ -16,7 +16,11 @@ import {
   Sparkles,
   Info,
   ExternalLink,
-  BookOpen
+  BookOpen,
+  Video,
+  Sliders,
+  Database,
+  PenTool
 } from 'lucide-react';
 
 import { MonthData, DayData, MarketPulseData, ApiKeysConfig, PlatformPosts, ToneOfVoice, CompanyTrainingConfig, GoogleAnalyticsConfig } from './types';
@@ -80,6 +84,7 @@ export default function App() {
   const [colombiaPriorityCities, setColombiaPriorityCities] = useState<string[]>(['Bogotá', 'Medellín', 'Cali', 'Barranquilla']);
   const [colombiaPort, setColombiaPort] = useState<'Cartagena' | 'Buenaventura'>('Cartagena');
   const [complianceActiveTab, setComplianceActiveTab] = useState<'admin' | 'specs' | 'colombia'>('admin');
+  const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<'video' | 'unified' | 'themes' | 'brand'>('video');
   const [integrateColombiaHolidays, setIntegrateColombiaHolidays] = useState<boolean>(true);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
@@ -1606,53 +1611,121 @@ export default function App() {
                 />
               </div>
 
-              {/* AI Video Production Hub (Runway Gen-3) */}
-              <div id="ai-video-studio-brick" className="animate-fadeIn">
-                <VideoGenerator
-                  selectedDay={selectedDay}
-                  selectedMonth={months[activeMonthIndex]}
-                  language={language}
-                  apiConfigs={apiConfigs}
-                  onSaveConfigs={handleSaveApiConfigs}
-                  showToast={(msg) => showToast(msg)}
-                />
-              </div>
+              {/* Advanced Creative Studio Suite Tabbed Control Center */}
+              <div id="advanced-studio-suite" className="space-y-4 animate-fadeIn">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-1.5 bg-stone-900 rounded-xl border border-stone-850 shadow-lg">
+                  {/* Studio Title Label */}
+                  <div className="px-3 py-1">
+                    <h3 className="font-mono text-[10px] font-black uppercase tracking-[0.2em] text-[#c9a961]">
+                      {language === 'EN' ? '⚡ ADVANCED CREATIVE SUITE' : '⚡ SUITE CREATIVA AVANZADA'}
+                    </h3>
+                  </div>
 
-              {/* AI Brand Training, Google Analytics, and Step-by-Step Manual Hub */}
-              <div id="brand-training-analytics-hub-brick" className="animate-fadeIn">
-                <TrainingAnalyticsHub
-                  trainingConfig={trainingConfig}
-                  analyticsConfig={analyticsConfig}
-                  onSaveTraining={handleSaveTrainingConfig}
-                  onSaveAnalytics={handleSaveAnalyticsConfig}
-                  onTriggerRebuild={handleTriggerRebuild}
-                  language={language}
-                />
-              </div>
+                  {/* Tab Selectors Buttons */}
+                  <div className="flex flex-wrap gap-1">
+                    <button
+                      onClick={() => setActiveWorkspaceTab('video')}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10.5px] font-sans font-extrabold uppercase tracking-wider transition-all cursor-pointer ${
+                        activeWorkspaceTab === 'video'
+                          ? 'bg-[#c9a961] text-stone-950 shadow-sm'
+                          : 'text-stone-300 hover:bg-stone-800 hover:text-white'
+                      }`}
+                    >
+                      <Video size={13} />
+                      <span>{language === 'EN' ? 'Runway Video' : 'Video Runway'}</span>
+                    </button>
 
-              {/* Editable Theme Sequencing Grid Matrix */}
-              {months.length > 0 && (
-                <div id="editable-theme-sequencer-brick">
-                  <ThemeControlPanel
-                    months={months}
-                    activeMonthIndex={activeMonthIndex}
-                    onMonthSelect={(index) => {
-                      setActiveMonthIndex(index);
-                      setSelectedDay(months[index].days[0]);
-                    }}
-                    onThemeUpdate={handleThemeUpdate}
-                    onAutoGenerateAll={handleAutoGenerateThemes}
-                    language={language}
-                  />
+                    <button
+                      onClick={() => setActiveWorkspaceTab('unified')}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10.5px] font-sans font-extrabold uppercase tracking-wider transition-all cursor-pointer ${
+                        activeWorkspaceTab === 'unified'
+                          ? 'bg-[#c9a961] text-stone-950 shadow-sm'
+                          : 'text-stone-300 hover:bg-stone-800 hover:text-white'
+                      }`}
+                    >
+                      <PenTool size={13} />
+                      <span>{language === 'EN' ? 'Unified Creator' : 'Creador Unificado'}</span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveWorkspaceTab('themes')}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10.5px] font-sans font-extrabold uppercase tracking-wider transition-all cursor-pointer ${
+                        activeWorkspaceTab === 'themes'
+                          ? 'bg-[#c9a961] text-stone-950 shadow-sm'
+                          : 'text-stone-300 hover:bg-stone-800 hover:text-white'
+                      }`}
+                    >
+                      <Sliders size={13} />
+                      <span>{language === 'EN' ? 'Theme Sequencer' : 'Secuenciador Temas'}</span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveWorkspaceTab('brand')}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10.5px] font-sans font-extrabold uppercase tracking-wider transition-all cursor-pointer ${
+                        activeWorkspaceTab === 'brand'
+                          ? 'bg-[#c9a961] text-stone-950 shadow-sm'
+                          : 'text-stone-300 hover:bg-stone-800 hover:text-white'
+                      }`}
+                    >
+                      <Database size={13} />
+                      <span>{language === 'EN' ? 'Brand & Metrics' : 'Marca & Métricas'}</span>
+                    </button>
+                  </div>
                 </div>
-              )}
 
-              {/* Unified Single Social Post Generator (Gemini-powered) */}
-              <div id="unified-social-post-brick" className="animate-fadeIn">
-                <UnifiedCreativeGenerator
-                  language={language}
-                  showToast={(msg) => showToast(msg)}
-                />
+                {/* Tab content panel */}
+                <div className="transition-all duration-300">
+                  {activeWorkspaceTab === 'video' && (
+                    <div id="ai-video-studio-brick" className="animate-fadeIn">
+                      <VideoGenerator
+                        selectedDay={selectedDay}
+                        selectedMonth={months[activeMonthIndex]}
+                        language={language}
+                        apiConfigs={apiConfigs}
+                        onSaveConfigs={handleSaveApiConfigs}
+                        showToast={(msg) => showToast(msg)}
+                      />
+                    </div>
+                  )}
+
+                  {activeWorkspaceTab === 'unified' && (
+                    <div id="unified-social-post-brick" className="animate-fadeIn">
+                      <UnifiedCreativeGenerator
+                        language={language}
+                        showToast={(msg) => showToast(msg)}
+                      />
+                    </div>
+                  )}
+
+                  {activeWorkspaceTab === 'themes' && months.length > 0 && (
+                    <div id="editable-theme-sequencer-brick" className="animate-fadeIn">
+                      <ThemeControlPanel
+                        months={months}
+                        activeMonthIndex={activeMonthIndex}
+                        onMonthSelect={(index) => {
+                          setActiveMonthIndex(index);
+                          setSelectedDay(months[index].days[0]);
+                        }}
+                        onThemeUpdate={handleThemeUpdate}
+                        onAutoGenerateAll={handleAutoGenerateThemes}
+                        language={language}
+                      />
+                    </div>
+                  )}
+
+                  {activeWorkspaceTab === 'brand' && (
+                    <div id="brand-training-analytics-hub-brick" className="animate-fadeIn">
+                      <TrainingAnalyticsHub
+                        trainingConfig={trainingConfig}
+                        analyticsConfig={analyticsConfig}
+                        onSaveTraining={handleSaveTrainingConfig}
+                        onSaveAnalytics={handleSaveAnalyticsConfig}
+                        onTriggerRebuild={handleTriggerRebuild}
+                        language={language}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
