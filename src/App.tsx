@@ -167,10 +167,17 @@ export default function App() {
 
     if (storedKeys) {
       try {
-        setApiConfigs(JSON.parse(storedKeys));
+        const parsed = JSON.parse(storedKeys);
+        setApiConfigs({
+          ...DEFAULT_KEY_CONFIGS,
+          ...parsed,
+          runway: parsed.runway || DEFAULT_KEY_CONFIGS.runway
+        });
       } catch (e) {
         console.error('Error loading API configuration keys', e);
       }
+    } else {
+      setApiConfigs(DEFAULT_KEY_CONFIGS);
     }
 
     if (storedTraining) {
