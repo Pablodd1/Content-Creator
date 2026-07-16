@@ -15,7 +15,9 @@ import {
   Database,
   CheckCircle2,
   Cpu,
-  Play
+  Play,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { DayData, MonthData, ApiKeysConfig } from '../types';
 
@@ -131,6 +133,7 @@ export default function VideoGenerator({
   const [activePlayVideo, setActivePlayVideo] = useState<GeneratedVideo | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
+  const [isPreviewExpanded, setIsPreviewExpanded] = useState(false);
 
   // Set default preview video on mount if available
   useEffect(() => {
@@ -176,14 +179,21 @@ export default function VideoGenerator({
     return basePrompt;
   };
 
-  const triggerVideoGeneration = () => {
+  const triggerVideoGeneration = async () => {
     setIsRendering(true);
     setRenderProgress(5);
     
-    const keyUsed = runwayKey || 'KEY_SIMULATED_PROD_7a3d2e';
-    const endpoint = 'https://api.runwayml.com/v2/batches';
+    const keyUsed = runwayKey;
+    if (!keyUsed) {
+      showToast(language === 'EN' ? 'Runway API Key is required' : 'Se requiere clave de API de Runway');
+      setIsRendering(false);
+      return;
+    }
+
+    const endpoint = '/api/runway/generate';
     const promptInstruction = getRunwayPromptText();
     const bodyPayload = {
+      apiKey: keyUsed,
       promptText: promptInstruction,
       model: "gen3a_turbo",
       seconds: parseInt(runwaySettings.duration),
@@ -200,46 +210,85 @@ export default function VideoGenerator({
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${keyUsed.substring(0, 12)}***`
       },
-      body: JSON.stringify(bodyPayload, null, 2),
-      response: '{\n  "status": "pending",\n  "job_id": "job_' + Math.random().toString(36).substring(2, 10) + '",\n  "eta_seconds": 15,\n  "message": "Enqueued in Runway Gen-3 rendering queue successfully"\n}'
+      body: JSON.stringify({ ...bodyPayload, apiKey: `Bearer ${keyUsed.substring(0, 12)}***` }, null, 2),
+      response: 'Waiting for Runway Gen-3 task creation...'
     });
 
     setRenderStep(language === 'EN' ? 'Initializing Runway Gen-3 Handshake...' : 'Estableciendo enlace seguro para Runway Gen-3...');
 
-    const interval = setInterval(() => {
-      setRenderProgress(prev => {
-        const next = prev + 15;
-        if (next >= 105) {
-          clearInterval(interval);
-          finalizeVideoGeneration();
-          return 100;
-        }
-
-        if (next < 30) {
-          setRenderStep(language === 'EN' ? `Authenticating Runway ML Handshake & sending prompt payload...` : 'Autenticando enlace de Runway ML y enviando parámetros...');
-        } else if (next < 60) {
-          setRenderStep(language === 'EN' ? `Runway accepted task. Initializing noise prediction grid (Gen-3)...` : 'Runway aceptó la tarea. Inicializando malla de predicción de ruido Gen-3...');
-        } else if (next < 85) {
-          setRenderStep(language === 'EN' ? `Synthesizing luxury PVC textures and simulating 3D lighting path...` : 'Sintetizando texturas de PVC de lujo y simulando iluminación 3D...');
-        } else {
-          setRenderStep(language === 'EN' ? `Runway render completed. Compiling final MP4 container...` : 'Render de Runway completado. Compilando contenedor MP4 final...');
-        }
-        
-        return next;
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bodyPayload)
       });
-    }, 800);
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to start generation');
+      }
+
+      setActiveApiLog(prev => prev ? {
+        ...prev,
+        response: JSON.stringify(data, null, 2)
+      } : null);
+
+      const taskId = data.job_id;
+      pollTaskStatus(taskId);
+
+    } catch (err: any) {
+      console.error(err);
+      showToast(language === 'EN' ? 'Video generation failed' : 'Error en la generación de video');
+      setIsRendering(false);
+    }
   };
 
-  const finalizeVideoGeneration = () => {
+  const pollTaskStatus = (taskId: string) => {
+    setRenderStep(language === 'EN' ? `Runway processing task...` : 'Runway procesando tarea...');
+    
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/runway/status/${taskId}`, {
+          headers: {
+            'Authorization': `Bearer ${runwayKey}`
+          }
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          const status = data.status; // e.g. PENDING, PROCESSING, SUCCEEDED, FAILED
+          const output = data.output; // array of urls
+          
+          if (status === 'SUCCEEDED' && output && output.length > 0) {
+            clearInterval(pollInterval);
+            setRenderProgress(100);
+            setRenderStep(language === 'EN' ? `Runway render completed.` : 'Render de Runway completado.');
+            finalizeVideoGeneration(taskId, output[0]);
+          } else if (status === 'FAILED') {
+            clearInterval(pollInterval);
+            showToast(language === 'EN' ? 'Video generation failed: ' + data.failureReason : 'Fallo la generación: ' + data.failureReason);
+            setIsRendering(false);
+          } else {
+            // Pending or Processing
+            setRenderProgress(prev => {
+              const next = prev + 5;
+              return next > 95 ? 95 : next;
+            });
+            if (status === 'PROCESSING') {
+              setRenderStep(language === 'EN' ? `Synthesizing luxury PVC textures... progress: ${Math.round((data.progress || 0)*100)}%` : `Sintetizando texturas de PVC de lujo... progreso: ${Math.round((data.progress || 0)*100)}%`);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Polling error', err);
+      }
+    }, 5000); // Check every 5 seconds
+  };
+
+  const finalizeVideoGeneration = (taskId: string, outputUrl: string) => {
     const dayTag = selectedDay ? `Día ${selectedDay.day}` : 'Día Central';
-    const runwayMockVideos = [
-      'https://assets.mixkit.co/videos/preview/mixkit-living-room-of-a-modern-apartment-41618-large.mp4',
-      'https://assets.mixkit.co/videos/preview/mixkit-dining-room-of-a-modern-house-41615-large.mp4'
-    ];
-    const randomVid = runwayMockVideos[Math.floor(Math.random() * runwayMockVideos.length)];
-    const id = `vid-${Math.floor(Math.random() * 900) + 100}`;
+    const id = taskId || `vid-${Math.floor(Math.random() * 900) + 100}`;
     const collObj = RUNWAY_COLLECTIONS.find(c => c.id === runwaySettings.collection);
     const promptText = getRunwayPromptText();
     
@@ -250,8 +299,8 @@ export default function VideoGenerator({
       script: promptText,
       duration: `0:${runwaySettings.duration.padStart(2, '0')}`,
       date: new Date().toISOString().replace('T', ' ').substring(0, 16),
-      videoUrl: randomVid,
-      posterUrl: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=500&q=80',
+      videoUrl: outputUrl,
+      posterUrl: outputUrl, // Provide output as poster url if no distinct image
       aspectRatio: runwaySettings.aspect
     };
 
@@ -274,6 +323,7 @@ export default function VideoGenerator({
     setVideosList(prev => [newVideo, ...prev]);
     setActivePlayVideo(newVideo);
     setIsRendering(false);
+    setIsPreviewExpanded(true);
     setActiveTab('gallery');
     showToast(language === 'ES' ? `¡Video Runway Gen-3 generado con éxito! #${id}` : `Runway Gen-3 video generated successfully! #${id}`);
   };
@@ -288,6 +338,7 @@ export default function VideoGenerator({
   };
 
   const isSpanish = language === 'ES';
+  const latestRunwayVideo = videosList[0];
 
   return (
     <div id="ai-video-production-studio" className="bg-white border border-[#e5e5df] rounded-xl text-[#1a1a1a] shadow-sm overflow-hidden flex flex-col">
@@ -541,6 +592,80 @@ export default function VideoGenerator({
                   <span>{isSpanish ? 'Generar Clip Runway Gen-3' : 'Submit Runway Gen-3 Render'}</span>
                 </button>
               </div>
+
+              {/* Collapsible Latest Preview Area */}
+              {latestRunwayVideo && (
+                <div id="latest-runway-preview-section" className="mt-3 border border-stone-200 rounded-lg overflow-hidden bg-stone-50 animate-fadeIn">
+                  <button
+                    id="toggle-latest-preview-btn"
+                    onClick={() => setIsPreviewExpanded(!isPreviewExpanded)}
+                    className="w-full px-3 py-2 flex items-center justify-between text-left bg-stone-100 hover:bg-stone-150 transition-colors cursor-pointer text-[11px] font-bold text-stone-700 font-sans border-0 outline-none"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <FileVideo size={13} className="text-[#c9a961]" />
+                      <span>
+                        {isSpanish ? 'Vista Previa del Último Render' : 'Latest Render Preview'}
+                      </span>
+                    </span>
+                    {isPreviewExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  </button>
+
+                  {isPreviewExpanded && (
+                    <div id="latest-preview-content-box" className="p-3 animate-fadeIn space-y-2 text-left bg-white border-t border-stone-200">
+                      <div className="relative aspect-video rounded-md overflow-hidden bg-black border border-stone-200 group">
+                        <img
+                          id="latest-preview-thumbnail-img"
+                          src={latestRunwayVideo.posterUrl}
+                          alt="Latest Runway Render Thumbnail"
+                          className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-300"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            id="play-latest-preview-hover-btn"
+                            onClick={() => {
+                              setActivePlayVideo(latestRunwayVideo);
+                              setIsPlaying(true);
+                              showToast(isSpanish ? 'Cargando último render en el reproductor' : 'Loading latest render into player');
+                            }}
+                            className="p-2 bg-white text-stone-900 rounded-full hover:bg-[#c9a961] hover:text-stone-950 transition-colors shadow-md flex items-center justify-center cursor-pointer"
+                          >
+                            <Play size={14} className="fill-current ml-0.5" />
+                          </button>
+                        </div>
+                        <span className="absolute bottom-1 right-1.5 bg-stone-950/80 text-white text-[8px] font-mono px-1 rounded">
+                          {latestRunwayVideo.duration}
+                        </span>
+                        <span className="absolute top-1 left-1.5 bg-stone-950/80 text-white text-[8px] font-mono px-1 rounded uppercase font-bold tracking-wider text-[#c9a961]">
+                          {latestRunwayVideo.id}
+                        </span>
+                      </div>
+
+                      <div className="space-y-1">
+                        <h5 className="font-sans font-bold text-stone-900 text-[11px] truncate leading-tight">
+                          {latestRunwayVideo.title}
+                        </h5>
+                        <p className="text-[10px] text-stone-500 font-mono line-clamp-2 leading-tight">
+                          {latestRunwayVideo.script}
+                        </p>
+                        <div className="flex justify-between items-center pt-1 text-[8.5px] text-stone-400 font-mono">
+                          <span>{latestRunwayVideo.date}</span>
+                          <button
+                            id="view-latest-preview-in-player-btn"
+                            onClick={() => {
+                              setActivePlayVideo(latestRunwayVideo);
+                              setIsPlaying(false);
+                            }}
+                            className="text-[#2d5a4a] hover:underline font-bold cursor-pointer"
+                          >
+                            {isSpanish ? 'Cargar en Reproductor' : 'Load in Player'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

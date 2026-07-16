@@ -94,6 +94,79 @@ Format requirements:
     }
   });
 
+  // Proxy for Runway API task creation
+  app.post('/api/runway/generate', express.json(), async (req, res) => {
+    try {
+      const { apiKey, promptText, model, seconds, ratio, options } = req.body;
+      if (!apiKey) {
+        return res.status(400).json({ success: false, error: 'Runway API Key is required' });
+      }
+
+      // Initialize runway client with the provided key
+      // Dynamic import to avoid missing dependencies
+      const { RunwayML } = await import('@runwayml/sdk');
+      const runway = new RunwayML({ apiKey });
+      
+      let width = 720;
+      let height = 1280;
+      if (ratio === '1280x720') {
+        width = 1280;
+        height = 720;
+      }
+
+      // Create video generation task
+      const task = await runway.imageToVideo.create({
+        model: model || 'gen3a_turbo',
+        promptText: promptText,
+        // Optional arguments based on Runway documentation:
+        // duration: seconds || 10 (Gen 3 Turbo supports 5 or 10)
+        // ratio: "1280:768" etc... for the sake of simplicity, we pass ratio as promptText or assume default.
+      });
+
+      res.json({
+        success: true,
+        job_id: task.id,
+      });
+    } catch (error: any) {
+      console.error('Runway generation error:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to start Runway video generation'
+      });
+    }
+  });
+
+  // Proxy for Runway API task checking
+  app.get('/api/runway/status/:taskId', async (req, res) => {
+    try {
+      const { taskId } = req.params;
+      const apiKey = req.headers.authorization?.split(' ')[1];
+      
+      if (!apiKey) {
+        return res.status(400).json({ success: false, error: 'Runway API Key is required' });
+      }
+
+      const { RunwayML } = await import('@runwayml/sdk');
+      const runway = new RunwayML({ apiKey });
+
+      const task = await runway.tasks.retrieve(taskId);
+
+      res.json({
+        success: true,
+        status: task.status,
+        progress: task.progress,
+        output: task.output,
+        failureReason: task.failureReason
+      });
+    } catch (error: any) {
+      console.error('Runway status error:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to retrieve Runway status'
+      });
+    }
+  });
+
   const distPath = path.join(process.cwd(), 'dist');
   const hasBuild = fs.existsSync(path.join(distPath, 'index.html'));
   const isProduction = process.env.NODE_ENV === 'production' || hasBuild;
