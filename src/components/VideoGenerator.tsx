@@ -235,14 +235,9 @@ export default function VideoGenerator({
     const bodyPayload = {
       apiKey: keyUsed,
       promptText: promptInstruction,
-      model: "gen3a_turbo",
+      model: "gen3a_alpha",
       seconds: parseInt(runwaySettings.duration),
-      ratio: runwaySettings.aspect === '16:9' ? '1280x720' : '720x1280',
-      options: {
-        motion: runwaySettings.motion,
-        speed: runwaySettings.cameraSpeed,
-        watermark: false
-      }
+      ratio: runwaySettings.aspect === '16:9' ? '1280:720' : '720:1280'
     };
 
     setActiveApiLog({
@@ -251,7 +246,7 @@ export default function VideoGenerator({
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ ...bodyPayload, apiKey: `Bearer ${keyUsed.substring(0, 12)}***` }, null, 2),
+      body: JSON.stringify({ ...bodyPayload, apiKey: `${keyUsed.substring(0, 12)}***` }, null, 2),
       response: 'Waiting for Runway Gen-3 task creation...'
     });
 
@@ -279,7 +274,8 @@ export default function VideoGenerator({
 
     } catch (err: any) {
       console.error(err);
-      showToast(language === 'EN' ? 'Video generation failed' : 'Error en la generación de video');
+      const errorMessage = err.message || (language === 'EN' ? 'Video generation failed' : 'Error en la generación de video');
+      showToast(errorMessage);
       setIsRendering(false);
     }
   };

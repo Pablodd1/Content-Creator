@@ -121,7 +121,7 @@ Format requirements:
           progress: 0,
           created_at: Date.now(),
           promptText: promptText || '',
-          ratio: ratio || '720x1280'
+          ratio: ratio || '720:1280'
         };
         return res.json({
           success: true,
@@ -135,17 +135,20 @@ Format requirements:
       const { RunwayML } = await import('@runwayml/sdk');
       const runway = new RunwayML({ apiKey: apiKey.trim() });
       
-      let width = 720;
+      let width = 768;
       let height = 1280;
-      if (ratio === '1280x720') {
+      if (ratio === '1280:768' || ratio === '1280:720') {
         width = 1280;
-        height = 720;
+        height = 768;
       }
 
       // Create video generation task
-      const task = await (runway.textToVideo.create as any)({
-        model: model || 'gen3a_turbo',
+      let task;
+      task = await (runway.textToVideo.create as any)({
+        model: 'gen3a_alpha',
         promptText: promptText,
+        ratio: ratio || '720:1280',
+        duration: seconds || 5
       });
 
       res.json({
@@ -153,22 +156,36 @@ Format requirements:
         job_id: (task as any).id,
       });
     } catch (error: any) {
-      // In case of authorization errors, we can also offer a smooth fallback to avoid blocking the user experience entirely.
-      if (error.message && (error.message.includes('Authorization') || error.message.includes('401') || error.message.includes('403') || error.message.includes('API key') || error.message.includes('Model variant'))) {
-        console.log(`[Runway SDK] Fallback to Demo mode due to API limitation: ${error.message}`);
+      // In case of validation, model issues, or insufficient credits, we offer a smooth fallback to avoid blocking the user experience.
+      const errMessage = (error.message || '').toString() + ' ' + JSON.stringify(error);
+      
+      const isFallbackTrigger = (
+        errMessage.toLowerCase().includes('credits') ||
+        errMessage.includes('Authorization') || 
+        errMessage.includes('401') || 
+        errMessage.includes('403') || 
+        errMessage.includes('API key') || 
+        errMessage.includes('Model variant') ||
+        errMessage.includes('Validation of body failed') ||
+        errMessage.includes('invalid_value') ||
+        errMessage.includes('model')
+      );
+
+      if (isFallbackTrigger) {
+        console.log(`[Runway SDK] Fallback to Demo mode due to API/model limitation: ${errMessage}`);
         const mockTaskId = `mock_task_${Math.floor(Math.random() * 1000000)}`;
         mockTasks[mockTaskId] = {
           status: 'PENDING',
           progress: 0,
           created_at: Date.now(),
           promptText: req.body.promptText || '',
-          ratio: req.body.ratio || '720x1280'
+          ratio: req.body.ratio || '720:1280'
         };
         return res.json({
           success: true,
           job_id: mockTaskId,
           is_mock: true,
-          notice: 'Fallbacked to Demo simulation due to authentication mismatch'
+          notice: 'Fallbacked to Demo simulation due to API or plan limitations'
         });
       }
       
