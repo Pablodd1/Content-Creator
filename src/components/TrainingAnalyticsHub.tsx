@@ -486,82 +486,147 @@ export default function TrainingAnalyticsHub({
           <div className="space-y-6 animate-fadeIn text-left text-xs leading-relaxed text-stone-700 bg-white p-6 border border-[#e5e5df] rounded-lg">
             <div>
               <h4 className="text-sm font-sans font-bold text-[#1a1a1a] border-b border-[#e5e5df] pb-2 flex items-center gap-2">
-                <HelpCircle size={15} className="text-[#c9a961]" />
-                Guía de Uso Paso a Paso • Content Command Center
+                <FileText size={15} className="text-[#c9a961]" />
+                Manual Técnico de Tránsito de Mercancías, Logística Portuaria y Generación de Contenido IA
               </h4>
               <p className="text-stone-500 mt-1">
-                Siga este manual de procedimiento técnico detallado para optimizar su distribución de contenido bilingüe y producción de video.
+                Este manual establece las directrices estandarizadas para el tránsito aduanero de compuestos de madera plástica (WPC) hacia Colombia, y el uso coordinado de la suite de inteligencia artificial para la generación automática de video (Runway Gen-3).
               </p>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex gap-3">
-                <span className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-stone-900 text-[#c9a961] font-mono text-[10px] font-bold">1</span>
-                <div>
-                  <h5 className="font-bold text-stone-900 text-xs">Alinee la Estrategia Anual (Temas de Mes)</h5>
-                  <p className="mt-0.5 text-stone-600">
-                    Diríjase a la sección <strong className="text-stone-900">"Planes de Temas Mensuales"</strong>. Utilice el botón de auto-generación para cargar los 12 meses con calendarios adaptados a nichos como sostenibilidad, logística FOB y arquitectura subtropical. Puede hacer clic sobre cualquier mes para reescribir manualmente el tema o cambiar el nicho técnico.
-                  </p>
+            <div className="space-y-6">
+              {/* Sección 1: Tránsito, Logística Portuaria y cubicaje */}
+              <div className="border-l-2 border-[#c9a961] pl-4 space-y-2">
+                <h5 className="font-mono text-xs uppercase tracking-wider text-stone-900 font-extrabold flex items-center gap-2">
+                  <span>⚓ SECCIÓN 1: MANUAL DE TRÁNSITO DE MERCANCÍAS Y LOGÍSTICA PORTUARIA</span>
+                </h5>
+                <p className="text-stone-600">
+                  La importación de perfiles y decks de WPC (Wood-Plastic Composite) a Colombia requiere una planificación rigurosa debido a la alta densidad de los materiales. Esta sección guía el procedimiento desde la fábrica de origen en régimen FOB hasta los principales puertos de destino colombianos.
+                </p>
+                
+                <div className="bg-stone-50 p-3 rounded border border-stone-200 space-y-2.5 font-sans">
+                  <h6 className="font-bold text-stone-800 text-[11px] uppercase tracking-tight">Pasos Clave de Tránsito Aduanero:</h6>
+                  <ol className="list-decimal pl-4 space-y-1.5 text-stone-600 text-[11px]">
+                    <li>
+                      <strong>Clasificación Arancelaria (HS Code):</strong> Los perfiles de WPC para exteriores generalmente tributan bajo la subpartida <strong>3918.90.00.00</strong> (Revestimientos de plástico para suelos, paredes o techos) o <strong>3925.95.00.00</strong> (Elementos para la construcción de plástico) dependiendo del contenido volumétrico de PVC/polietileno frente a la fibra de madera.
+                    </li>
+                    <li>
+                      <strong>Elección del Puerto de Destino en Colombia:</strong>
+                      <ul className="list-disc pl-4 mt-1 space-y-1">
+                        <li><strong>Puerto de Buenaventura (Pacífico):</strong> Recomendado para importaciones provenientes de Asia. Reduce tiempos de tránsito marítimo de 35 a 24 días. Es ideal para distribución en el Valle del Cauca, el Eje Cafetero y Bogotá (vía Alto de la Línea).</li>
+                        <li><strong>Puerto de Cartagena (Atlántico):</strong> Recomendado para despachos desde Europa o la Costa Este de EE. UU. Destaca por su alta eficiencia aduanera, menor índice de inspecciones físicas invasivas y excelente conectividad terrestre con la Costa Norte (Barranquilla, Santa Marta) y Antioquia (Medellín vía Autopistas de la Prosperidad).</li>
+                      </ul>
+                    </li>
+                    <li>
+                      <strong>Cálculo de Carga y Cubicaje (FOB Weight Limit):</strong> Las normas viales colombianas limitan rígidamente el peso bruto de vehículos de transporte terrestre (configuraciones de tractomulas de tres ejes C3-S3 admiten hasta 52 toneladas de peso bruto vehicular combinado).
+                    </li>
+                  </ol>
+
+                  <div className="bg-white p-3 rounded border border-stone-150 space-y-1">
+                    <span className="text-[10px] uppercase tracking-wider font-mono font-bold text-[#c9a961] block">EJEMPLO PRÁCTICO DE CUBICAJE DE EMBARQUE WPC:</span>
+                    <p className="text-[11px] text-stone-600">
+                      Un contenedor estándar de 20 pies (20ft GP) tiene un límite de carga útil aduanera de <strong>21,500 kg (21.5 Toneladas)</strong> netas para tránsito terrestre en Colombia sin incurrir en sobrepeso aduanero de la DIAN.
+                    </p>
+                    <div className="font-mono text-[10.5px] text-stone-800 bg-stone-50 p-2 rounded border border-stone-100 space-y-1">
+                      <div>• Peso de un panel de Deck Alveolar WPC (2.9m largo x 14cm ancho x 22mm espesor) = <strong>5.2 kg / pieza</strong></div>
+                      <div>• Cantidad máxima permitida por contenedor = 21,500 kg / 5.2 kg = <strong>4,134 piezas de deck</strong></div>
+                      <div>• Cubicaje volumétrico: 4,134 piezas ocupan aproximadamente 25.5 m³, lo que encaja perfectamente en el volumen útil de un contenedor de 20ft (33 m³).</div>
+                      <div>• <em>Nota:</em> Nunca intente llenar un contenedor de 40ft High Cube al 100% de su volumen con WPC, ya que sobrepasará el límite de peso de tránsito terrestre colombiano mucho antes de llenar el volumen del contenedor.</div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex gap-3">
-                <span className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-stone-900 text-[#c9a961] font-mono text-[10px] font-bold">2</span>
-                <div>
-                  <h5 className="font-bold text-stone-900 text-xs">Entrene a la Inteligencia Artificial</h5>
-                  <p className="mt-0.5 text-stone-600">
-                    En la pestaña <strong className="text-stone-900">"Perfil & Entrenamiento IA"</strong> de este panel, defina el nombre de su marca, su propuesta de valor exacta (por ejemplo, el encaje de sus paneles de WPC con ranura click), su segmento y reglas especiales (evitar sobreuso de emojis o insistir en puertos de entrega en Colombia). Guarde y haga clic en <strong className="text-stone-900">"Re-procesar Calendarios"</strong>.
-                  </p>
+              {/* Sección 2: Uso automatizado de Runway Gen-3 */}
+              <div className="border-l-2 border-stone-900 pl-4 space-y-2">
+                <h5 className="font-mono text-xs uppercase tracking-wider text-stone-900 font-extrabold flex items-center gap-2">
+                  <span>🎬 SECCIÓN 2: PROCESAMIENTO AUTOMÁTICO DE VIDEO CON RUNWAY GEN-3</span>
+                </h5>
+                <p className="text-stone-600">
+                  La plataforma cuenta con un integrador en tiempo real con la API oficial de RunwayML (versión 4.10.0) para sintetizar renders de video hiperrealistas de arquitectura en 3D y aplicaciones del WPC basados en el calendario técnico mensual.
+                </p>
+
+                <div className="bg-stone-50 p-3 rounded border border-stone-200 space-y-2.5 font-sans">
+                  <h6 className="font-bold text-stone-800 text-[11px] uppercase tracking-tight">Instrucciones de Operación de la Suite Creativa:</h6>
+                  <ol className="list-decimal pl-4 space-y-1.5 text-stone-600 text-[11px]">
+                    <li>
+                      <strong>Verificación del Token de Acceso:</strong> Asegúrese de registrar su clave secreta en la casilla de configuración. El backend del sistema procesa las solicitudes a través de un proxy local seguro (puerto 3000), ocultando su clave secreta del navegador web para evitar robos de consumo.
+                    </li>
+                    <li>
+                      <strong>Diseño Automatizado del Prompt de Renderizado:</strong> El generador de video lee el nicho arquitectónico del día seleccionado (ej. Sostenibilidad, Decks de Lujo, Instalaciones Comerciales) y redacta automáticamente una instrucción altamente cinematográfica.
+                    </li>
+                    <li>
+                      <strong>Monitoreo y Cola de Render:</strong> Al hacer clic en <strong className="text-stone-900">"Submit Runway Gen-3 Render"</strong>, la app establece comunicación segura con Runway, genera un ID de tarea único en la nube y activa una barra de progreso que consulta el estado del servidor cada 5 segundos.
+                    </li>
+                  </ol>
+
+                  <div className="bg-white p-3 rounded border border-stone-150 space-y-1.5">
+                    <span className="text-[10px] uppercase tracking-wider font-mono font-bold text-[#c9a961] block">EJEMPLO DE PROMPT CONSTRUIDO POR LA IA:</span>
+                    <p className="text-[11px] text-stone-600">
+                      Cuando el calendario selecciona el tema de <em>"Sostenibilidad y Resistencia Subtropical"</em>, el sistema concatena descriptores volumétricos estéticos optimizados para el modelo de Runway Gen-3:
+                    </p>
+                    <div className="font-mono text-[10.5px] text-stone-800 bg-stone-50 p-2 rounded border border-stone-100 italic">
+                      "Cinematic architectural visualization of a luxury coastal villa in Cartagena, Colombia. Seamless co-extruded teak wood-plastic composite (WPC) cladding installed on external walls. Soft golden hour sunshine, photorealistic details, high-end materials, slow panning camera shot, 4k, architectural render style."
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex gap-3">
-                <span className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-stone-900 text-[#c9a961] font-mono text-[10px] font-bold">3</span>
-                <div>
-                  <h5 className="font-bold text-stone-900 text-xs">Generación de Copys Optimizados</h5>
-                  <p className="mt-0.5 text-stone-600">
-                    Haga clic sobre cualquier bloque del calendario de 30 días para cargar un día específico en el <strong className="text-stone-900">"Previsualizador Diario"</strong>. Utilice <strong className="text-stone-900">"Bulk Generate Month"</strong> para generar todo el mes de golpe, o <strong className="text-stone-900">"Generate Today's Content"</strong> para procesar únicamente el bloque seleccionado.
+              {/* Sección 3: Compliance y Regulación Técnica del Compuesto */}
+              <div className="border-l-2 border-emerald-600 pl-4 space-y-2">
+                <h5 className="font-mono text-xs uppercase tracking-wider text-stone-900 font-extrabold flex items-center gap-2">
+                  <span>🛡️ SECCIÓN 3: MANUAL DE COMPLIANCE ADUANERO Y NORMAS TÉCNICAS</span>
+                </h5>
+                <p className="text-stone-600">
+                  Todo el contenido promocional generado automáticamente por la inteligencia artificial pasa por un analizador de cumplimiento normativo (Compliance Auditor) para evitar publicidad engañosa o infracciones de normas técnicas colombianas.
+                </p>
+
+                <div className="bg-stone-50 p-3 rounded border border-stone-200 space-y-2 font-sans text-[11px] text-stone-600">
+                  <p>
+                    En Colombia, las aseveraciones sobre materiales de construcción compuestos están vigiladas por la Superintendencia de Industria y Comercio (SIC) y el Reglamento Colombiano de Construcción Sismo Resistente (NSR-10).
                   </p>
+                  
+                  <div className="bg-white p-2.5 rounded border border-stone-150 space-y-1.5">
+                    <div className="font-bold text-stone-800 text-[10.5px] uppercase tracking-wider text-amber-600 flex items-center gap-1">
+                      ⚠️ EJEMPLO DE CORRECCIÓN DE CUMPLIMIENTO REGULATORIO:
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[10.5px]">
+                      <div className="p-2 bg-red-50 text-red-800 rounded border border-red-100">
+                        <span className="font-bold block uppercase text-[8px] tracking-wide text-red-500">❌ Frase Prohibida (Publicidad Engañosa):</span>
+                        "Nuestros revestimientos de deck WPC son 100% inmunes al fuego y resisten cualquier incendio forestal sin quemarse."
+                      </div>
+                      <div className="p-2 bg-emerald-50 text-emerald-800 rounded border border-emerald-100">
+                        <span className="font-bold block uppercase text-[8px] tracking-wide text-emerald-500">✅ Alternativa Técnica de Cumplimiento:</span>
+                        "Nuestros perfiles de WPC cuentan con aditivos retardantes de llama clasificados con certificación internacional ASTM Clase-B."
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex gap-3">
-                <span className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-stone-900 text-[#c9a961] font-mono text-[10px] font-bold">4</span>
-                <div>
-                  <h5 className="font-bold text-stone-900 text-xs">Auditoría Regulatoria de Cumplimiento (Compliance Check)</h5>
-                  <p className="mt-0.5 text-stone-600">
-                    La aplicación ejecuta comprobaciones automáticas de seguridad:
-                  </p>
-                  <ul className="list-disc pl-4 mt-1 space-y-1 text-stone-600">
-                    <li><strong className="text-[#c9a961]">Círculo Dorado (generated):</strong> Borrador creado, pendiente de auditoría manual.</li>
-                    <li><strong className="text-emerald-600">Check Verde (reviewed):</strong> Contenido aprobado por su equipo de marketing listo para ser copiado.</li>
-                    <li><strong className="text-amber-500">Advertencia (!):</strong> Bloqueo regulatorio de seguridad (ej. afirmar que un compuesto de WPC es 100% inmune al fuego, lo cual viola la norma ASTM Clase-B; o exceder límites de emojis o violar formatos en LinkedIn).</li>
-                  </ul>
-                </div>
-              </div>
+              {/* Sección 4: Guía de Google Analytics (GA4) */}
+              <div className="border-l-2 border-stone-500 pl-4 space-y-2">
+                <h5 className="font-mono text-xs uppercase tracking-wider text-stone-900 font-extrabold flex items-center gap-2">
+                  <span>📊 SECCIÓN 4: PROTOCOLO DE CONEXIÓN DE GOOGLE ANALYTICS (GA4)</span>
+                </h5>
+                <p className="text-stone-600">
+                  La medición de conversiones es vital para justificar la inversión publicitaria. Siga estos pasos para conectar la cuenta corporativa de analítica:
+                </p>
 
-              <div className="flex gap-3">
-                <span className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-stone-900 text-[#c9a961] font-mono text-[10px] font-bold">5</span>
-                <div>
-                  <h5 className="font-bold text-stone-900 text-xs">Copia Rápida Multicanal & AI Video Production Hub</h5>
-                  <p className="mt-0.5 text-stone-600">
-                    Cambie entre las pestañas de plataformas (Instagram, LinkedIn, Facebook, YouTube) para ver el formato optimizado. Use los botones de copiar, o descienda al <strong className="text-stone-900">"AI Video Production Hub"</strong> para enviar los guiones de alta gama directamente a renderizadores automáticos como HeyGen o InVideo mediante sus correspondientes Bearer Tokens.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <span className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-stone-900 text-[#c9a961] font-mono text-[10px] font-bold">6</span>
-                <div>
-                  <h5 className="font-bold text-stone-900 text-xs">Monitoreo de Extracción de Google Analytics</h5>
-                  <p className="mt-0.5 text-stone-600">
-                    Ingrese su ID GA4 en la pestaña de analítica para rastrear visitas, CTR de sus enlaces de descarga de catálogo, y solicitudes de cajas de muestra en territorio colombiano. Utilice los dashboards visuales de Bogotá, Medellín, Cali y Barranquilla para re-enfocar la inversión y cronogramas de publicación.
-                  </p>
+                <div className="bg-stone-50 p-3 rounded border border-stone-200 space-y-2 font-sans text-[11px] text-stone-600">
+                  <ol className="list-decimal pl-4 space-y-1">
+                    <li>Extraiga su ID de medición desde la consola de Google Analytics (generalmente con formato <code className="bg-stone-200 px-1 rounded font-mono">G-XXXXXXXXXX</code>).</li>
+                    <li>Ingrese el ID en la pestaña <strong className="text-stone-900">"2. Google Analytics & KPIs"</strong> de este centro de control.</li>
+                    <li>
+                      <strong>Eventos Clave Registrados:</strong> El sistema rastreará de forma automática el evento <code className="bg-stone-200 px-1 rounded font-mono">catalog_pdf_download</code> (un cliente potencial descarga el catálogo de precios mayorista) y <code className="bg-stone-200 px-1 rounded font-mono">sample_box_request</code> (un arquitecto solicita una caja física de muestras de texturas de WPC para validar el tacto y color del producto).
+                    </li>
+                  </ol>
                 </div>
               </div>
             </div>
           </div>
         )}
+
 
       </div>
     </div>

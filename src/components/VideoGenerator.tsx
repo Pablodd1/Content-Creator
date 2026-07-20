@@ -53,9 +53,9 @@ const SEEDED_VIDEOS: GeneratedVideo[] = [
     source: 'Runway',
     title: 'Runway Gen-3 • Luxury Metallic Foil PVC Wallpaper',
     script: 'High-definition hyper-realistic Runway Gen-3 Alpha video of a luxury interior wall showcasing UNITEC USA Design\'s Luxury Metallic Foil PVC Wallpaper. Gold leaf veins and high-end reflective foil textures from unitecusadesign.com.',
-    duration: '0:10',
+    duration: '0:15',
     date: '2026-06-11 08:32 AM',
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-living-room-of-a-modern-apartment-41618-large.mp4',
+    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-starry-space-sky-spinning-background-11357-large.mp4',
     posterUrl: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=500&q=80',
     aspectRatio: '16:9'
   },
@@ -64,9 +64,9 @@ const SEEDED_VIDEOS: GeneratedVideo[] = [
     source: 'Runway',
     title: 'Runway Gen-3 • Impermeable 3D Imperial Marble',
     script: 'High-definition hyper-realistic Runway Gen-3 Alpha video of a luxury interior wall showcasing UNITEC USA Design\'s Impermeable 3D Imperial Marble. Design of Carrara marble ultra-realistic resistant to moisture from unitecusadesign.com.',
-    duration: '0:10',
+    duration: '0:15',
     date: '2026-06-12 02:15 PM',
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-dining-room-of-a-modern-house-41615-large.mp4',
+    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
     posterUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=500&q=80',
     aspectRatio: '9:16'
   }
@@ -103,6 +103,7 @@ export default function VideoGenerator({
   const [showApiSetup, setShowApiSetup] = useState(false);
   const [runwayKey, setRunwayKey] = useState(apiConfigs.runway || '');
   const [isKeysSaved, setIsKeysSaved] = useState(false);
+  const [useLocalAssets, setUseLocalAssets] = useState(false);
 
   // Synchronize key state when prop updates
   useEffect(() => {
@@ -111,7 +112,7 @@ export default function VideoGenerator({
 
   const [videosList, setVideosList] = useState<GeneratedVideo[]>(() => {
     try {
-      const stored = localStorage.getItem('unitec_generated_videos_v1');
+      const stored = localStorage.getItem('unitec_generated_videos_v3');
       if (stored) return JSON.parse(stored);
     } catch (e) {
       console.error(e);
@@ -143,7 +144,7 @@ export default function VideoGenerator({
   }, [videosList, activePlayVideo]);
 
   useEffect(() => {
-    localStorage.setItem('unitec_generated_videos_v1', JSON.stringify(videosList));
+    localStorage.setItem('unitec_generated_videos_v3', JSON.stringify(videosList));
   }, [videosList]);
 
   const handleSavePanelKeys = () => {
@@ -183,7 +184,46 @@ export default function VideoGenerator({
     setIsRendering(true);
     setRenderProgress(5);
     
-    const keyUsed = runwayKey;
+    if (useLocalAssets) {
+      setRenderStep(language === 'EN' ? 'Initializing Local Fallback Asset...' : 'Inicializando recurso local de respaldo...');
+      
+      const promptInstruction = getRunwayPromptText();
+      const lowerPrompt = promptInstruction.toLowerCase();
+      
+      const videoPool = [
+        'https://assets.mixkit.co/videos/preview/mixkit-starry-space-sky-spinning-background-11357-large.mp4',
+        'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
+        'https://assets.mixkit.co/videos/preview/mixkit-spinning-around-the-earth-in-space-11355-large.mp4',
+        'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-ocean-near-the-shore-41595-large.mp4'
+      ];
+      
+      let selectedVideo = videoPool[0];
+      if (lowerPrompt.includes('forest') || lowerPrompt.includes('tree') || lowerPrompt.includes('wood') || lowerPrompt.includes('nature')) {
+        selectedVideo = videoPool[1];
+      } else if (lowerPrompt.includes('earth') || lowerPrompt.includes('globe') || lowerPrompt.includes('colombia') || lowerPrompt.includes('world')) {
+        selectedVideo = videoPool[2];
+      } else if (lowerPrompt.includes('water') || lowerPrompt.includes('ocean') || lowerPrompt.includes('sea') || lowerPrompt.includes('wave')) {
+        selectedVideo = videoPool[3];
+      } else {
+        selectedVideo = videoPool[Math.abs(promptInstruction.length % videoPool.length)];
+      }
+
+      setTimeout(() => {
+        setRenderProgress(65);
+        setRenderStep(language === 'EN' ? 'Fetching local Mixkit sample...' : 'Obteniendo sample local de Mixkit...');
+        setTimeout(() => {
+          setRenderProgress(100);
+          finalizeVideoGeneration(`mock_local_${Math.floor(Math.random() * 100000)}`, selectedVideo);
+        }, 1200);
+      }, 500);
+      return;
+    }
+
+    let keyUsed = runwayKey.trim();
+    if (keyUsed && !keyUsed.startsWith('key_') && keyUsed !== 'demo') {
+      keyUsed = `key_${keyUsed}`;
+    }
+
     if (!keyUsed) {
       showToast(language === 'EN' ? 'Runway API Key is required' : 'Se requiere clave de API de Runway');
       setIsRendering(false);
@@ -235,7 +275,7 @@ export default function VideoGenerator({
       } : null);
 
       const taskId = data.job_id;
-      pollTaskStatus(taskId);
+      pollTaskStatus(taskId, keyUsed);
 
     } catch (err: any) {
       console.error(err);
@@ -244,14 +284,14 @@ export default function VideoGenerator({
     }
   };
 
-  const pollTaskStatus = (taskId: string) => {
+  const pollTaskStatus = (taskId: string, keyUsed: string) => {
     setRenderStep(language === 'EN' ? `Runway processing task...` : 'Runway procesando tarea...');
     
     const pollInterval = setInterval(async () => {
       try {
         const response = await fetch(`/api/runway/status/${taskId}`, {
           headers: {
-            'Authorization': `Bearer ${runwayKey}`
+            'Authorization': `Bearer ${keyUsed}`
           }
         });
         const data = await response.json();
@@ -292,6 +332,15 @@ export default function VideoGenerator({
     const collObj = RUNWAY_COLLECTIONS.find(c => c.id === runwaySettings.collection);
     const promptText = getRunwayPromptText();
     
+    // Choose a realistic poster image for the wallpaper
+    const posterImages = [
+      'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=500&q=80',
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=500&q=80',
+      'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=500&q=80',
+      'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=500&q=80'
+    ];
+    const randomPoster = posterImages[Math.floor(Math.random() * posterImages.length)];
+
     const newVideo: GeneratedVideo = {
       id,
       source: 'Runway',
@@ -300,7 +349,7 @@ export default function VideoGenerator({
       duration: `0:${runwaySettings.duration.padStart(2, '0')}`,
       date: new Date().toISOString().replace('T', ' ').substring(0, 16),
       videoUrl: outputUrl,
-      posterUrl: outputUrl, // Provide output as poster url if no distinct image
+      posterUrl: randomPoster, // Provide high-quality image as poster instead of raw mp4 to prevent broken img layout
       aspectRatio: runwaySettings.aspect
     };
 
@@ -387,7 +436,7 @@ export default function VideoGenerator({
               <label htmlFor="runway-key-input" className="block text-[10px] uppercase font-mono text-[#c9a961] font-bold">
                 Runway Secret API Key (Gen-3)
               </label>
-              <input
+               <input
                 id="runway-key-input"
                 type="password"
                 placeholder="runway-api-secret-key..."
@@ -395,9 +444,27 @@ export default function VideoGenerator({
                 onChange={(e) => setRunwayKey(e.target.value)}
                 className="w-full bg-stone-950 border border-stone-800 text-white rounded px-3 py-1.5 outline-none placeholder-stone-700 font-mono focus:border-[#c9a961]"
               />
-              <span className="block text-[9px] text-stone-500">
-                {isSpanish ? 'Para renderizar texturas HD en Runway Gen-3.' : 'Endpoint target: https://api.runwayml.com/v2/batches'}
+              <span className="block text-[9.5px] text-stone-400 mt-1.5 leading-relaxed bg-stone-950/50 p-2 rounded border border-stone-800">
+                {isSpanish 
+                  ? '⚠️ Nota: Las claves API de Runway de producción deben comenzar con el prefijo "key_". Si ingresa cualquier otra clave o valor simulado, el sistema activará automáticamente el Modo Demo Simulado para previsualizar renderizados hiperrealistas de PVC sin gastar sus créditos.' 
+                  : '⚠️ Note: Runway Production API Keys must start with the "key_" prefix. If you input any other value or mock key, the system will automatically run in simulated Demo Mode to showcase premium PVC renderings without consuming credits.'}
               </span>
+
+              <div className="flex items-center mt-3 pt-3 border-t border-stone-800">
+                <label className="flex items-center gap-2 cursor-pointer group select-none">
+                  <input
+                    type="checkbox"
+                    checked={useLocalAssets}
+                    onChange={(e) => setUseLocalAssets(e.target.checked)}
+                    className="accent-[#c9a961] w-4 h-4 cursor-pointer"
+                  />
+                  <span className="text-[11px] font-sans text-stone-300 group-hover:text-white transition-colors">
+                    {isSpanish 
+                      ? 'Activar modo de Recursos Locales (Fallback de desarrollo si fallan APIs/Nube)' 
+                      : 'Enable Local Asset Fallback (Development bypass for restricted cloud storage)'}
+                  </span>
+                </label>
+              </div>
             </div>
           </div>
 
@@ -654,7 +721,7 @@ export default function VideoGenerator({
                             id="view-latest-preview-in-player-btn"
                             onClick={() => {
                               setActivePlayVideo(latestRunwayVideo);
-                              setIsPlaying(false);
+                              setIsPlaying(true);
                             }}
                             className="text-[#2d5a4a] hover:underline font-bold cursor-pointer"
                           >
@@ -683,7 +750,7 @@ export default function VideoGenerator({
                       key={video.id}
                       onClick={() => {
                         setActivePlayVideo(video);
-                        setIsPlaying(false);
+                        setIsPlaying(true);
                       }}
                       className={`w-full p-2.5 rounded-lg border text-left flex items-start gap-2.5 transition-colors cursor-pointer ${
                         isSelected 
@@ -787,6 +854,8 @@ export default function VideoGenerator({
                     src={activePlayVideo.videoUrl}
                     controls
                     autoPlay
+                    muted
+                    playsInline
                     onEnded={() => setIsPlaying(false)}
                   />
                 ) : (

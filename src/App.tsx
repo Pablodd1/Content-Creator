@@ -1103,8 +1103,8 @@ export default function App() {
       {/* Main UI App Screen */}
       <div className="no-print flex-1 flex flex-col">
         {/* Navigation / Header bar */}
-        <header className="sticky top-0 z-40 bg-[#1a1a1a] shadow-lg border-b border-stone-800 px-4 py-4">
-          <div className="w-full max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <header className="sticky top-0 z-40 bg-[#1a1a1a] shadow-lg border-b border-stone-800 px-4 py-4 lg:px-8 xl:px-12">
+          <div className="w-full max-w-full mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
             {/* Logo Group */}
             <div className="flex flex-col justify-center">
               <h1 className="font-mono font-black text-lg tracking-tight text-[#c9a961] uppercase">
@@ -1173,7 +1173,7 @@ export default function App() {
         </header>
 
         {/* Dashboard Frame Area */}
-        <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 space-y-6">
+        <main className="flex-1 w-full max-w-full mx-auto px-4 lg:px-8 xl:px-12 py-6 space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Left Hand: Market Pulse Side Rails (1 col) */}
             <div className="lg:col-span-1 space-y-6">
