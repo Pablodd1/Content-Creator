@@ -103,7 +103,6 @@ export default function VideoGenerator({
   const [showApiSetup, setShowApiSetup] = useState(false);
   const [runwayKey, setRunwayKey] = useState(apiConfigs.runway || '');
   const [isKeysSaved, setIsKeysSaved] = useState(false);
-  const [useLocalAssets, setUseLocalAssets] = useState(false);
 
   // Synchronize key state when prop updates
   useEffect(() => {
@@ -184,46 +183,7 @@ export default function VideoGenerator({
     setIsRendering(true);
     setRenderProgress(5);
     
-    if (useLocalAssets) {
-      setRenderStep(language === 'EN' ? 'Initializing Local Fallback Asset...' : 'Inicializando recurso local de respaldo...');
-      
-      const promptInstruction = getRunwayPromptText();
-      const lowerPrompt = promptInstruction.toLowerCase();
-      
-      const videoPool = [
-        'https://assets.mixkit.co/videos/preview/mixkit-starry-space-sky-spinning-background-11357-large.mp4',
-        'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
-        'https://assets.mixkit.co/videos/preview/mixkit-spinning-around-the-earth-in-space-11355-large.mp4',
-        'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-ocean-near-the-shore-41595-large.mp4'
-      ];
-      
-      let selectedVideo = videoPool[0];
-      if (lowerPrompt.includes('forest') || lowerPrompt.includes('tree') || lowerPrompt.includes('wood') || lowerPrompt.includes('nature')) {
-        selectedVideo = videoPool[1];
-      } else if (lowerPrompt.includes('earth') || lowerPrompt.includes('globe') || lowerPrompt.includes('colombia') || lowerPrompt.includes('world')) {
-        selectedVideo = videoPool[2];
-      } else if (lowerPrompt.includes('water') || lowerPrompt.includes('ocean') || lowerPrompt.includes('sea') || lowerPrompt.includes('wave')) {
-        selectedVideo = videoPool[3];
-      } else {
-        selectedVideo = videoPool[Math.abs(promptInstruction.length % videoPool.length)];
-      }
-
-      setTimeout(() => {
-        setRenderProgress(65);
-        setRenderStep(language === 'EN' ? 'Fetching local Mixkit sample...' : 'Obteniendo sample local de Mixkit...');
-        setTimeout(() => {
-          setRenderProgress(100);
-          finalizeVideoGeneration(`mock_local_${Math.floor(Math.random() * 100000)}`, selectedVideo);
-        }, 1200);
-      }, 500);
-      return;
-    }
-
     let keyUsed = runwayKey.trim();
-    if (keyUsed && !keyUsed.startsWith('key_') && keyUsed !== 'demo') {
-      keyUsed = `key_${keyUsed}`;
-    }
-
     if (!keyUsed) {
       showToast(language === 'EN' ? 'Runway API Key is required' : 'Se requiere clave de API de Runway');
       setIsRendering(false);
@@ -442,25 +402,9 @@ export default function VideoGenerator({
               />
               <span className="block text-[9.5px] text-stone-400 mt-1.5 leading-relaxed bg-stone-950/50 p-2 rounded border border-stone-800">
                 {isSpanish 
-                  ? '⚠️ Nota: Las claves API de Runway de producción deben comenzar con el prefijo "key_". Si ingresa cualquier otra clave o valor simulado, el sistema activará automáticamente el Modo Demo Simulado para previsualizar renderizados hiperrealistas de PVC sin gastar sus créditos.' 
-                  : '⚠️ Note: Runway Production API Keys must start with the "key_" prefix. If you input any other value or mock key, the system will automatically run in simulated Demo Mode to showcase premium PVC renderings without consuming credits.'}
+                  ? '⚠️ Nota: Ingrese su clave API de Runway de producción. El sistema generará videos reales usando Runway Gen-3 Alpha.' 
+                  : '⚠️ Note: Enter your production Runway API key. The system will generate real videos using Runway Gen-3 Alpha.'}
               </span>
-
-              <div className="flex items-center mt-3 pt-3 border-t border-stone-800">
-                <label className="flex items-center gap-2 cursor-pointer group select-none">
-                  <input
-                    type="checkbox"
-                    checked={useLocalAssets}
-                    onChange={(e) => setUseLocalAssets(e.target.checked)}
-                    className="accent-[#c9a961] w-4 h-4 cursor-pointer"
-                  />
-                  <span className="text-[11px] font-sans text-stone-300 group-hover:text-white transition-colors">
-                    {isSpanish 
-                      ? 'Activar modo de Recursos Locales (Fallback de desarrollo si fallan APIs/Nube)' 
-                      : 'Enable Local Asset Fallback (Development bypass for restricted cloud storage)'}
-                  </span>
-                </label>
-              </div>
             </div>
           </div>
 

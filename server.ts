@@ -17,7 +17,7 @@ function getGeminiClient(): GoogleGenAI {
       throw new Error('GEMINI_API_KEY environment variable is required');
     }
     aiClient = new GoogleGenAI({
-      apiKey: key,
+      apiKey: process.env.GEMINI_API_KEY || '',
       httpOptions: {
         headers: {
           'User-Agent': 'aistudio-build',
@@ -94,15 +94,6 @@ Format requirements:
     }
   });
 
-  // Memory database to simulate Runway tasks when using demo/invalid keys
-  const mockTasks: Record<string, {
-    status: string;
-    progress: number;
-    created_at: number;
-    promptText: string;
-    ratio: string;
-  }> = {};
-
   // Proxy for Runway API task creation
   app.post('/api/runway/generate', express.json(), async (req, res) => {
     try {
@@ -111,23 +102,9 @@ Format requirements:
         return res.status(400).json({ success: false, error: 'Runway API Key is required' });
       }
 
-      // Check if API key starts with 'key_'. If not, fallback to simulated demo mode
-      // to prevent 401 Authentication crashes for users without a paid developer key.
-      if (!apiKey.trim().startsWith('key_')) {
-        console.log(`[Runway SDK] API Key "${apiKey.substring(0, 5)}..." does not start with "key_". Booting simulated Demo mode.`);
-        const mockTaskId = `mock_task_${Math.floor(Math.random() * 1000000)}`;
-        mockTasks[mockTaskId] = {
-          status: 'PENDING',
-          progress: 0,
-          created_at: Date.now(),
-          promptText: promptText || '',
-          ratio: ratio || '720:1280'
-        };
-        return res.json({
-          success: true,
-          job_id: mockTaskId,
-          is_mock: true
-        });
+      // Check if API key is provided
+      if (!apiKey || apiKey.trim().length === 0) {
+        return res.status(400).json({ success: false, error: 'Runway API Key is required' });
       }
 
       // Initialize runway client with the provided key
@@ -156,39 +133,6 @@ Format requirements:
         job_id: (task as any).id,
       });
     } catch (error: any) {
-      // In case of validation, model issues, or insufficient credits, we offer a smooth fallback to avoid blocking the user experience.
-      const errMessage = (error.message || '').toString() + ' ' + JSON.stringify(error);
-      
-      const isFallbackTrigger = (
-        errMessage.toLowerCase().includes('credits') ||
-        errMessage.includes('Authorization') || 
-        errMessage.includes('401') || 
-        errMessage.includes('403') || 
-        errMessage.includes('API key') || 
-        errMessage.includes('Model variant') ||
-        errMessage.includes('Validation of body failed') ||
-        errMessage.includes('invalid_value') ||
-        errMessage.includes('model')
-      );
-
-      if (isFallbackTrigger) {
-        console.log(`[Runway SDK] Fallback to Demo mode due to API/model limitation: ${errMessage}`);
-        const mockTaskId = `mock_task_${Math.floor(Math.random() * 1000000)}`;
-        mockTasks[mockTaskId] = {
-          status: 'PENDING',
-          progress: 0,
-          created_at: Date.now(),
-          promptText: req.body.promptText || '',
-          ratio: req.body.ratio || '720:1280'
-        };
-        return res.json({
-          success: true,
-          job_id: mockTaskId,
-          is_mock: true,
-          notice: 'Fallbacked to Demo simulation due to API or plan limitations'
-        });
-      }
-      
       console.error('Runway generation error:', error);
       res.status(500).json({
         success: false,
@@ -204,66 +148,8 @@ Format requirements:
       const authHeader = req.headers.authorization;
       const apiKey = authHeader ? authHeader.split(' ')[1] : '';
 
-      // Check if it is a simulated mock task
-      if (taskId.startsWith('mock_task_')) {
-        const taskObj = mockTasks[taskId];
-        if (!taskObj) {
-          return res.status(404).json({ success: false, error: 'Mock task not found' });
-        }
-
-        const elapsed = (Date.now() - taskObj.created_at) / 1000; // in seconds
-        if (elapsed > 12) {
-          taskObj.status = 'SUCCEEDED';
-          taskObj.progress = 1.0;
-        } else if (elapsed > 3) {
-          taskObj.status = 'PROCESSING';
-          taskObj.progress = Math.min(elapsed / 12, 0.95);
-        } else {
-          taskObj.status = 'PENDING';
-          taskObj.progress = 0;
-        }
-
-        const videoPool = [
-          'https://assets.mixkit.co/videos/preview/mixkit-starry-space-sky-spinning-background-11357-large.mp4',
-          'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
-          'https://assets.mixkit.co/videos/preview/mixkit-spinning-around-the-earth-in-space-11355-large.mp4',
-          'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-ocean-near-the-shore-41595-large.mp4'
-        ];
-        // Select video based on prompt/task characteristics
-        const lowerPrompt = taskObj.promptText.toLowerCase();
-        let selectedVideo = videoPool[0];
-        if (lowerPrompt.includes('forest') || lowerPrompt.includes('tree') || lowerPrompt.includes('wood') || lowerPrompt.includes('nature')) {
-          selectedVideo = videoPool[1];
-        } else if (lowerPrompt.includes('earth') || lowerPrompt.includes('globe') || lowerPrompt.includes('colombia') || lowerPrompt.includes('world')) {
-          selectedVideo = videoPool[2];
-        } else if (lowerPrompt.includes('water') || lowerPrompt.includes('ocean') || lowerPrompt.includes('sea') || lowerPrompt.includes('wave')) {
-          selectedVideo = videoPool[3];
-        } else {
-          selectedVideo = videoPool[Math.abs(taskObj.promptText.length % videoPool.length)];
-        }
-
-        return res.json({
-          success: true,
-          status: taskObj.status,
-          progress: taskObj.progress,
-          output: taskObj.status === 'SUCCEEDED' ? [selectedVideo] : null,
-          failureReason: null
-        });
-      }
-      
       if (!apiKey) {
         return res.status(400).json({ success: false, error: 'Runway API Key is required' });
-      }
-
-      // If the API key is invalid or doesn't start with key_, simulate status response to prevent crash
-      if (!apiKey.trim().startsWith('key_')) {
-        return res.json({
-          success: true,
-          status: 'SUCCEEDED',
-          progress: 1.0,
-          output: ['https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4'],
-          failureReason: null
-        });
       }
 
       const { RunwayML } = await import('@runwayml/sdk');
@@ -279,14 +165,10 @@ Format requirements:
         failureReason: task.failureReason
       });
     } catch (error: any) {
-      console.log(`[Runway SDK] Status check error, applying fallback: ${error.message}`);
-      // Fallback on error checking as well
-      res.json({
-        success: true,
-        status: 'SUCCEEDED',
-        progress: 1.0,
-        output: ['https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4'],
-        failureReason: null
+      console.error('Runway status check error:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to check Runway task status'
       });
     }
   });
