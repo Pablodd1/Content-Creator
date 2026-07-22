@@ -29,6 +29,16 @@ function getGeminiClient(): GoogleGenAI {
   return aiClient;
 }
 
+// Helper for resolving Runway API key
+function resolveRunwayApiKey(req: express.Request): string {
+  const authHeader = req.headers.authorization || '';
+  const headerKey = authHeader.replace(/^Bearer\s+/i, '').trim();
+  const bodyKey = (req.body && req.body.apiKey) ? req.body.apiKey.trim() : '';
+  const clientApiKey = headerKey || bodyKey;
+  const serverApiKey = process.env.RUNWAY_API_KEY ? process.env.RUNWAY_API_KEY.trim() : '';
+  return clientApiKey.startsWith('key_') ? clientApiKey : (serverApiKey.startsWith('key_') ? serverApiKey : clientApiKey);
+}
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -98,10 +108,8 @@ Format requirements:
   // Proxy for Runway API task creation
   app.post('/api/runway/generate', express.json(), async (req, res) => {
     try {
-      const { apiKey, promptText, model, seconds, ratio, options } = req.body;
-      const clientApiKey = apiKey && apiKey.trim().length > 0 ? apiKey.trim() : '';
-      const serverApiKey = process.env.RUNWAY_API_KEY ? process.env.RUNWAY_API_KEY.trim() : '';
-      const finalApiKey = clientApiKey.startsWith('key_') ? clientApiKey : (serverApiKey.startsWith('key_') ? serverApiKey : clientApiKey);
+      const { promptText, model, seconds, ratio, options } = req.body;
+      const finalApiKey = resolveRunwayApiKey(req);
 
       if (!finalApiKey || finalApiKey.length === 0) {
         return res.status(400).json({ success: false, error: 'Runway API Key is required' });
@@ -145,12 +153,7 @@ Format requirements:
   app.get('/api/runway/status/:taskId', async (req, res) => {
     try {
       const { taskId } = req.params;
-      const authHeader = req.headers.authorization || '';
-      const apiKey = authHeader.replace(/^Bearer\s+/i, '').trim();
-      
-      const clientApiKey = apiKey && apiKey.trim().length > 0 ? apiKey.trim() : '';
-      const serverApiKey = process.env.RUNWAY_API_KEY ? process.env.RUNWAY_API_KEY.trim() : '';
-      const finalApiKey = clientApiKey.startsWith('key_') ? clientApiKey : (serverApiKey.startsWith('key_') ? serverApiKey : clientApiKey);
+      const finalApiKey = resolveRunwayApiKey(req);
       
       if (!finalApiKey) {
         return res.status(400).json({ success: false, error: 'Runway API Key is required' });
