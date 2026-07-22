@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
@@ -17,7 +18,7 @@ function getGeminiClient(): GoogleGenAI {
       throw new Error('GEMINI_API_KEY environment variable is required');
     }
     aiClient = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY || '',
+      apiKey: key,
       httpOptions: {
         headers: {
           'User-Agent': 'aistudio-build',
@@ -98,19 +99,18 @@ Format requirements:
   app.post('/api/runway/generate', express.json(), async (req, res) => {
     try {
       const { apiKey, promptText, model, seconds, ratio, options } = req.body;
-      if (!apiKey) {
-        return res.status(400).json({ success: false, error: 'Runway API Key is required' });
-      }
+      const clientApiKey = apiKey && apiKey.trim().length > 0 ? apiKey.trim() : '';
+      const serverApiKey = process.env.RUNWAY_API_KEY ? process.env.RUNWAY_API_KEY.trim() : '';
+      const finalApiKey = clientApiKey.startsWith('key_') ? clientApiKey : (serverApiKey.startsWith('key_') ? serverApiKey : clientApiKey);
 
-      // Check if API key is provided
-      if (!apiKey || apiKey.trim().length === 0) {
+      if (!finalApiKey || finalApiKey.length === 0) {
         return res.status(400).json({ success: false, error: 'Runway API Key is required' });
       }
 
       // Initialize runway client with the provided key
       // Dynamic import to avoid missing dependencies
       const { RunwayML } = await import('@runwayml/sdk');
-      const runway = new RunwayML({ apiKey: apiKey.trim() });
+      const runway = new RunwayML({ apiKey: finalApiKey });
       
       let width = 768;
       let height = 1280;
@@ -122,7 +122,7 @@ Format requirements:
       // Create video generation task
       let task;
       task = await (runway.textToVideo.create as any)({
-        model: 'gen3a_alpha',
+        model: model || 'gen4.5',
         promptText: promptText,
         ratio: ratio || '720:1280',
         duration: seconds || 5
@@ -145,15 +145,19 @@ Format requirements:
   app.get('/api/runway/status/:taskId', async (req, res) => {
     try {
       const { taskId } = req.params;
-      const authHeader = req.headers.authorization;
-      const apiKey = authHeader ? authHeader.split(' ')[1] : '';
-
-      if (!apiKey) {
+      const authHeader = req.headers.authorization || '';
+      const apiKey = authHeader.replace(/^Bearer\s+/i, '').trim();
+      
+      const clientApiKey = apiKey && apiKey.trim().length > 0 ? apiKey.trim() : '';
+      const serverApiKey = process.env.RUNWAY_API_KEY ? process.env.RUNWAY_API_KEY.trim() : '';
+      const finalApiKey = clientApiKey.startsWith('key_') ? clientApiKey : (serverApiKey.startsWith('key_') ? serverApiKey : clientApiKey);
+      
+      if (!finalApiKey) {
         return res.status(400).json({ success: false, error: 'Runway API Key is required' });
       }
 
       const { RunwayML } = await import('@runwayml/sdk');
-      const runway = new RunwayML({ apiKey: apiKey.trim() });
+      const runway = new RunwayML({ apiKey: finalApiKey });
 
       const task = await runway.tasks.retrieve(taskId) as any;
 
@@ -175,14 +179,18 @@ Format requirements:
 
   const distPath = path.join(process.cwd(), 'dist');
   const hasBuild = fs.existsSync(path.join(distPath, 'index.html'));
-  const isProduction = process.env.NODE_ENV === 'production' || hasBuild;
+  const isProduction = process.env.NODE_ENV === 'production';
 
   // Serve static assets or mount Vite middleware
   if (isProduction) {
     console.log(`Production mode active. Serving static files from: ${distPath}`);
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      if (fs.existsSync(path.join(distPath, 'index.html'))) {
+        res.sendFile(path.join(distPath, 'index.html'));
+      } else {
+        res.status(503).send('Application is currently starting or building. Please reload in a few seconds.');
+      }
     });
   } else {
     console.log('Development mode active. Attempting to mount Vite middleware...');
@@ -200,7 +208,11 @@ Format requirements:
         console.log('Static build files found. Falling back to static file serving.');
         app.use(express.static(distPath));
         app.get('*', (req, res) => {
-          res.sendFile(path.join(distPath, 'index.html'));
+          if (fs.existsSync(path.join(distPath, 'index.html'))) {
+            res.sendFile(path.join(distPath, 'index.html'));
+          } else {
+            res.status(503).send('Application is currently starting or building. Please reload in a few seconds.');
+          }
         });
       } else {
         app.get('*', (req, res) => {

@@ -51,8 +51,8 @@ const SEEDED_VIDEOS: GeneratedVideo[] = [
   {
     id: 'vid-001',
     source: 'Runway',
-    title: 'Runway Gen-3 • Luxury Metallic Foil PVC Wallpaper',
-    script: 'High-definition hyper-realistic Runway Gen-3 Alpha video of a luxury interior wall showcasing UNITEC USA Design\'s Luxury Metallic Foil PVC Wallpaper. Gold leaf veins and high-end reflective foil textures from unitecusadesign.com.',
+    title: 'Runway Gen-4.5 • Luxury Metallic Foil PVC Wallpaper',
+    script: 'High-definition hyper-realistic Runway Gen-4.5 video of a luxury interior wall showcasing UNITEC USA Design\'s Luxury Metallic Foil PVC Wallpaper. Gold leaf veins and high-end reflective foil textures from unitecusadesign.com.',
     duration: '0:15',
     date: '2026-06-11 08:32 AM',
     videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-starry-space-sky-spinning-background-11357-large.mp4',
@@ -62,8 +62,8 @@ const SEEDED_VIDEOS: GeneratedVideo[] = [
   {
     id: 'vid-002',
     source: 'Runway',
-    title: 'Runway Gen-3 • Impermeable 3D Imperial Marble',
-    script: 'High-definition hyper-realistic Runway Gen-3 Alpha video of a luxury interior wall showcasing UNITEC USA Design\'s Impermeable 3D Imperial Marble. Design of Carrara marble ultra-realistic resistant to moisture from unitecusadesign.com.',
+    title: 'Runway Gen-4.5 • Impermeable 3D Imperial Marble',
+    script: 'High-definition hyper-realistic Runway Gen-4.5 video of a luxury interior wall showcasing UNITEC USA Design\'s Impermeable 3D Imperial Marble. Design of Carrara marble ultra-realistic resistant to moisture from unitecusadesign.com.',
     duration: '0:15',
     date: '2026-06-12 02:15 PM',
     videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4',
@@ -173,8 +173,8 @@ export default function VideoGenerator({
         );
 
     const basePrompt = language === 'ES'
-      ? `Video hiperrealista de Runway Gen-3 Alpha de alta definición de un muro interior decorado con el producto de UNITEC USA Design: ${chosenColl?.nameES}. Detalle visual: ${chosenColl?.descES}. Estilo de cámara: ${chosenMotion?.nameES} (${chosenMotion?.prompt}). Concepto del día: ${themeText}. El material es 100% impermeable, lavable y de calidad premium de unitecusadesign.com, con luz ambiental cálida de showroom, 8k, cinematográfico.`
-      : `High-definition hyper-realistic Runway Gen-3 Alpha video of a luxury interior wall showcasing UNITEC USA Design's ${chosenColl?.nameEN}. Visual detail: ${chosenColl?.descEN}. Camera style: ${chosenMotion?.nameEN} (${chosenMotion?.prompt}). Topic context: ${themeText}. The material is 100% waterproof, washable and premium quality from unitecusadesign.com, warm environmental showroom lighting, 8k resolution, cinematic commercial advertising.`;
+      ? `Video hiperrealista de Runway Gen-4.5 de alta definición de un muro interior decorado con el producto de UNITEC USA Design: ${chosenColl?.nameES}. Detalle visual: ${chosenColl?.descES}. Estilo de cámara: ${chosenMotion?.nameES} (${chosenMotion?.prompt}). Concepto del día: ${themeText}. El material es 100% impermeable, lavable y de calidad premium de unitecusadesign.com, con luz ambiental cálida de showroom, 8k, cinematográfico.`
+      : `High-definition hyper-realistic Runway Gen-4.5 video of a luxury interior wall showcasing UNITEC USA Design's ${chosenColl?.nameEN}. Visual detail: ${chosenColl?.descEN}. Camera style: ${chosenMotion?.nameEN} (${chosenMotion?.prompt}). Topic context: ${themeText}. The material is 100% waterproof, washable and premium quality from unitecusadesign.com, warm environmental showroom lighting, 8k resolution, cinematic commercial advertising.`;
       
     return basePrompt;
   };
@@ -183,19 +183,14 @@ export default function VideoGenerator({
     setIsRendering(true);
     setRenderProgress(5);
     
-    let keyUsed = runwayKey.trim();
-    if (!keyUsed) {
-      showToast(language === 'EN' ? 'Runway API Key is required' : 'Se requiere clave de API de Runway');
-      setIsRendering(false);
-      return;
-    }
+    let keyUsed = runwayKey.trim() || 'use_server_key';
 
     const endpoint = '/api/runway/generate';
     const promptInstruction = getRunwayPromptText();
     const bodyPayload = {
       apiKey: keyUsed,
       promptText: promptInstruction,
-      model: "gen3a_alpha",
+      model: "gen4.5",
       seconds: parseInt(runwaySettings.duration),
       ratio: runwaySettings.aspect === '16:9' ? '1280:720' : '720:1280'
     };
@@ -207,10 +202,10 @@ export default function VideoGenerator({
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ ...bodyPayload, apiKey: `${keyUsed.substring(0, 12)}***` }, null, 2),
-      response: 'Waiting for Runway Gen-3 task creation...'
+      response: 'Waiting for Runway Gen-4.5 task creation...'
     });
 
-    setRenderStep(language === 'EN' ? 'Initializing Runway Gen-3 Handshake...' : 'Estableciendo enlace seguro para Runway Gen-3...');
+    setRenderStep(language === 'EN' ? 'Initializing Runway Gen-4.5 Handshake...' : 'Estableciendo enlace seguro para Runway Gen-4.5...');
 
     try {
       const response = await fetch(endpoint, {
@@ -300,7 +295,7 @@ export default function VideoGenerator({
     const newVideo: GeneratedVideo = {
       id,
       source: 'Runway',
-      title: `Runway Gen-3 • ${collObj ? (language === 'ES' ? collObj.nameES : collObj.nameEN) : 'Luxury Texture'} (${dayTag})`,
+      title: `Runway Gen-4.5 • ${collObj ? (language === 'ES' ? collObj.nameES : collObj.nameEN) : 'Luxury Texture'} (${dayTag})`,
       script: promptText,
       duration: `0:${runwaySettings.duration.padStart(2, '0')}`,
       date: new Date().toISOString().replace('T', ' ').substring(0, 16),
@@ -319,7 +314,7 @@ export default function VideoGenerator({
           duration_seconds: parseInt(runwaySettings.duration),
           download_url: newVideo.videoUrl,
           meta: {
-            compliance_check: "Premium PVC Wallpaper Verification Confirmed via Runway Gen-3"
+            compliance_check: "Premium PVC Wallpaper Verification Confirmed via Runway Gen-4.5"
           }
         }, null, 2)
       } : null);
@@ -330,7 +325,7 @@ export default function VideoGenerator({
     setIsRendering(false);
     setIsPreviewExpanded(true);
     setActiveTab('gallery');
-    showToast(language === 'ES' ? `¡Video Runway Gen-3 generado con éxito! #${id}` : `Runway Gen-3 video generated successfully! #${id}`);
+    showToast(language === 'ES' ? `¡Video Runway Gen-4.5 generado con éxito! #${id}` : `Runway Gen-4.5 video generated successfully! #${id}`);
   };
 
   const handleCopyLink = (text: string, id: string) => {
@@ -359,7 +354,7 @@ export default function VideoGenerator({
             {isSpanish ? 'Estudio de Video por IA Runway' : 'Runway AI Video Production Studio'}
           </h3>
           <p className="text-[10px] text-stone-400 font-sans">
-            {isSpanish ? 'Cree animaciones de texturas hiperrealistas de papel tapiz PVC de alta calidad con Runway Gen-3' : 'Generate hyper-realistic textured wallpaper animations with Runway Gen-3 Alpha'}
+            {isSpanish ? 'Cree animaciones de texturas hiperrealistas de papel tapiz PVC de alta calidad con Runway Gen-4.5' : 'Generate hyper-realistic textured wallpaper animations with Runway Gen-4.5'}
           </p>
         </div>
         
@@ -390,7 +385,7 @@ export default function VideoGenerator({
           <div className="text-xs font-sans text-stone-300 leading-relaxed max-w-md">
             <div className="space-y-1 text-left">
               <label htmlFor="runway-key-input" className="block text-[10px] uppercase font-mono text-[#c9a961] font-bold">
-                Runway Secret API Key (Gen-3)
+                Runway Secret API Key (Gen-4.5)
               </label>
                <input
                 id="runway-key-input"
@@ -402,8 +397,8 @@ export default function VideoGenerator({
               />
               <span className="block text-[9.5px] text-stone-400 mt-1.5 leading-relaxed bg-stone-950/50 p-2 rounded border border-stone-800">
                 {isSpanish 
-                  ? '⚠️ Nota: Ingrese su clave API de Runway de producción. El sistema generará videos reales usando Runway Gen-3 Alpha.' 
-                  : '⚠️ Note: Enter your production Runway API key. The system will generate real videos using Runway Gen-3 Alpha.'}
+                  ? 'Ingrese su clave API de producción de Runway. El sistema generará videos reales usando Runway Gen-4.5.' 
+                  : 'Enter your production Runway API key. The system will generate real videos using Runway Gen-4.5.'}
               </span>
             </div>
           </div>
@@ -439,7 +434,7 @@ export default function VideoGenerator({
           }`}
         >
           <Sparkles size={13} className={activeTab === 'runway' ? 'text-[#c9a961]' : 'text-stone-400'} />
-          <span>{isSpanish ? 'Renderizador Runway Gen-3' : 'Runway Gen-3 Renderer'}</span>
+          <span>{isSpanish ? 'Renderizador Runway Gen-4.5' : 'Runway Gen-4.5 Renderer'}</span>
         </button>
         <button
           id="video-gallery-tab-btn"
@@ -467,7 +462,7 @@ export default function VideoGenerator({
             <div className="space-y-3.5 animate-fadeIn text-xs font-sans">
               <div className="bg-[#c9a961]/5 border border-[#c9a961]/25 p-3 rounded-lg space-y-1.5 text-left">
                 <div className="flex justify-between items-center text-[10px] font-mono font-bold tracking-wider text-[#b09352] uppercase">
-                  <span>🎬 {isSpanish ? '1. Prompt de Animación Runway Gen-3:' : '1. Runway Gen-3 Prompt:'}</span>
+                  <span>🎬 {isSpanish ? '1. Prompt de Animación Runway Gen-4.5:' : '1. Runway Gen-4.5 Prompt:'}</span>
                   <button 
                     onClick={() => setRunwaySettings(prev => ({ ...prev, customPrompt: '' }))}
                     className="text-[9px] hover:underline normal-case text-stone-400 cursor-pointer"
@@ -484,7 +479,7 @@ export default function VideoGenerator({
                 />
                 
                 <p className="text-[8.5px] text-stone-500 leading-snug">
-                  {isSpanish ? '※ Runway Gen-3 Alpha crea clips hiperrealistas optimizados para el marketing de papel tapiz premium de unitecusadesign.com.' : '※ Runway Gen-3 Alpha renders hyper-realistic clips optimized for premium wallpaper marketing of unitecusadesign.com.'}
+                  {isSpanish ? '※ Runway Gen-4.5 crea clips hiperrealistas optimizados para el marketing de papel tapiz premium de unitecusadesign.com.' : '※ Runway Gen-4.5 renders hyper-realistic clips optimized for premium wallpaper marketing of unitecusadesign.com.'}
                 </p>
               </div>
 
@@ -596,7 +591,7 @@ export default function VideoGenerator({
                   className="w-full py-2.5 bg-stone-900 hover:bg-stone-800 text-[#c9a961] font-sans font-black uppercase text-xs tracking-wider rounded-lg transition-all shadow-sm hover:shadow-md cursor-pointer disabled:bg-stone-200 disabled:text-stone-400 flex items-center justify-center gap-2"
                 >
                   <Sparkles size={14} className="text-[#c9a961] animate-pulse" />
-                  <span>{isSpanish ? 'Generar Clip Runway Gen-3' : 'Submit Runway Gen-3 Render'}</span>
+                  <span>{isSpanish ? 'Generar Clip Runway Gen-4.5' : 'Submit Runway Gen-4.5 Render'}</span>
                 </button>
               </div>
 

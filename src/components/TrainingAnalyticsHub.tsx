@@ -490,7 +490,7 @@ export default function TrainingAnalyticsHub({
                 Manual Técnico de Tránsito de Mercancías, Logística Portuaria y Generación de Contenido IA
               </h4>
               <p className="text-stone-500 mt-1">
-                Este manual establece las directrices estandarizadas para el tránsito aduanero de compuestos de madera plástica (WPC) hacia Colombia, y el uso coordinado de la suite de inteligencia artificial para la generación automática de video (Runway Gen-3).
+                Este manual establece las directrices estandarizadas para el tránsito aduanero de compuestos de madera plástica (WPC) hacia Colombia, y el uso coordinado de la suite de inteligencia artificial para la generación automática de video (Runway Gen-4.5).
               </p>
             </div>
 
@@ -537,7 +537,7 @@ export default function TrainingAnalyticsHub({
                 </div>
               </div>
 
-              {/* Sección 2: Uso automatizado de Runway Gen-3 */}
+              {/* Sección 2: Uso automatizado de Runway Gen-4.5 */}
               <div className="border-l-2 border-stone-900 pl-4 space-y-2">
                 <h5 className="font-mono text-xs uppercase tracking-wider text-stone-900 font-extrabold flex items-center gap-2">
                   <span>🎬 SECCIÓN 2: PROCESAMIENTO AUTOMÁTICO DE VIDEO CON RUNWAY GEN-3</span>
@@ -556,14 +556,14 @@ export default function TrainingAnalyticsHub({
                       <strong>Diseño Automatizado del Prompt de Renderizado:</strong> El generador de video lee el nicho arquitectónico del día seleccionado (ej. Sostenibilidad, Decks de Lujo, Instalaciones Comerciales) y redacta automáticamente una instrucción altamente cinematográfica.
                     </li>
                     <li>
-                      <strong>Monitoreo y Cola de Render:</strong> Al hacer clic en <strong className="text-stone-900">"Submit Runway Gen-3 Render"</strong>, la app establece comunicación segura con Runway, genera un ID de tarea único en la nube y activa una barra de progreso que consulta el estado del servidor cada 5 segundos.
+                      <strong>Monitoreo y Cola de Render:</strong> Al hacer clic en <strong className="text-stone-900">"Submit Runway Gen-4.5 Render"</strong>, la app establece comunicación segura con Runway, genera un ID de tarea único en la nube y activa una barra de progreso que consulta el estado del servidor cada 5 segundos.
                     </li>
                   </ol>
 
                   <div className="bg-white p-3 rounded border border-stone-150 space-y-1.5">
                     <span className="text-[10px] uppercase tracking-wider font-mono font-bold text-[#c9a961] block">EJEMPLO DE PROMPT CONSTRUIDO POR LA IA:</span>
                     <p className="text-[11px] text-stone-600">
-                      Cuando el calendario selecciona el tema de <em>"Sostenibilidad y Resistencia Subtropical"</em>, el sistema concatena descriptores volumétricos estéticos optimizados para el modelo de Runway Gen-3:
+                      Cuando el calendario selecciona el tema de <em>"Sostenibilidad y Resistencia Subtropical"</em>, el sistema concatena descriptores volumétricos estéticos optimizados para el modelo de Runway Gen-4.5:
                     </p>
                     <div className="font-mono text-[10.5px] text-stone-800 bg-stone-50 p-2 rounded border border-stone-100 italic">
                       "Cinematic architectural visualization of a luxury coastal villa in Cartagena, Colombia. Seamless co-extruded teak wood-plastic composite (WPC) cladding installed on external walls. Soft golden hour sunshine, photorealistic details, high-end materials, slow panning camera shot, 4k, architectural render style."
