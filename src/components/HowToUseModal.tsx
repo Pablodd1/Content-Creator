@@ -71,186 +71,80 @@ export default function HowToUseModal({ isOpen, onClose, language = 'ES' }: HowT
           
           {modalLang === 'ES' ? (
             // ================= SPANISH COLOMBIAN INSTRUCTIONS =================
-            <div className="space-y-8 animate-fadeIn text-stone-750">
+            <div className="space-y-6 animate-fadeIn text-stone-750">
               <div className="bg-[#2d5a4a]/10 border border-[#2d5a4a]/20 p-4 rounded-xl text-[#2d5a4a] text-xs font-medium leading-relaxed">
-                <strong>Bienvenido al Centro de Comando de Contenido UNITEC USA:</strong> Este manual detalla minuciosamente el funcionamiento técnico y operacional de cada módulo de la plataforma, diseñado específicamente para la distribución mayorista de revestimientos de WPC (revestimientos de coextrusión bicapa) en Colombia (puertos de Cartagena/Buenaventura) y Estados Unidos.
+                <strong>Guía de Uso & Flujo de Trabajo UNITEC USA:</strong> Esta plataforma organiza la creación y distribución de contenido bilingüe (Español/Inglés) en 3 pasos secuenciales orientados al sector comercial de revestimientos WPC, papel tapiz y acabados arquitectónicos en Colombia (Cartagena/Buenaventura) y Estados Unidos.
               </div>
 
-              {/* Módulo 1 */}
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/35 font-mono text-sm font-bold">
+              {/* Módulo 1: PASO 1 - Configuración & Estrategia */}
+              <div className="flex gap-4 p-3.5 bg-white rounded-xl border border-stone-200 shadow-sm">
+                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#c9a961] text-stone-950 font-mono text-xs font-black shadow-sm">
                   1
                 </div>
-                <div>
-                  <h4 className="font-bold text-[#1a1a1a] text-sm uppercase tracking-tight flex items-center gap-2">
-                    Definición de Temas Anuales <span className="text-stone-500 font-normal">| ThemeControlPanel</span>
+                <div className="space-y-1.5 w-full">
+                  <h4 className="font-extrabold text-[#1a1a1a] text-sm uppercase tracking-tight flex items-center justify-between">
+                    <span>PASO 1: Configuración & Estrategia Inicial</span>
+                    <span className="text-[#c9a961] font-mono text-[10px] bg-[#c9a961]/10 px-2 py-0.5 rounded border border-[#c9a961]/30">Suite Creativa</span>
                   </h4>
-                  <p className="mt-1.5 text-stone-650 text-xs leading-relaxed">
-                    Ubicado en la parte inferior del tablero principal. Este panel permite estructurar la agenda estratégica de marketing para los 12 meses del año.
+                  <p className="text-stone-650 text-xs leading-relaxed">
+                    Acceda al panel de la <strong>Suite Creativa Avanzada</strong> en la parte superior para definir los pilares del proyecto:
                   </p>
-                  <ul className="list-disc pl-5 mt-2 space-y-1.5 text-xs text-stone-600">
-                    <li><strong className="text-[#1a1a1a]">Generación en Lote:</strong> El botón <em className="not-italic font-bold">"Auto-Generate 12 Months"</em> crea de forma inteligente un plan estacional unificado donde se asocian de inmediato temas y nichos arquitectónicos optimizados.</li>
-                    <li><strong className="text-[#1a1a1a]">Modificación Manual Directa:</strong> Cada celda de tema (bilingüe Inglés/Español) es editable en tiempo real. Al cambiar el texto, la memoria caché local se actualiza automáticamente.</li>
-                    <li><strong className="text-[#1a1a1a]">Asignación de Nichos:</strong> Permite sincronizar cada mes con audiencias técnicas clave como arquitectos, constructoras o mayoristas.</li>
-                    <li><strong className="text-[#1a1a1a]">Entrada de Voz:</strong> Presione el ícono de micrófono junto a los inputs para dictar el título del tema directamente mediante reconocimiento de voz.</li>
+                  <ul className="list-disc pl-5 space-y-1.5 text-xs text-stone-600">
+                    <li><strong className="text-[#1a1a1a]">1. Secuenciador de Temas (Theme Sequencer):</strong> Configure la estrategia temática para los 12 meses. Al hacer clic en <em>"Auto-Generate 12 Months"</em>, el sistema crea automáticamente temas bilingües estacionales (Cladding WPC, Papel Tapiz, normativas e importación).</li>
+                    <li><strong className="text-[#1a1a1a]">2. Creador Unificado de Posts (Unified Post Creator):</strong> Redacte publicaciones completas para Instagram, LinkedIn, Facebook y YouTube con hashtags optimizados y prompts visuales estandarizados.</li>
+                    <li><strong className="text-[#1a1a1a]">3. Estudio de Video Runway Gen-4.5:</strong> Genere guiones de video profesionales y prompts de animación cinematográfica para showrooms y acabados de lujo.</li>
+                    <li><strong className="text-[#1a1a1a]">4. Marca & Datos (Training Analytics Hub):</strong> Ajuste las directrices de marca, requisitos normativos (ASTM Clase-B, NSR-10) y métricas de rendimiento.</li>
                   </ul>
                 </div>
               </div>
 
-              {/* Módulo 2 */}
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/35 font-mono text-sm font-bold">
+              {/* Módulo 2: PASO 2 - Planificación de Calendario */}
+              <div className="flex gap-4 p-3.5 bg-white rounded-xl border border-stone-200 shadow-sm">
+                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#c9a961] text-stone-950 font-mono text-xs font-black shadow-sm">
                   2
                 </div>
-                <div>
-                  <h4 className="font-bold text-[#1a1a1a] text-sm uppercase tracking-tight flex items-center gap-2">
-                    Generador de Contenido Bilingüe e Inteligente <span className="text-stone-500 font-normal">| DailyContentPreview</span>
+                <div className="space-y-1.5 w-full">
+                  <h4 className="font-extrabold text-[#1a1a1a] text-sm uppercase tracking-tight flex items-center justify-between">
+                    <span>PASO 2: Planificación en Calendario de 12 Meses</span>
+                    <span className="text-[#c9a961] font-mono text-[10px] bg-[#c9a961]/10 px-2 py-0.5 rounded border border-[#c9a961]/30">VisualCalendar</span>
                   </h4>
-                  <p className="mt-1.5 text-stone-650 text-xs leading-relaxed">
-                    Es el motor neuronal del sistema. Genera los copys específicos para cada red social utilizando IA de vanguardia.
+                  <p className="text-stone-650 text-xs leading-relaxed">
+                    Estructure la distribución temporal del año con control bilingüe e indicadores en tiempo real:
                   </p>
-                  <ul className="list-disc pl-5 mt-2 space-y-1.5 text-xs text-stone-600">
-                    <li><strong className="text-[#1a1a1a]">Generación Individual:</strong> Al seleccionar cualquier día libre, puede elegir el tono deseado (ROI Comercial, Ficha Técnica, Constructor Local) y pulsar <em className="not-italic font-bold">"Generar Contenido de Hoy"</em> para ensamblar los copys y prompts del día.</li>
-                    <li><strong className="text-[#1a1a1a]">Tono de Voz:</strong> Cambie dinámicamente entre acentos de venta directa, divulgación de resistencia técnica (normativa ASTM), o historias de éxito locales en Colombia para modelar el copy generado.</li>
-                    <li><strong className="text-[#1a1a1a]">Edición Directa de Horarios:</strong> El planificador calcula automáticamente las horas de mayor interacción. Puede modificarlas manualmente usando los selectores integrados por red social.</li>
+                  <ul className="list-disc pl-5 space-y-1.5 text-xs text-stone-600">
+                    <li><strong className="text-[#1a1a1a]">Generación en Lote por Mes:</strong> Seleccione cualquier mes en el carrusel y presione <em>"Generar Mes Completo en Lote"</em> para estructurar los 30 días de forma automatizada.</li>
+                    <li><strong className="text-[#1a1a1a]">Festivos de Colombia & Aduanas:</strong> Active la integración de festivos para detectar automáticamente días no laborales en Colombia que puedan impactar la logística en puertos de Cartagena o Buenaventura.</li>
+                    <li><strong className="text-[#1a1a1a]">Atajos de Teclado:</strong> Navegue velozmente usando las flechas ⬅️ ➡️ para cambiar de mes y ⬆️ ⬇️ para avanzar secuencialmente entre días.</li>
                   </ul>
                 </div>
               </div>
 
-              {/* Módulo 3 */}
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/35 font-mono text-sm font-bold">
+              {/* Módulo 3: PASO 3 - Generación de Contenido, Revisión y Exportación */}
+              <div className="flex gap-4 p-3.5 bg-white rounded-xl border border-stone-200 shadow-sm">
+                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#2d5a4a] text-white font-mono text-xs font-black shadow-sm">
                   3
                 </div>
-                <div>
-                  <h4 className="font-bold text-[#1a1a1a] text-sm uppercase tracking-tight flex items-center gap-2">
-                    Sistema de Cumplimiento Normativo y Doble Revisión <span className="text-stone-500 font-normal">| Compliance Center</span>
+                <div className="space-y-1.5 w-full">
+                  <h4 className="font-extrabold text-[#1a1a1a] text-sm uppercase tracking-tight flex items-center justify-between">
+                    <span>PASO 3: Revisión Diaria, Aprobación & Exportación</span>
+                    <span className="text-[#2d5a4a] font-mono text-[10px] bg-[#2d5a4a]/10 px-2 py-0.5 rounded border border-[#2d5a4a]/30">DailyContentPreview</span>
                   </h4>
-                  <p className="mt-1.5 text-stone-650 text-xs leading-relaxed">
-                    Garantiza que el contenido respete los estrictos estándares industriales de UNITEC y no incurra en falsas promesas o riesgos legales.
+                  <p className="text-stone-650 text-xs leading-relaxed">
+                    Finalice el trabajo de creación revisando y exportando las publicaciones aprobadas:
                   </p>
-                  <ul className="list-disc pl-5 mt-2 space-y-1.5 text-xs text-stone-600">
-                    <li><strong className="text-[#1a1a1a]">Control ASTM Clase-B:</strong> Valida que al proclamar impermeabilidad o retardancia de llama, se listen certificaciones ASTM oficiales.</li>
-                    <li><strong className="text-[#1a1a1a]">Términos de Envío FOB:</strong> Audita que las publicaciones comerciales de logística mencionen específicamente las condiciones de envío FOB (Cartagena, Buenaventura o Miami).</li>
-                    <li><strong className="text-[#1a1a1a]">Festivos Nacionales en Colombia:</strong> El sistema advierte de forma automática si un día coincide con un festivo en Colombia, sugiriendo posponer o reconfigurar la publicación debido a cierres de aduanas y oficinas administrativas.</li>
-                    <li><strong className="text-[#1a1a1a]">Semáforo de Estado:</strong> El color del día en el calendario indica si el post está Vacío (Gris), Generado esperando revisión (Dorado), Aprobado formalmente (Verde) o con Alertas pendientes de resolver (Naranja).</li>
+                  <ul className="list-disc pl-5 space-y-1.5 text-xs text-stone-600">
+                    <li><strong className="text-[#1a1a1a]">Generador de Contenido Diario:</strong> Seleccione cualquier día y presione <em>"Generar Contenido de Hoy"</em> para compilar copys bilingües adaptados a cada red social.</li>
+                    <li><strong className="text-[#1a1a1a]">Control de Tono de Voz:</strong> Alterne dinámicamente entre ROI Comercial WPC, Ficha Técnica ASTM y Enfoque en Constructores Locales.</li>
+                    <li><strong className="text-[#1a1a1a]">Semáforo de Estado:</strong> Cambie el estado de Pendiente (Gris) a Generado (Dorado) o Aprobado (Verde) para coordinar con el equipo de marketing.</li>
+                    <li><strong className="text-[#1a1a1a]">Exportación & Impresión:</strong> Descargue reportes en CSV o JSON, o imprima el <em>Brief Diario</em> en PDF con formato A4/Oficio listo para juntas ejecutivas.</li>
                   </ul>
                 </div>
               </div>
 
-              {/* Módulo 4 */}
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/35 font-mono text-sm font-bold">
-                  4
-                </div>
-                <div>
-                  <h4 className="font-bold text-[#1a1a1a] text-sm uppercase tracking-tight flex items-center gap-2">
-                    Copiar y Desplegar en Múltiples Plataformas <span className="text-stone-500 font-normal">| Multi-Platform Copy</span>
-                  </h4>
-                  <p className="mt-1.5 text-stone-650 text-xs leading-relaxed">
-                    Proporciona pestañas dedicadas para Instagram, LinkedIn, Facebook, y YouTube, organizando los copys listos para publicar.
-                  </p>
-                  <ul className="list-disc pl-5 mt-2 space-y-1.5 text-xs text-stone-600">
-                    <li><strong className="text-[#1a1a1a]">Copiado Inteligente:</strong> Copie el contenido de una red social individual con un solo clic, o presione <em className="not-italic font-bold">"Copiar Todo el Contenido"</em> para capturar el plan unificado de todas las plataformas, hashtags y prompts de imagen del día.</li>
-                    <li><strong className="text-[#1a1a1a]">Visuales Prompts:</strong> Incluye un prompt de inteligencia artificial en formato estandarizado (Midjourney/Flux) para generar imágenes fotorrealistas de revestimientos WPC en proyectos de lujo.</li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Módulo 5 */}
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/35 font-mono text-sm font-bold">
-                  5
-                </div>
-                <div>
-                  <h4 className="font-bold text-[#1a1a1a] text-sm uppercase tracking-tight flex items-center gap-2">
-                    Atajos de Teclado Globales <span className="text-stone-500 font-normal">| Keyboard Shortcuts</span>
-                  </h4>
-                  <p className="mt-1.5 text-stone-650 text-xs leading-relaxed">
-                    Navegue a la velocidad del pensamiento. Diseñado especialmente para agilizar el flujo de trabajo de los administradores.
-                  </p>
-                  <ul className="list-disc pl-5 mt-2 space-y-1.5 text-xs text-stone-600 font-mono">
-                    <li><strong className="text-[#1a1a1a]">Flecha Izquierda / Derecha (⬅️ ➡️):</strong> Cambia de forma instantánea entre los meses del año para revisar el cronograma estacional.</li>
-                    <li><strong className="text-[#1a1a1a]">Flecha Arriba / Abajo (⬆️ ⬇️):</strong> Navega y selecciona secuencialmente los días del mes actual. Al cruzar los límites del mes, avanza o retrocede automáticamente de mes seleccionando el día correspondiente.</li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Módulo 6 */}
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/35 font-mono text-sm font-bold">
-                  6
-                </div>
-                <div>
-                  <h4 className="font-bold text-[#1a1a1a] text-sm uppercase tracking-tight flex items-center gap-2">
-                    Reportes de Impresión Profesional y Generación de PDF <span className="text-stone-500 font-normal">| Reporting & PDF Exports</span>
-                  </h4>
-                  <p className="mt-1.5 text-stone-650 text-xs leading-relaxed">
-                    Usted puede exportar reportes de impresión de alta fidelidad, diseñados con hojas de estilo dedicadas para tamaño A4 u oficios.
-                  </p>
-                  <ul className="list-disc pl-5 mt-2 space-y-1.5 text-xs text-stone-600">
-                    <li><strong className="text-[#1a1a1a]">Imprimir Brief Diario:</strong> Disponible en la cabecera del visor de contenido del día. Formatea exclusivamente la información, copys, hashtags y directivas visuales de ese día, ocultando la interfaz de la aplicación.</li>
-                    <li><strong className="text-[#1a1a1a]">Imprimir Reporte Mensual Completo:</strong> Próximamente disponible de manera unificada. Genera un cronograma completo del mes seleccionado en forma de tabla administrativa con fechas, estados de revisión, horas planeadas y ángulos de comunicación.</li>
-                    <li><strong className="text-[#1a1a1a]">Exportar a PDF:</strong> Al abrirse la ventana nativa de impresión del navegador, simplemente seleccione como destino <em className="not-italic font-bold">"Guardar como PDF"</em> (Save as PDF). Asegúrese de activar la casilla "Imprimir gráficos de fondo" para plasmar perfectamente los acentos visuales y colores de los semáforos de cumplimiento.</li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Módulo 7 */}
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/35 font-mono text-sm font-bold">
-                  7
-                </div>
-                <div>
-                  <h4 className="font-bold text-[#1a1a1a] text-sm uppercase tracking-tight flex items-center gap-2">
-                    Módulo de Video Asistido por IA <span className="text-stone-500 font-normal">| VideoGenerator</span>
-                  </h4>
-                  <p className="mt-1.5 text-stone-650 text-xs leading-relaxed">
-                    Estructure y redacte guiones para videos de redes sociales de forma automatizada.
-                  </p>
-                  <ul className="list-disc pl-5 mt-2 space-y-1.5 text-xs text-stone-600">
-                    <li><strong className="text-[#1a1a1a]">Guión Estructurado:</strong> Crea de forma automática guiones bilingües con indicaciones para el presentador, locución de voz y tomas de apoyo visual (B-Roll).</li>
-                    <li><strong className="text-[#1a1a1a]">Plataformas de Render:</strong> Los prompts generados están formateados para ingresar directamente a herramientas de síntesis como HeyGen, InVideo o Runway.</li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Módulo 8 */}
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/35 font-mono text-sm font-bold">
-                  8
-                </div>
-                <div>
-                  <h4 className="font-bold text-[#1a1a1a] text-sm uppercase tracking-tight flex items-center gap-2">
-                    Entrenamiento de Marca y Google Analytics Simulado <span className="text-stone-500 font-normal">| TrainingAnalyticsHub</span>
-                  </h4>
-                  <p className="mt-1.5 text-stone-650 text-xs leading-relaxed">
-                    Alinee el comportamiento de la inteligencia artificial con el ADN exacto de la empresa.
-                  </p>
-                  <ul className="list-disc pl-5 mt-2 space-y-1.5 text-xs text-stone-600">
-                    <li><strong className="text-[#1a1a1a]">Directrices Corporativas:</strong> Defina el nombre de la empresa, la propuesta de valor del WPC coextruido bicapa, guías de tono y palabras clave obligatorias. Al guardar, el motor de IA prioriza estas reglas en cada nueva generación.</li>
-                    <li><strong className="text-[#1a1a1a]">Simulador de Rendimiento:</strong> Realice seguimiento del tráfico de marketing digital, tasa de clics (CTR) y tasas de conversión simuladas asociadas a las campañas del sistema.</li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Módulo 9 */}
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#c9a961]/15 text-[#c9a961] border border-[#c9a961]/35 font-mono text-sm font-bold">
-                  9
-                </div>
-                <div>
-                  <h4 className="font-bold text-[#1a1a1a] text-sm uppercase tracking-tight flex items-center gap-2">
-                    Respaldo Automático de Seguridad <span className="text-stone-500 font-normal">| Local Autosave Backup</span>
-                  </h4>
-                  <p className="mt-1.5 text-stone-650 text-xs leading-relaxed">
-                    Sus datos de trabajo están totalmente seguros gracias al sistema de copia de seguridad redundante integrado.
-                  </p>
-                  <ul className="list-disc pl-5 mt-2 space-y-1.5 text-xs text-stone-600">
-                    <li><strong className="text-[#1a1a1a]">Respaldo Automático de 5 Minutos:</strong> Cada 5 minutos el sistema consolida el estado entero de la aplicación (12 meses de calendario, copys editados manualmente, configuraciones de marca) y los escribe en el almacenamiento seguro del navegador.</li>
-                    <li><strong className="text-[#1a1a1a]">Sello de Guardado:</strong> Visualice de manera interactiva la hora exacta del último respaldo directamente en la cabecera principal junto al contador de telemetría (<em className="not-italic text-[#c9a961] font-mono">GUARDADO: HH:MM</em>).</li>
-                  </ul>
-                </div>
+              {/* Info de Respaldo */}
+              <div className="p-3 bg-stone-100 rounded-xl border border-stone-200 text-stone-600 text-xs flex items-center justify-between">
+                <span className="font-mono text-[11px] font-bold text-stone-800">💾 Respaldo Automático de Seguridad:</span>
+                <span>Guardado local redundante cada 5 minutos. Visualice la hora exacta en la cabecera principal.</span>
               </div>
             </div>
           ) : (

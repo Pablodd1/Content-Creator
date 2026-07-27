@@ -94,6 +94,9 @@ export default function VideoGenerator({
   const [runwaySettings, setRunwaySettings] = useState({
     collection: 'pvc_metallic',
     motion: 'orbit_arc',
+    lighting: 'showroom' as 'showroom' | 'daylight' | 'moody' | 'studio',
+    scenePreset: 'living_room' as 'living_room' | 'hotel_suite' | 'executive_office' | 'sample_studio',
+    styleModifier: 'hyperreal' as 'hyperreal' | 'commercial' | 'macro_texture' | 'bokeh',
     aspect: '9:16' as '16:9' | '9:16',
     duration: '10' as '5' | '10',
     customPrompt: '',
@@ -159,6 +162,27 @@ export default function VideoGenerator({
     showToast(language === 'EN' ? 'Runway API Key synced successfully' : 'Clave de API de Runway guardada con éxito');
   };
 
+  const LIGHTING_PRESETS = {
+    showroom: language === 'ES' ? 'luz cálida de showroom de iluminación focalizada' : 'warm spotlighting with subtle ambient showroom glow',
+    daylight: language === 'ES' ? 'luz natural arquitectónica de gran ventanal lateral' : 'soft architectural daylight streaming through large side windows',
+    moody: language === 'ES' ? 'iluminación tenue de ambiente nocturno de lujo' : 'moody evening ambient interior lighting with soft golden highlights',
+    studio: language === 'ES' ? 'iluminación de estudio fotográfico de alta precisión' : 'high-key studio photography softbox lighting with crisp texture resolution'
+  };
+
+  const SCENE_PRESETS = {
+    living_room: language === 'ES' ? 'muro principal de una sala de estar de lujo' : 'feature wall of a luxury residential living room',
+    hotel_suite: language === 'ES' ? 'suite de hotel boutique internacional de cinco estrellas' : 'presidential suite wall of a five-star international boutique hotel',
+    executive_office: language === 'ES' ? 'oficina ejecutiva arquitectónica moderna' : 'modern executive architectural conference office wall',
+    sample_studio: language === 'ES' ? 'estudio de muestras de diseño de interiores' : 'interior design studio sample board showcase environment'
+  };
+
+  const STYLE_MODIFIERS = {
+    hyperreal: language === 'ES' ? 'fotografía arquitectónica hiperrealista en resolución 8k' : '8k resolution hyper-realistic architectural detail photography',
+    commercial: language === 'ES' ? 'toma cinematográfica de anuncio publicitario de alta gama' : 'cinematic commercial advertising video production shot',
+    macro_texture: language === 'ES' ? 'primer plano macro enfocado en los relieves táctiles del papel tapiz' : 'macro close-up lens focus highlighting tactile 3D wallpaper reliefs',
+    bokeh: language === 'ES' ? 'profundidad de campo suave con desenfoque de fondo de lujo' : 'shallow depth of field with buttery soft background studio bokeh'
+  };
+
   const getRunwayPromptText = (): string => {
     if (runwaySettings.customPrompt) return runwaySettings.customPrompt;
     
@@ -172,11 +196,40 @@ export default function VideoGenerator({
           : (language === 'ES' ? 'Papel tapiz de PVC con textura europea' : 'PVC Wallpaper with European textured detail')
         );
 
+    const lightingPhrase = LIGHTING_PRESETS[runwaySettings.lighting];
+    const scenePhrase = SCENE_PRESETS[runwaySettings.scenePreset];
+    const stylePhrase = STYLE_MODIFIERS[runwaySettings.styleModifier];
+    const speedPhrase = language === 'ES' 
+      ? (runwaySettings.cameraSpeed === 'slow' ? 'movimiento pausado y elegante' : runwaySettings.cameraSpeed === 'fast' ? 'movimiento dinámico y fluido' : 'movimiento moderado fluido')
+      : (runwaySettings.cameraSpeed === 'slow' ? 'slow elegant pacing' : runwaySettings.cameraSpeed === 'fast' ? 'dynamic fast pan' : 'moderate smooth pacing');
+
     const basePrompt = language === 'ES'
-      ? `Video hiperrealista de Runway Gen-4.5 de alta definición de un muro interior decorado con el producto de UNITEC USA Design: ${chosenColl?.nameES}. Detalle visual: ${chosenColl?.descES}. Estilo de cámara: ${chosenMotion?.nameES} (${chosenMotion?.prompt}). Concepto del día: ${themeText}. El material es 100% impermeable, lavable y de calidad premium de unitecusadesign.com, con luz ambiental cálida de showroom, 8k, cinematográfico.`
-      : `High-definition hyper-realistic Runway Gen-4.5 video of a luxury interior wall showcasing UNITEC USA Design's ${chosenColl?.nameEN}. Visual detail: ${chosenColl?.descEN}. Camera style: ${chosenMotion?.nameEN} (${chosenMotion?.prompt}). Topic context: ${themeText}. The material is 100% waterproof, washable and premium quality from unitecusadesign.com, warm environmental showroom lighting, 8k resolution, cinematic commercial advertising.`;
+      ? `Video hiperrealista de Runway Gen-4.5 (8k, ${stylePhrase}) mostrando el ${scenePhrase} decorado con el producto de UNITEC USA Design: ${chosenColl?.nameES}. Detalle del producto: ${chosenColl?.descES}. Estilo de cámara: ${chosenMotion?.nameES} (${chosenMotion?.prompt}), con ${speedPhrase}. Iluminación: ${lightingPhrase}. Concepto: ${themeText}. El material es 100% impermeable, lavable y de calidad premium de unitecusadesign.com, acabado impecable sin artefactos.`
+      : `High-definition hyper-realistic Runway Gen-4.5 commercial video (${stylePhrase}) showcasing the ${scenePhrase} decorated with UNITEC USA Design's ${chosenColl?.nameEN}. Product detail: ${chosenColl?.descEN}. Camera movement: ${chosenMotion?.nameEN} (${chosenMotion?.prompt}) with ${speedPhrase}. Lighting setup: ${lightingPhrase}. Topic context: ${themeText}. The material is 100% waterproof, washable, and premium quality from unitecusadesign.com, zero artifacts, cinematic quality.`;
       
     return basePrompt;
+  };
+
+  const handleEnhancePrompt = () => {
+    const rawPrompt = getRunwayPromptText();
+    const enhancedTag = language === 'ES' 
+      ? `, f/2.8 lens, photorealistic 8k octane render feel, high luxury interior showcase, perfect material finish of unitecusadesign.com.`
+      : `, f/2.8 aperture lens, photorealistic 8k octane render feel, high luxury interior showcase, perfect material finish of unitecusadesign.com.`;
+    
+    setRunwaySettings(prev => ({
+      ...prev,
+      customPrompt: rawPrompt + enhancedTag
+    }));
+    showToast(language === 'ES' ? 'Prompt de Runway enriquecido con calidad f/2.8 y detalles 8K' : 'Runway prompt enhanced with f/2.8 macro detail and 8K parameters');
+  };
+
+  const appendKeywordTag = (tag: string) => {
+    const current = getRunwayPromptText();
+    setRunwaySettings(prev => ({
+      ...prev,
+      customPrompt: `${current}, ${tag}`
+    }));
+    showToast(language === 'ES' ? `Añadido: "${tag}"` : `Appended tag: "${tag}"`);
   };
 
   const triggerVideoGeneration = async () => {
@@ -453,39 +506,116 @@ export default function VideoGenerator({
         </button>
       </div>
 
-      {/* Main Panel Content Area */}
-      <div className="p-5 flex-1 min-h-[360px] flex flex-col md:flex-row gap-6">
+      {/* Main Panel Content Area (Desktop 12-col grid optimization) */}
+      <div className="p-5 flex-1 min-h-[360px] grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        {/* Form and configs column */}
-        <div className="flex-1 space-y-4 max-w-md">
+        {/* Form and configs column (7 cols on desktop) */}
+        <div className="lg:col-span-7 space-y-4">
           {activeTab === 'runway' && (
-            <div className="space-y-3.5 animate-fadeIn text-xs font-sans">
-              <div className="bg-[#c9a961]/5 border border-[#c9a961]/25 p-3 rounded-lg space-y-1.5 text-left">
+            <div className="space-y-4 animate-fadeIn text-xs font-sans">
+              
+              {/* Interactive Prompt Studio Box */}
+              <div className="bg-[#c9a961]/5 border border-[#c9a961]/30 p-3.5 rounded-lg space-y-2 text-left shadow-xs">
                 <div className="flex justify-between items-center text-[10px] font-mono font-bold tracking-wider text-[#b09352] uppercase">
-                  <span>🎬 {isSpanish ? '1. Prompt de Animación Runway Gen-4.5:' : '1. Runway Gen-4.5 Prompt:'}</span>
-                  <button 
-                    onClick={() => setRunwaySettings(prev => ({ ...prev, customPrompt: '' }))}
-                    className="text-[9px] hover:underline normal-case text-stone-400 cursor-pointer"
-                  >
-                    {isSpanish ? 'Restablecer' : 'Default Prompt'}
-                  </button>
+                  <span className="flex items-center gap-1">
+                    <Sparkles size={11} className="text-[#c9a961]" />
+                    {isSpanish ? '1. Estudio de Prompt de Animación Runway Gen-4.5:' : '1. Runway Gen-4.5 Prompt Studio:'}
+                  </span>
+                  
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={handleEnhancePrompt}
+                      className="px-2 py-0.5 bg-[#c9a961] text-stone-950 font-sans font-bold text-[9.5px] rounded hover:bg-[#b09352] transition-colors cursor-pointer flex items-center gap-1"
+                      title={isSpanish ? 'Optimizar prompt con parámetros 8K f/2.8' : 'Optimize prompt with 8K f/2.8 parameters'}
+                    >
+                      <Sparkles size={10} />
+                      <span>{isSpanish ? 'Enriquecer con IA' : 'Enhance Prompt'}</span>
+                    </button>
+                    
+                    <button 
+                      onClick={() => setRunwaySettings(prev => ({ ...prev, customPrompt: '' }))}
+                      className="text-[9px] hover:underline normal-case text-stone-500 cursor-pointer"
+                    >
+                      {isSpanish ? 'Restablecer' : 'Reset'}
+                    </button>
+                  </div>
                 </div>
                 
                 <textarea
-                  className="w-full h-24 p-2.5 bg-white border border-stone-200 text-[10.5px] leading-relaxed text-stone-750 font-mono resize-none focus:outline-[#2d5a4a] rounded-lg"
+                  className="w-full h-24 p-2.5 bg-white border border-stone-200 text-[10.5px] leading-relaxed text-stone-800 font-mono resize-none focus:outline-[#2d5a4a] rounded-lg shadow-inner"
                   value={getRunwayPromptText()}
                   onChange={(e) => setRunwaySettings(prev => ({ ...prev, customPrompt: e.target.value }))}
                   placeholder={isSpanish ? 'Describa el patrón, iluminación o detalles de papel tapiz PVC...' : 'Describe the wallpaper pattern, lighting, or room details...'}
                 />
-                
-                <p className="text-[8.5px] text-stone-500 leading-snug">
-                  {isSpanish ? '※ Runway Gen-4.5 crea clips hiperrealistas optimizados para el marketing de papel tapiz premium de unitecusadesign.com.' : '※ Runway Gen-4.5 renders hyper-realistic clips optimized for premium wallpaper marketing of unitecusadesign.com.'}
-                </p>
+
+                {/* Quick Keyword Tag Append Chips */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="text-[9px] font-mono uppercase text-stone-500 font-bold">{isSpanish ? '+ TAGS RÁPIDOS:' : '+ QUICK TAGS:'}</span>
+                  <button 
+                    onClick={() => appendKeywordTag(isSpanish ? 'vetas doradas brillantes' : 'gold leaf vein shimmer')}
+                    className="px-1.5 py-0.5 bg-white hover:bg-stone-100 text-stone-700 text-[9px] rounded border border-stone-200 transition-colors cursor-pointer font-mono"
+                  >
+                    + Gold Veins
+                  </button>
+                  <button 
+                    onClick={() => appendKeywordTag(isSpanish ? '100% impermeable lavable' : '100% waterproof washable')}
+                    className="px-1.5 py-0.5 bg-white hover:bg-stone-100 text-stone-700 text-[9px] rounded border border-stone-200 transition-colors cursor-pointer font-mono"
+                  >
+                    + Waterproof
+                  </button>
+                  <button 
+                    onClick={() => appendKeywordTag(isSpanish ? 'cumplimiento norma fuego NSR-10' : 'NSR-10 fire safety standards')}
+                    className="px-1.5 py-0.5 bg-white hover:bg-stone-100 text-stone-700 text-[9px] rounded border border-stone-200 transition-colors cursor-pointer font-mono"
+                  >
+                    + NSR-10 Code
+                  </button>
+                  <button 
+                    onClick={() => appendKeywordTag(isSpanish ? 'relieve de damasco táctil' : 'tactile damask relief')}
+                    className="px-1.5 py-0.5 bg-white hover:bg-stone-100 text-stone-700 text-[9px] rounded border border-stone-200 transition-colors cursor-pointer font-mono"
+                  >
+                    + Damask Relief
+                  </button>
+                </div>
+              </div>
+
+              {/* Lighting & Scene Environment Selectors */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+                <div className="space-y-1">
+                  <label className="block text-[10px] uppercase font-mono tracking-wider text-stone-600 font-bold">
+                    💡 {isSpanish ? 'Iluminación de Escena:' : 'Lighting Preset:'}
+                  </label>
+                  <select
+                    value={runwaySettings.lighting}
+                    onChange={(e) => setRunwaySettings(prev => ({ ...prev, lighting: e.target.value as any }))}
+                    className="w-full bg-stone-50 border border-stone-200 rounded px-2.5 py-1.5 text-[11px] text-stone-850 focus:outline-[#2d5a4a]"
+                  >
+                    <option value="showroom">{isSpanish ? 'Showroom de Lujo (Spotlight Cálido)' : 'Warm Showroom Spotlight'}</option>
+                    <option value="daylight">{isSpanish ? 'Luz Natural Arquitectónica (Ventanal)' : 'Architectural Daylight'}</option>
+                    <option value="moody">{isSpanish ? 'Ambiente Nocturno de Lujo (Dorado)' : 'Moody Evening Interior'}</option>
+                    <option value="studio">{isSpanish ? 'Estudio Fotográfico Softbox Precision' : 'High-Key Studio Photography'}</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[10px] uppercase font-mono tracking-wider text-stone-600 font-bold">
+                    🏛️ {isSpanish ? 'Ambiente Interior:' : 'Atmosphere / Room:'}
+                  </label>
+                  <select
+                    value={runwaySettings.scenePreset}
+                    onChange={(e) => setRunwaySettings(prev => ({ ...prev, scenePreset: e.target.value as any }))}
+                    className="w-full bg-stone-50 border border-stone-200 rounded px-2.5 py-1.5 text-[11px] text-stone-850 focus:outline-[#2d5a4a]"
+                  >
+                    <option value="living_room">{isSpanish ? 'Muro Principal Sala de Estar' : 'Luxury Living Room Wall'}</option>
+                    <option value="hotel_suite">{isSpanish ? 'Suite de Hotel Boutique 5★' : 'Five-Star Hotel Suite'}</option>
+                    <option value="executive_office">{isSpanish ? 'Oficina Ejecutiva Arquitectónica' : 'Executive Architectural Suite'}</option>
+                    <option value="sample_studio">{isSpanish ? 'Estudio de Muestras de Interiorismo' : 'Interior Sample Board Studio'}</option>
+                  </select>
+                </div>
               </div>
 
               {/* Collection Selector */}
               <div className="space-y-1 text-left">
-                <label className="block text-[10px] uppercase font-mono tracking-wider text-stone-500 font-bold">
+                <label className="block text-[10px] uppercase font-mono tracking-wider text-stone-600 font-bold">
                   🌟 {isSpanish ? '2. Colección de Papel Tapiz PVC:' : '2. PVC Wallpaper Collection:'}
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -495,8 +625,8 @@ export default function VideoGenerator({
                       onClick={() => setRunwaySettings(prev => ({ ...prev, collection: coll.id }))}
                       className={`p-2 rounded-lg border text-left flex flex-col justify-between transition-colors cursor-pointer ${
                         runwaySettings.collection === coll.id
-                          ? 'bg-[#c9a961]/5 border-[#c9a961] text-[#2d5a4a] font-bold'
-                          : 'bg-stone-50 border-stone-200 hover:bg-stone-100 text-stone-650'
+                          ? 'bg-[#c9a961]/10 border-[#c9a961] text-[#2d5a4a] font-bold shadow-xs'
+                          : 'bg-stone-50 border-stone-200 hover:bg-stone-100 text-stone-700'
                       }`}
                     >
                       <span className="block text-[11px] leading-tight font-sans text-stone-900">
@@ -510,34 +640,52 @@ export default function VideoGenerator({
                 </div>
               </div>
 
-              {/* Camera Motion Selector */}
-              <div className="space-y-1 text-left">
-                <label className="block text-[10px] uppercase font-mono tracking-wider text-stone-500 font-bold">
-                  🎥 {isSpanish ? '3. Movimiento de Cámara:' : '3. Camera Motion Style:'}
-                </label>
-                <select
-                  value={runwaySettings.motion}
-                  onChange={(e) => setRunwaySettings(prev => ({ ...prev, motion: e.target.value }))}
-                  className="w-full bg-stone-50 border border-stone-200 rounded px-2.5 py-1.5 text-[11.5px] text-stone-800 focus:outline-[#2d5a4a]"
-                >
-                  {RUNWAY_MOTIONS.map(motion => (
-                    <option key={motion.id} value={motion.id}>
-                      {isSpanish ? motion.nameES : motion.nameEN} ({motion.prompt})
-                    </option>
-                  ))}
-                </select>
+              {/* Camera Motion Selector & Style Modifier */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+                <div className="space-y-1">
+                  <label className="block text-[10px] uppercase font-mono tracking-wider text-stone-600 font-bold">
+                    🎥 {isSpanish ? '3. Movimiento de Cámara:' : '3. Camera Motion Style:'}
+                  </label>
+                  <select
+                    value={runwaySettings.motion}
+                    onChange={(e) => setRunwaySettings(prev => ({ ...prev, motion: e.target.value }))}
+                    className="w-full bg-stone-50 border border-stone-200 rounded px-2.5 py-1.5 text-[11px] text-stone-850 focus:outline-[#2d5a4a]"
+                  >
+                    {RUNWAY_MOTIONS.map(motion => (
+                      <option key={motion.id} value={motion.id}>
+                        {isSpanish ? motion.nameES : motion.nameEN} ({motion.prompt})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[10px] uppercase font-mono tracking-wider text-stone-600 font-bold">
+                    🎨 {isSpanish ? 'Modificador de Estilo:' : 'Style Modifier:'}
+                  </label>
+                  <select
+                    value={runwaySettings.styleModifier}
+                    onChange={(e) => setRunwaySettings(prev => ({ ...prev, styleModifier: e.target.value as any }))}
+                    className="w-full bg-stone-50 border border-stone-200 rounded px-2.5 py-1.5 text-[11px] text-stone-850 focus:outline-[#2d5a4a]"
+                  >
+                    <option value="hyperreal">{isSpanish ? 'Detalle Hiperrealista 8K' : '8K Hyper-realistic Detail'}</option>
+                    <option value="commercial">{isSpanish ? 'Anuncio Publicitario Comercial' : 'Cinematic Commercial'}</option>
+                    <option value="macro_texture">{isSpanish ? 'Lente Macro de Relieves 3D' : 'Macro Texture Lens Focus'}</option>
+                    <option value="bokeh">{isSpanish ? 'Desenfoque Bokeh de Estudio' : 'Soft Studio Bokeh Depth'}</option>
+                  </select>
+                </div>
               </div>
 
               {/* Speed & Duration & Aspect Grid */}
               <div className="grid grid-cols-3 gap-2.5 text-left">
                 <div className="space-y-1">
-                  <label className="block text-[10px] uppercase font-mono tracking-wider text-stone-500 font-bold">
+                  <label className="block text-[10px] uppercase font-mono tracking-wider text-stone-600 font-bold">
                     ⏱️ {isSpanish ? 'Duración:' : 'Duration:'}
                   </label>
                   <select
                     value={runwaySettings.duration}
                     onChange={(e) => setRunwaySettings(prev => ({ ...prev, duration: e.target.value as '5' | '10' }))}
-                    className="w-full bg-stone-50 border border-stone-200 rounded px-1.5 py-1 text-[11px] text-stone-800 focus:outline-[#2d5a4a]"
+                    className="w-full bg-stone-50 border border-stone-200 rounded px-1.5 py-1.5 text-[11px] text-stone-850 focus:outline-[#2d5a4a]"
                   >
                     <option value="5">5 {isSpanish ? 'Segundos' : 'Seconds'}</option>
                     <option value="10">10 {isSpanish ? 'Segundos' : 'Seconds'}</option>
@@ -545,13 +693,13 @@ export default function VideoGenerator({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-[10px] uppercase font-mono tracking-wider text-stone-500 font-bold">
+                  <label className="block text-[10px] uppercase font-mono tracking-wider text-stone-600 font-bold">
                     ⚡ {isSpanish ? 'Velocidad:' : 'Speed:'}
                   </label>
                   <select
                     value={runwaySettings.cameraSpeed}
                     onChange={(e) => setRunwaySettings(prev => ({ ...prev, cameraSpeed: e.target.value as 'slow' | 'medium' | 'fast' }))}
-                    className="w-full bg-stone-50 border border-stone-200 rounded px-1.5 py-1 text-[11px] text-[#1a1a1a] focus:outline-[#2d5a4a]"
+                    className="w-full bg-stone-50 border border-stone-200 rounded px-1.5 py-1.5 text-[11px] text-stone-850 focus:outline-[#2d5a4a]"
                   >
                     <option value="slow">{isSpanish ? 'Lento' : 'Slow'}</option>
                     <option value="medium">{isSpanish ? 'Medio' : 'Medium'}</option>
@@ -560,16 +708,16 @@ export default function VideoGenerator({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-[10px] uppercase font-mono tracking-wider text-stone-500 font-bold">
+                  <label className="block text-[10px] uppercase font-mono tracking-wider text-stone-600 font-bold">
                     📐 {isSpanish ? 'Aspecto:' : 'Aspect:'}
                   </label>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 pt-0.5">
                     {(['9:16', '16:9'] as const).map(ratio => (
                       <button
                         key={ratio}
                         type="button"
                         onClick={() => setRunwaySettings(prev => ({ ...prev, aspect: ratio }))}
-                        className={`flex-1 py-1 text-center font-mono text-[9px] font-bold rounded border cursor-pointer ${
+                        className={`flex-1 py-1 text-center font-mono text-[9.5px] font-bold rounded border cursor-pointer ${
                           runwaySettings.aspect === ratio
                             ? 'bg-[#1a1a1a] text-white border-[#1a1a1a]'
                             : 'bg-stone-50 text-stone-500 border-stone-200 hover:bg-stone-100'
@@ -588,7 +736,7 @@ export default function VideoGenerator({
                   id="runway-generate-btn"
                   onClick={triggerVideoGeneration}
                   disabled={isRendering}
-                  className="w-full py-2.5 bg-stone-900 hover:bg-stone-800 text-[#c9a961] font-sans font-black uppercase text-xs tracking-wider rounded-lg transition-all shadow-sm hover:shadow-md cursor-pointer disabled:bg-stone-200 disabled:text-stone-400 flex items-center justify-center gap-2"
+                  className="w-full py-3 bg-stone-900 hover:bg-stone-800 text-[#c9a961] font-sans font-black uppercase text-xs tracking-wider rounded-lg transition-all shadow-sm hover:shadow-md cursor-pointer disabled:bg-stone-200 disabled:text-stone-400 flex items-center justify-center gap-2"
                 >
                   <Sparkles size={14} className="text-[#c9a961] animate-pulse" />
                   <span>{isSpanish ? 'Generar Clip Runway Gen-4.5' : 'Submit Runway Gen-4.5 Render'}</span>
@@ -739,8 +887,8 @@ export default function VideoGenerator({
           )}
         </div>
 
-        {/* Video Player Display Screen / Developer Logger Block */}
-        <div className="flex-1 bg-stone-50 border border-stone-200 rounded-xl p-4 flex flex-col justify-between">
+        {/* Video Player Display Screen / Developer Logger Block (5 cols on desktop) */}
+        <div className="lg:col-span-5 bg-stone-50 border border-stone-200 rounded-xl p-4 flex flex-col justify-between">
           
           {isRendering ? (
             /* RENDERING SCREEN */

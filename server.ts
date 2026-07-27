@@ -54,7 +54,7 @@ async function startServer() {
   // Universal Social Media Post Generator endpoint
   app.post('/api/generate-universal-post', async (req, res) => {
     try {
-      const { title, target, objective, want, language = 'ES' } = req.body;
+      const { title, target, objective, want, tone = 'Sales-driven', platform = 'All Platforms', complianceFlags = [], language = 'ES' } = req.body;
       
       if (!title && !target && !objective && !want) {
         return res.status(400).json({ 
@@ -65,30 +65,53 @@ async function startServer() {
 
       const ai = getGeminiClient();
       
-      const systemInstruction = `You are a professional social media copywriter specialized in luxury interior design and premium PVC wallpaper marketing for unitecusadesign.com.
-Your goal is to write a single, extremely engaging, high-converting social media post that fits multiple platforms (Instagram, Facebook, LinkedIn, YouTube).
-Ensure you maintain an elegant, high-end, bilingually integrated structure or focus primarily on Spanish (Colombia targeted) with clean, professional accents.`;
+      const complianceText = complianceFlags && complianceFlags.length > 0 
+        ? `Mandatory Compliance & Product Features to Include: ${complianceFlags.join(', ')}.`
+        : '';
 
-      const prompt = `Please generate a single creative social media post using the following details:
-- Title/Hook: "${title || 'Not specified'}"
-- Target Audience/Segment: "${target || 'Not specified'}"
-- Strategy Objective: "${objective || 'Not specified'}"
-- Specific Want/Creative Angle: "${want || 'Not specified'}"
+      const systemInstruction = `You are a world-class creative director and senior social media strategist specialized in luxury interior design, architectural finishes, and high-end PVC wallpapers for UNITEC USA Design (unitecusadesign.com).
+Your task is to write high-converting, highly engaging, professional social media copy tailored to ${tone} tone and targeted for ${platform}.
+Maintain a sleek, modern, sophisticated voice. Integrate high-value interior architecture terminology (e.g., 3D reliefs, 100% waterproof PVC, European design, NSR-10 fire retardation standards, FOB container wholesale distribution).`;
 
-Format requirements:
-1. Write a captivating headline using the Title.
-2. Structure the body with elegant spacing and subtle bullet points.
-3. Make sure to call to action (direct to website: unitecusadesign.com).
-4. Do not over-use emojis on professional angles. Keep it sleek.
-5. Provide a block of highly relevant hashtags at the very end.
-6. Return the post in ${language === 'EN' ? 'English' : 'Spanish (with secondary English translation if requested or helpful)'}.`;
+      const prompt = `Please generate an individual, highly optimized social media campaign post based on the following creative parameters:
+
+📌 CREATIVE BRIEF:
+- Title / Hook Line: "${title || 'Luxury PVC Wallpaper & 3D Wall Cladding'}"
+- Target Audience / Segment: "${target || 'Interior designers, architects, builders, and wholesale distributors in Colombia & US'}"
+- Strategic Objective: "${objective || 'Drive digital showroom traffic and container orders at unitecusadesign.com'}"
+- Specific Want / Creative Angle: "${want || 'Highlight durability, European aesthetic, and waterproof features'}"
+- Desired Tone of Voice: ${tone}
+- Target Platform Focus: ${platform}
+${complianceText ? `- Compliance Mandates: ${complianceText}` : ''}
+
+REQUIRED OUTPUT FORMAT (Return clean text with these exact formatted sections):
+
+✨ [CAPTURE HOOK / HEADLINE]
+(Create a high-impact, attention-grabbing opening line)
+
+📖 [MAIN POST BODY]
+(Write 2-3 engaging, well-spaced paragraphs with subtle bullet points highlighting value propositions and material benefits)
+
+🔒 [TECHNICAL & COMPLIANCE SPECIFICATIONS]
+(Include waterproof, washable PVC details, NSR-10 safety standards, or container shipment terms where appropriate)
+
+🎯 [CALL TO ACTION]
+(Direct traffic to browse catalog / request sample boards at unitecusadesign.com)
+
+🎬 [PAIRED AI VISUAL ASSET PROMPT (Runway / Midjourney)]
+(Provide a ready-to-use high-definition visual prompt description for AI image or video generation of this product scene)
+
+🏷️ [HASHTAGS]
+(Provide 10-12 highly targeted, high-performing hashtags for Instagram, LinkedIn, Facebook, and YouTube)
+
+Language: Output strictly in ${language === 'EN' ? 'English' : 'Spanish (with high-end Colombian & US international terminology)'}.`;
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
+        model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
           systemInstruction,
-          temperature: 0.8,
+          temperature: 0.75,
         }
       });
 

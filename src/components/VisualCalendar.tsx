@@ -76,25 +76,25 @@ export default function VisualCalendar({
                 id={`month-selector-card-${idx}`}
                 key={idx}
                 onClick={() => onMonthSelect(idx)}
-                className={`text-left p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between h-28 w-full relative ${active ? 'bg-[#c9a961]/10 border-2 border-[#c9a961] shadow-md shadow-[#c9a961]/5' : 'bg-white border-[#e5e5df] hover:border-stone-400 shadow-sm'}`}
+                className={`text-left p-3 rounded-xl border transition-all cursor-pointer flex flex-col justify-between min-h-[116px] h-auto w-full relative overflow-hidden ${active ? 'bg-[#c9a961]/10 border-2 border-[#c9a961] shadow-md shadow-[#c9a961]/5' : 'bg-white border-[#e5e5df] hover:border-stone-400 shadow-sm'}`}
               >
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className={`font-sans font-bold text-xs ${active ? 'text-[#c9a961]' : 'text-[#1a1a1a]'}`}>
+                <div className="space-y-1 overflow-hidden w-full">
+                  <div className="flex items-center justify-between gap-1 w-full">
+                    <span className={`font-sans font-bold text-xs truncate ${active ? 'text-[#c9a961]' : 'text-[#1a1a1a]'}`}>
                       {language === 'EN' ? mName.en : mName.es}
                     </span>
                     {pct === 100 && (
-                      <span className="w-4 h-4 rounded-full bg-emerald-500/15 text-emerald-600 flex items-center justify-center border border-emerald-500/30">
+                      <span className="w-4 h-4 rounded-full bg-emerald-500/15 text-emerald-600 flex items-center justify-center border border-emerald-500/30 shrink-0">
                         <Check size={8} className="stroke-[3]" />
                       </span>
                     )}
                   </div>
-                  <p className="text-[10.5px] text-stone-500 mt-1 line-clamp-1 font-medium leading-snug">
+                  <p className="text-[10px] text-stone-500 font-medium leading-tight truncate block w-full" title={language === 'EN' ? m.themeEN : m.themeES}>
                     {language === 'EN' ? m.themeEN : m.themeES}
                   </p>
                 </div>
 
-                <div className="mt-3">
+                <div className="pt-2 mt-2 border-t border-stone-100/80 w-full">
                   <div className="w-full bg-[#f5f5f0] h-1.5 rounded-full overflow-hidden">
                     <div
                       className={`h-full transition-all ${pct === 100 ? 'bg-emerald-500' : 'bg-[#c9a961]'}`}
