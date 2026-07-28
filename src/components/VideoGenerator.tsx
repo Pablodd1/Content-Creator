@@ -17,7 +17,14 @@ import {
   Cpu,
   Play,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  X,
+  Plus,
+  Shield,
+  Info,
+  Sliders,
+  Layers,
+  Award
 } from 'lucide-react';
 import { DayData, MonthData, ApiKeysConfig } from '../types';
 
@@ -31,6 +38,7 @@ interface GeneratedVideo {
   videoUrl: string;
   posterUrl: string;
   aspectRatio: '9:16' | '16:9';
+  hasWatermark?: boolean;
 }
 
 const RUNWAY_COLLECTIONS = [
@@ -45,6 +53,20 @@ const RUNWAY_MOTIONS = [
   { id: 'dolly_in', nameES: 'Dolly-In Acercamiento de Relieves', nameEN: 'Detail Dolly-In Close-Up', prompt: 'slow camera dolly-in close-up showcasing the physical 3D embossed wall texture' },
   { id: 'slow_pan', nameES: 'Paneo Lateral Cinemático', nameEN: 'Cinematic Horizontal Pan', prompt: 'slow elegant horizontal pan from left to right revealing the luxury feature wall' },
   { id: 'jib_down', nameES: 'Inclinación de Techo a Suelo', nameEN: 'Ceiling-to-Floor Jib-Down', prompt: 'slow vertical jib-down camera movement showing full wall elevation and lighting reflections' }
+];
+
+const DEFAULT_PROMPT_TAGS_ES = [
+  'Vetas doradas reflectivas 8K',
+  '100% Impermeable y Lavable',
+  'Sin texto visual ni marcas ajenas',
+  'Retardante de fuego norma NSR-10'
+];
+
+const DEFAULT_PROMPT_TAGS_EN = [
+  '8K Reflective Gold Veins',
+  '100% Waterproof & Washable',
+  'No text or foreign watermarks',
+  'NSR-10 Fire retardant certified'
 ];
 
 const SEEDED_VIDEOS: GeneratedVideo[] = [
@@ -138,6 +160,19 @@ export default function VideoGenerator({
   const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
   const [isPreviewExpanded, setIsPreviewExpanded] = useState(false);
 
+  // Logo & Branding Settings
+  const [alwaysAddLogo, setAlwaysAddLogo] = useState(true);
+  const [logoPosition, setLogoPosition] = useState<'top-right' | 'bottom-right' | 'top-left'>('top-right');
+  
+  // Dynamic Prompt Tags State (Users can add/remove elements)
+  const [promptTags, setPromptTags] = useState<string[]>(
+    language === 'ES' ? DEFAULT_PROMPT_TAGS_ES : DEFAULT_PROMPT_TAGS_EN
+  );
+  const [newTagInput, setNewTagInput] = useState('');
+  
+  // Prompt Info Modal
+  const [showPromptMatrixModal, setShowPromptMatrixModal] = useState(false);
+
   // Set default preview video on mount if available
   useEffect(() => {
     if (videosList.length > 0 && !activePlayVideo) {
@@ -148,6 +183,24 @@ export default function VideoGenerator({
   useEffect(() => {
     localStorage.setItem('unitec_generated_videos_v3', JSON.stringify(videosList));
   }, [videosList]);
+
+  const handleAddCustomTag = () => {
+    if (!newTagInput.trim()) return;
+    const cleanTag = newTagInput.trim();
+    if (promptTags.includes(cleanTag)) {
+      showToast(language === 'ES' ? 'Este elemento ya está agregado' : 'Tag already present');
+      return;
+    }
+    setPromptTags(prev => [...prev, cleanTag]);
+    setNewTagInput('');
+    showToast(language === 'ES' ? `Añadido al prompt: "${cleanTag}"` : `Added to prompt: "${cleanTag}"`);
+  };
+
+  const handleRemoveTag = (indexToRemove: number) => {
+    const tagRemoved = promptTags[indexToRemove];
+    setPromptTags(prev => prev.filter((_, idx) => idx !== indexToRemove));
+    showToast(language === 'ES' ? `Eliminado: "${tagRemoved}"` : `Removed: "${tagRemoved}"`);
+  };
 
   const handleSavePanelKeys = () => {
     onSaveConfigs({
@@ -201,9 +254,14 @@ export default function VideoGenerator({
       ? (runwaySettings.cameraSpeed === 'slow' ? 'movimiento pausado y elegante' : runwaySettings.cameraSpeed === 'fast' ? 'movimiento dinámico y fluido' : 'movimiento moderado fluido')
       : (runwaySettings.cameraSpeed === 'slow' ? 'slow elegant pacing' : runwaySettings.cameraSpeed === 'fast' ? 'dynamic fast pan' : 'moderate smooth pacing');
 
+    const tagsJoined = promptTags.length > 0 ? `, ${promptTags.join(', ')}` : '';
+    const brandTag = alwaysAddLogo 
+      ? (language === 'ES' ? ', con marca de agua y sello arquitectónico de UNITEC USA Design' : ', with subtle UNITEC USA Design architectural watermark placement')
+      : '';
+
     const basePrompt = language === 'ES'
-      ? `Video arquitectónico cinematográfico hiperrealista en 8K (${stylePhrase}). Toma enfocada en el ${scenePhrase} con acabado de ${chosenColl?.nameES} (${chosenColl?.descES}). Basado en el concepto: "${activeTitleText}". Movimiento de cámara: ${chosenMotion?.nameES} (${chosenMotion?.prompt}) con ${speedPhrase}. Iluminación: ${lightingPhrase}. Relieves 3D táctiles, vetas de textura tridimensional, reflejos de luz de showroom sutiles. Acabado de superficie limpio, pulido e impecable, sin texto, sin marcas de agua, sin logotipos, sin tipografía visual.`
-      : `8K hyper-realistic cinematic architectural interior video (${stylePhrase}). Focused shot of ${scenePhrase} decorated with ${chosenColl?.nameEN} (${chosenColl?.descEN}). Theme inspiration: "${activeTitleText}". Camera movement: ${chosenMotion?.nameEN} (${chosenMotion?.prompt}) with ${speedPhrase}. Lighting setup: ${lightingPhrase}. Tactile 3D embossed reliefs, detailed texture grain, soft ray-traced highlights. Pristine wall surface, photorealistic Octane render, no text, no watermarks, no logos, no typography.`;
+      ? `Video arquitectónico cinematográfico hiperrealista en 8K (${stylePhrase}). Toma enfocada en el ${scenePhrase} con acabado de ${chosenColl?.nameES} (${chosenColl?.descES}). Basado en el concepto: "${activeTitleText}". Movimiento de cámara: ${chosenMotion?.nameES} (${chosenMotion?.prompt}) con ${speedPhrase}. Iluminación: ${lightingPhrase}. Relieves 3D táctiles, vetas de textura tridimensional${tagsJoined}${brandTag}.`
+      : `8K hyper-realistic cinematic architectural interior video (${stylePhrase}). Focused shot of ${scenePhrase} decorated with ${chosenColl?.nameEN} (${chosenColl?.descEN}). Theme inspiration: "${activeTitleText}". Camera movement: ${chosenMotion?.nameEN} (${chosenMotion?.prompt}) with ${speedPhrase}. Lighting setup: ${lightingPhrase}. Tactile 3D embossed reliefs, detailed texture grain${tagsJoined}${brandTag}.`;
       
     return basePrompt;
   };
@@ -542,14 +600,25 @@ export default function VideoGenerator({
             <div className="space-y-4 animate-fadeIn text-xs font-sans">
               
               {/* Interactive Prompt Studio Box */}
-              <div className="bg-[#c9a961]/5 border border-[#c9a961]/30 p-3.5 rounded-lg space-y-2 text-left shadow-xs">
-                <div className="flex justify-between items-center text-[10px] font-mono font-bold tracking-wider text-[#b09352] uppercase">
+              <div className="bg-[#c9a961]/5 border border-[#c9a961]/30 p-3.5 rounded-lg space-y-3 text-left shadow-xs">
+                
+                {/* Header & Prompt Engine Info Button */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[10px] font-mono font-bold tracking-wider text-[#b09352] uppercase">
                   <span className="flex items-center gap-1">
-                    <Sparkles size={11} className="text-[#c9a961]" />
-                    {isSpanish ? '1. Estudio de Prompt de Animación Runway Gen-4.5:' : '1. Runway Gen-4.5 Prompt Studio:'}
+                    <Sparkles size={12} className="text-[#c9a961]" />
+                    {isSpanish ? '1. Prompt Inteligente Basado en Idea del Día:' : '1. Smart Prompt Derived from Idea Title:'}
                   </span>
                   
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setShowPromptMatrixModal(true)}
+                      className="px-2 py-0.5 bg-stone-900 text-[#c9a961] border border-[#c9a961]/30 font-sans font-bold text-[9.5px] rounded hover:bg-stone-850 transition-colors cursor-pointer flex items-center gap-1"
+                      title={isSpanish ? 'Ver cómo el título genera +3,072 combinaciones de prompt' : 'See how the title generates 3,072+ prompt combinations'}
+                    >
+                      <Info size={11} />
+                      <span>{isSpanish ? '¿Cómo se generan? (3,072 Combinaciones)' : 'How prompts are generated?'}</span>
+                    </button>
+
                     <button 
                       onClick={handleEnhancePrompt}
                       className="px-2 py-0.5 bg-[#c9a961] text-stone-950 font-sans font-bold text-[9.5px] rounded hover:bg-[#b09352] transition-colors cursor-pointer flex items-center gap-1"
@@ -560,7 +629,10 @@ export default function VideoGenerator({
                     </button>
                     
                     <button 
-                      onClick={() => setRunwaySettings(prev => ({ ...prev, customPrompt: '' }))}
+                      onClick={() => {
+                        setRunwaySettings(prev => ({ ...prev, customPrompt: '' }));
+                        showToast(isSpanish ? 'Prompt restablecido a la idea predeterminada' : 'Prompt reset to default idea');
+                      }}
                       className="text-[9px] hover:underline normal-case text-stone-500 cursor-pointer"
                     >
                       {isSpanish ? 'Restablecer' : 'Reset'}
@@ -568,6 +640,7 @@ export default function VideoGenerator({
                   </div>
                 </div>
                 
+                {/* Active Editable Prompt Textarea */}
                 <textarea
                   className="w-full h-24 p-2.5 bg-white border border-stone-200 text-[10.5px] leading-relaxed text-stone-800 font-mono resize-none focus:outline-[#2d5a4a] rounded-lg shadow-inner"
                   value={getRunwayPromptText()}
@@ -575,34 +648,104 @@ export default function VideoGenerator({
                   placeholder={isSpanish ? 'Describa el patrón, iluminación o detalles de papel tapiz PVC...' : 'Describe the wallpaper pattern, lighting, or room details...'}
                 />
 
-                {/* Quick Keyword Tag Append Chips */}
-                <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  <span className="text-[9px] font-mono uppercase text-stone-500 font-bold">{isSpanish ? '+ TAGS RÁPIDOS:' : '+ QUICK TAGS:'}</span>
-                  <button 
-                    onClick={() => appendKeywordTag(isSpanish ? 'vetas doradas brillantes' : 'gold leaf vein shimmer')}
-                    className="px-1.5 py-0.5 bg-white hover:bg-stone-100 text-stone-700 text-[9px] rounded border border-stone-200 transition-colors cursor-pointer font-mono"
-                  >
-                    + Gold Veins
-                  </button>
-                  <button 
-                    onClick={() => appendKeywordTag(isSpanish ? '100% impermeable lavable' : '100% waterproof washable')}
-                    className="px-1.5 py-0.5 bg-white hover:bg-stone-100 text-stone-700 text-[9px] rounded border border-stone-200 transition-colors cursor-pointer font-mono"
-                  >
-                    + Waterproof
-                  </button>
-                  <button 
-                    onClick={() => appendKeywordTag(isSpanish ? 'cumplimiento norma fuego NSR-10' : 'NSR-10 fire safety standards')}
-                    className="px-1.5 py-0.5 bg-white hover:bg-stone-100 text-stone-700 text-[9px] rounded border border-stone-200 transition-colors cursor-pointer font-mono"
-                  >
-                    + NSR-10 Code
-                  </button>
-                  <button 
-                    onClick={() => appendKeywordTag(isSpanish ? 'relieve de damasco táctil' : 'tactile damask relief')}
-                    className="px-1.5 py-0.5 bg-white hover:bg-stone-100 text-stone-700 text-[9px] rounded border border-stone-200 transition-colors cursor-pointer font-mono"
-                  >
-                    + Damask Relief
-                  </button>
+                {/* ADD / REMOVE CUSTOM ELEMENTS SECTION */}
+                <div className="pt-1 space-y-2 border-t border-[#c9a961]/20">
+                  <div className="flex items-center justify-between text-[9.5px] font-mono font-bold uppercase text-stone-700">
+                    <span className="flex items-center gap-1">
+                      <Sliders size={11} className="text-[#2d5a4a]" />
+                      {isSpanish ? 'AÑADIR O QUITAR ELEMENTOS DEL VIDEO:' : 'ADD OR REMOVE VIDEO ELEMENTS:'}
+                    </span>
+                    <span className="text-[9px] text-stone-500 font-normal">
+                      {isSpanish ? 'Haga clic en [x] para eliminar un elemento' : 'Click [x] on any tag to remove it'}
+                    </span>
+                  </div>
+
+                  {/* Add Custom Element Input */}
+                  <div className="flex gap-1.5">
+                    <input
+                      type="text"
+                      value={newTagInput}
+                      onChange={(e) => setNewTagInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCustomTag())}
+                      placeholder={isSpanish ? 'Ej: "Añadir luz dorada de atardecer", "Quitar sofá", "Añadir silla de terciopelo"' : 'E.g. "Add golden hour sunlight", "Remove sofa", "Add velvet armchair"'}
+                      className="flex-1 bg-white border border-stone-300 text-stone-800 text-[10px] px-2.5 py-1 rounded-md outline-none focus:border-[#2d5a4a] font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddCustomTag}
+                      className="px-2.5 py-1 bg-[#2d5a4a] text-white rounded-md text-[10px] font-bold font-sans hover:bg-[#204236] transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      <Plus size={11} />
+                      <span>{isSpanish ? 'Añadir' : 'Add Element'}</span>
+                    </button>
+                  </div>
+
+                  {/* Removable Element Tag Chips */}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    {promptTags.map((tag, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 bg-white border border-stone-300 rounded-full text-[9.5px] font-mono text-stone-800 shadow-2xs group hover:border-red-300 transition-colors"
+                      >
+                        <span>{tag}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveTag(idx)}
+                          title={isSpanish ? 'Quitar este elemento del prompt' : 'Remove this element from prompt'}
+                          className="w-3.5 h-3.5 rounded-full bg-stone-100 group-hover:bg-red-500 group-hover:text-white text-stone-500 flex items-center justify-center transition-colors cursor-pointer ml-0.5"
+                        >
+                          <X size={9} />
+                        </button>
+                      </span>
+                    ))}
+
+                    {promptTags.length === 0 && (
+                      <span className="text-[9.5px] font-mono text-stone-400 italic">
+                        {isSpanish ? 'Sin etiquetas de elementos personalizadas.' : 'No custom element tags active.'}
+                      </span>
+                    )}
+                  </div>
                 </div>
+
+                {/* ALWAYS OVERLAY LOGO / WATERMARK TOGGLE CARD */}
+                <div className="pt-2 border-t border-[#c9a961]/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-white/60 p-2 rounded-lg border border-stone-200">
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="always-add-logo-checkbox"
+                      type="checkbox"
+                      checked={alwaysAddLogo}
+                      onChange={(e) => {
+                        setAlwaysAddLogo(e.target.checked);
+                        showToast(
+                          e.target.checked
+                            ? (isSpanish ? 'Logotipo de marca UNITEC activado en el video' : 'UNITEC brand logo overlay enabled')
+                            : (isSpanish ? 'Logotipo de marca desactivado' : 'Brand logo overlay disabled')
+                        );
+                      }}
+                      className="w-4 h-4 accent-[#2d5a4a] rounded cursor-pointer"
+                    />
+                    <label htmlFor="always-add-logo-checkbox" className="text-[10px] font-sans font-bold text-stone-900 cursor-pointer flex items-center gap-1.5">
+                      <Award size={13} className="text-[#c9a961]" />
+                      <span>{isSpanish ? 'INCLUIR SIEMPRE EL LOGOTIPO UNITEC USA DESIGN' : 'ALWAYS OVERLAY UNITEC USA DESIGN LOGO'}</span>
+                    </label>
+                  </div>
+
+                  {alwaysAddLogo && (
+                    <div className="flex items-center gap-1 text-[9px] font-mono text-stone-600">
+                      <span>{isSpanish ? 'Posición:' : 'Position:'}</span>
+                      <select
+                        value={logoPosition}
+                        onChange={(e) => setLogoPosition(e.target.value as any)}
+                        className="bg-white border border-stone-300 rounded px-1.5 py-0.5 text-[9px] font-mono text-stone-800 font-bold focus:outline-[#2d5a4a]"
+                      >
+                        <option value="top-right">Arriba Derecha ↗</option>
+                        <option value="bottom-right">Abajo Derecha ↘</option>
+                        <option value="top-left">Arriba Izquierda ↖</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+
               </div>
 
               {/* Lighting & Scene Environment Selectors */}
@@ -930,7 +1073,7 @@ export default function VideoGenerator({
                   Rendering Service Container
                 </span>
                 <h4 className="text-xs font-sans font-extrabold text-stone-800">
-                  {isSpanish ? 'COMPILANDO VIDEO CON RUNWAY GEN-3' : 'RENDERING RUNWAY DIGITAL STREAM...'}
+                  {isSpanish ? 'COMPILANDO VIDEO CON RUNWAY GEN-4.5' : 'RENDERING RUNWAY GEN-4.5 DIGITAL STREAM...'}
                 </h4>
                 <p className="text-[9.5px] text-stone-500 font-mono italic leading-relaxed">
                   {renderStep}
@@ -990,6 +1133,21 @@ export default function VideoGenerator({
                       </span>
                     </div>
                   </>
+                )}
+
+                {/* BRAND WATERMARK BADGE OVERLAY */}
+                {alwaysAddLogo && (
+                  <div className={`absolute pointer-events-none z-10 flex items-center gap-1.5 px-2 py-1 bg-stone-950/80 text-white backdrop-blur-md rounded border border-[#c9a961]/40 shadow-md ${
+                    logoPosition === 'top-right' ? 'top-2.5 right-2.5' : logoPosition === 'bottom-right' ? 'bottom-2.5 right-2.5' : 'top-2.5 left-2.5'
+                  }`}>
+                    <div className="w-3.5 h-3.5 rounded bg-[#c9a961] text-stone-950 font-black text-[8.5px] flex items-center justify-center font-mono">
+                      U
+                    </div>
+                    <div className="text-left leading-none">
+                      <span className="block text-[8px] font-sans font-black tracking-widest text-white uppercase">UNITEC USA</span>
+                      <span className="block text-[6.5px] font-mono text-[#c9a961]">WALL CLADDING</span>
+                    </div>
+                  </div>
                 )}
 
                 {/* Aspect ratio frame marker overlay */}
@@ -1095,6 +1253,131 @@ export default function VideoGenerator({
           {isSpanish ? 'Canal Runway: Conexión Cifrada' : 'Secure Runway API Channel: Active'}
         </span>
       </div>
+
+      {/* PROMPT MATRIX & TITLE IDEA EXPLANATION MODAL */}
+      {showPromptMatrixModal && (
+        <div className="fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-xl max-w-2xl w-full border border-stone-200 shadow-2xl overflow-hidden text-left flex flex-col max-h-[90vh]">
+            
+            {/* Modal Header */}
+            <div className="bg-[#1a1a1a] p-4 text-white flex items-center justify-between border-b border-stone-800">
+              <div className="flex items-center gap-2">
+                <Sparkles size={16} className="text-[#c9a961]" />
+                <h3 className="text-xs font-sans font-extrabold uppercase tracking-wider text-white">
+                  {isSpanish ? 'Matriz de Prompts de Video e Integración de Ideas' : 'Video Prompt Engine & Title Ideas Matrix'}
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowPromptMatrixModal(false)}
+                className="p-1 rounded hover:bg-stone-800 text-stone-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Modal Body Content */}
+            <div className="p-5 space-y-4 overflow-y-auto text-xs text-stone-700 leading-relaxed font-sans">
+              
+              {/* Question 1: How prompts are built */}
+              <div className="p-3 bg-amber-50/60 border border-amber-200/80 rounded-lg space-y-1.5">
+                <h4 className="font-bold text-stone-900 text-[11.5px] flex items-center gap-1.5 text-[#2d5a4a]">
+                  <Layers size={14} className="text-[#c9a961]" />
+                  <span>{isSpanish ? '1. ¿De dónde provienen los prompts de video?' : '1. Where do video prompts come from?'}</span>
+                </h4>
+                <p className="text-[11px] text-stone-700">
+                  {isSpanish ? (
+                    <>Cada prompt toma directamente el <strong>Título o Idea del Contenido del Día</strong> seleccionado en el Calendario (por ejemplo: <em>"{selectedDay?.platforms?.instagram?.text?.slice(0, 80) || 'Revestimientos de Papel Tapiz PVC y WPC de Lujo'}"</em>) y la fusiona cinemáticamente con la colección de PVC/WPC de UNITEC USA Design.</>
+                  ) : (
+                    <>Each prompt pulls directly from the <strong>Content Idea Title</strong> of the active calendar day (e.g. <em>"{selectedDay?.platforms?.instagram?.text?.slice(0, 80) || 'Luxury PVC & WPC Wall Cladding'}"</em>) and combines it with architectural material parameters.</>
+                  )}
+                </p>
+              </div>
+
+              {/* Question 2: How many combinations exist */}
+              <div className="p-3 bg-stone-50 border border-stone-200 rounded-lg space-y-2">
+                <h4 className="font-bold text-stone-900 text-[11.5px] flex items-center gap-1.5 text-[#2d5a4a]">
+                  <Cpu size={14} className="text-[#c9a961]" />
+                  <span>{isSpanish ? '2. ¿Cuántas combinaciones de prompt existen?' : '2. How many prompt combinations exist?'}</span>
+                </h4>
+                <p className="text-[10.5px] text-stone-600">
+                  {isSpanish 
+                    ? 'El motor sintetiza automáticamente más de 3,000 combinaciones cinemáticas calculadas a partir de:'
+                    : 'The engine automatically calculates over 3,000 cinematic permutations derived from:'}
+                </p>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 font-mono text-[10px] pt-1">
+                  <div className="p-2 bg-white rounded border border-stone-200">
+                    <span className="block font-bold text-[#2d5a4a]">4 Colecciones PVC</span>
+                    <span className="text-[9px] text-stone-500">Mármol, Metálico, Damasco, WPC</span>
+                  </div>
+                  <div className="p-2 bg-white rounded border border-stone-200">
+                    <span className="block font-bold text-[#2d5a4a]">4 Movimientos Cámara</span>
+                    <span className="text-[9px] text-stone-500">Orbital 3D, Dolly-In, Paneo, Jib</span>
+                  </div>
+                  <div className="p-2 bg-white rounded border border-stone-200">
+                    <span className="block font-bold text-[#2d5a4a]">4 Iluminaciones</span>
+                    <span className="text-[9px] text-stone-500">Showroom, Natural, Moody, Estudio</span>
+                  </div>
+                  <div className="p-2 bg-white rounded border border-stone-200">
+                    <span className="block font-bold text-[#2d5a4a]">4 Ambientes</span>
+                    <span className="text-[9px] text-stone-500">Living, Hotel 5★, Oficina, Muestras</span>
+                  </div>
+                  <div className="p-2 bg-white rounded border border-stone-200">
+                    <span className="block font-bold text-[#2d5a4a]">4 Estilos Render</span>
+                    <span className="text-[9px] text-stone-500">Hiperreal 8K, Comercial, Macro, Bokeh</span>
+                  </div>
+                  <div className="p-2 bg-white rounded border border-stone-200 bg-[#c9a961]/10 border-[#c9a961]">
+                    <span className="block font-bold text-stone-900">= 3,072+ Variaciones</span>
+                    <span className="text-[9px] text-[#2d5a4a] font-bold">Por cada idea de título</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Question 3: How to add or remove elements */}
+              <div className="p-3 bg-stone-50 border border-stone-200 rounded-lg space-y-1.5">
+                <h4 className="font-bold text-stone-900 text-[11.5px] flex items-center gap-1.5 text-[#2d5a4a]">
+                  <Sliders size={14} className="text-[#c9a961]" />
+                  <span>{isSpanish ? '3. ¿Cómo añadir o quitar elementos al video?' : '3. How to add or remove elements in the video?'}</span>
+                </h4>
+                <p className="text-[10.5px] text-stone-600 leading-relaxed">
+                  {isSpanish ? (
+                    <>En la sección <strong>"AÑADIR O QUITAR ELEMENTOS"</strong>, escriba cualquier instrucción (ej: <em>"Añadir luz cálida de atardecer"</em> o <em>"Quitar sofá"</em>) y presione Enter o el botón <strong>+ Añadir</strong>. También puede hacer clic en la <strong>[x]</strong> de cualquier etiqueta activa para eliminarla al instante.</>
+                  ) : (
+                    <>In the <strong>"ADD OR REMOVE VIDEO ELEMENTS"</strong> section, type any custom detail (e.g. <em>"Add golden hour light"</em> or <em>"Remove couch"</em>) and click <strong>+ Add Element</strong>. Click <strong>[x]</strong> on any active tag to remove it instantly.</>
+                  )}
+                </p>
+              </div>
+
+              {/* Question 4: Logo Watermark */}
+              <div className="p-3 bg-stone-50 border border-stone-200 rounded-lg space-y-1.5">
+                <h4 className="font-bold text-stone-900 text-[11.5px] flex items-center gap-1.5 text-[#2d5a4a]">
+                  <Award size={14} className="text-[#c9a961]" />
+                  <span>{isSpanish ? '4. ¿Cómo incluir siempre el logotipo UNITEC?' : '4. How to always include the UNITEC logo?'}</span>
+                </h4>
+                <p className="text-[10.5px] text-stone-600 leading-relaxed">
+                  {isSpanish ? (
+                    <>Mantenga activada la casilla <strong>"INCLUIR SIEMPRE EL LOGOTIPO UNITEC USA DESIGN"</strong>. Esto colocará un sello de agua estilizado sobre el reproductor de video en la esquina deseada (Arriba Derecha, Abajo Derecha, Arriba Izquierda) e incluirá la instrucción de branding en el renderizador de Runway.</>
+                  ) : (
+                    <>Keep the <strong>"ALWAYS OVERLAY UNITEC USA DESIGN LOGO"</strong> checkbox checked. This places a stylized brand watermark over the video player in your preferred position and adds brand instructions into Runway.</>
+                  )}
+                </p>
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-stone-50 p-3.5 border-t border-stone-200 flex justify-end">
+              <button
+                onClick={() => setShowPromptMatrixModal(false)}
+                className="px-4 py-1.5 bg-[#2d5a4a] text-white hover:bg-[#204236] rounded text-xs font-bold font-sans uppercase tracking-wider transition-colors cursor-pointer"
+              >
+                {isSpanish ? 'Entendido' : 'Got it'}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );
