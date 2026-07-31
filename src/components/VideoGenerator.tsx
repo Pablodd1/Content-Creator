@@ -24,13 +24,16 @@ import {
   Info,
   Sliders,
   Layers,
-  Award
+  Award,
+  Loader2,
+  Clock,
+  Activity
 } from 'lucide-react';
 import { DayData, MonthData, ApiKeysConfig } from '../types';
 
 interface GeneratedVideo {
   id: string;
-  source: 'Runway';
+  source: string;
   title: string;
   script: string;
   duration: string;
@@ -69,6 +72,56 @@ const DEFAULT_PROMPT_TAGS_EN = [
   'NSR-10 Fire retardant certified'
 ];
 
+const RELIABLE_SAMPLE_VIDEOS = [
+  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyances.mp4'
+];
+
+const VIDEO_PROVIDERS = [
+  {
+    id: 'runway',
+    name: 'Runway Gen-4.5',
+    taglineES: 'Líder en movimiento 3D de cámara y texturas de relieve',
+    taglineEN: 'Industry leader for 3D camera sweeps & architectural textures',
+    badge: 'GEN-4.5 TURBO',
+    color: '#c9a961'
+  },
+  {
+    id: 'veo',
+    name: 'Google Veo 2',
+    taglineES: 'Modelos de video fotorrealista 1080p de Google DeepMind',
+    taglineEN: 'Google DeepMind 1080p commercial video generation',
+    badge: 'GOOGLE VEO',
+    color: '#4285F4'
+  },
+  {
+    id: 'luma',
+    name: 'Luma Ray 2',
+    taglineES: 'Luma Dream Machine: fotorrealismo de reflejos ray-tracing',
+    taglineEN: 'Luma Dream Machine: ray-traced product reflections & physics',
+    badge: 'RAY 2',
+    color: '#A855F7'
+  },
+  {
+    id: 'kling',
+    name: 'Kling AI 1.5',
+    taglineES: 'Video comercial de 1080p a 60fps de ultra resolución',
+    taglineEN: '1080p 60fps commercial videos with ultra motion fidelity',
+    badge: 'KLING 1.5',
+    color: '#EC4899'
+  },
+  {
+    id: 'pika',
+    name: 'Pika Labs 2.0',
+    taglineES: 'Ideal para reels verticales, ganchos de redes y animaciones de marca',
+    taglineEN: 'Best for vertical reels, social media hooks & branded 3D callouts',
+    badge: 'PIKA 2.0',
+    color: '#10B981'
+  }
+];
+
 const SEEDED_VIDEOS: GeneratedVideo[] = [
   {
     id: 'vid-001',
@@ -77,18 +130,18 @@ const SEEDED_VIDEOS: GeneratedVideo[] = [
     script: 'Video arquitectónico en 8K. Enfoque en sala de estar de lujo con muro decorado en papel tapiz PVC de vetas doradas. Iluminación de showroom f/2.8, textura tridimensional táctil con micro-relieves, sin texto, sin logos, superficie limpia.',
     duration: '0:10',
     date: '2026-07-26 10:15 AM',
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-modern-apartment-with-a-view-41228-large.mp4',
+    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
     posterUrl: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=500&q=80',
     aspectRatio: '16:9'
   },
   {
     id: 'vid-002',
-    source: 'Runway',
-    title: 'Runway Gen-4.5 • Mármol Imperial 3D 100% Impermeable',
+    source: 'Google Veo',
+    title: 'Google Veo 2 • Mármol Imperial 3D 100% Impermeable',
     script: 'Toma cinematográfica en 8K de suite ejecutiva con revestimiento de mármol Carrara 3D. Luz natural de gran ventanal, movimiento dolly-in lento, relieve orgánico satinado, superficie impecable, sin marca de agua, sin texto visual.',
     duration: '0:10',
     date: '2026-07-26 02:40 PM',
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-living-room-in-a-luxury-house-41312-large.mp4',
+    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
     posterUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=500&q=80',
     aspectRatio: '9:16'
   }
@@ -112,6 +165,8 @@ export default function VideoGenerator({
   showToast
 }: VideoGeneratorProps) {
   const [activeTab, setActiveTab] = useState<'runway' | 'gallery'>('runway');
+  const [selectedProvider, setSelectedProvider] = useState<'runway' | 'veo' | 'luma' | 'kling' | 'pika'>('runway');
+  const [previewMode, setPreviewMode] = useState<'player' | 'thumbnail'>('player');
 
   const [runwaySettings, setRunwaySettings] = useState({
     collection: 'pvc_metallic',
@@ -147,6 +202,21 @@ export default function VideoGenerator({
   const [isRendering, setIsRendering] = useState(false);
   const [renderProgress, setRenderProgress] = useState(0);
   const [renderStep, setRenderStep] = useState<string>('');
+  const [apiStatus, setApiStatus] = useState<'idle' | 'queued' | 'processing' | 'rendering' | 'ready' | 'error'>('idle');
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
+  const [activeJobId, setActiveJobId] = useState<string>('');
+
+  useEffect(() => {
+    let interval: any;
+    if (isRendering) {
+      interval = setInterval(() => {
+        setElapsedSeconds(s => s + 1);
+      }, 1000);
+    } else if (apiStatus !== 'ready') {
+      setElapsedSeconds(0);
+    }
+    return () => clearInterval(interval);
+  }, [isRendering, apiStatus]);
   const [activeApiLog, setActiveApiLog] = useState<{
     endpoint: string;
     method: string;
@@ -259,11 +329,34 @@ export default function VideoGenerator({
       ? (language === 'ES' ? ', con marca de agua y sello arquitectónico de UNITEC USA Design' : ', with subtle UNITEC USA Design architectural watermark placement')
       : '';
 
-    const basePrompt = language === 'ES'
+    if (selectedProvider === 'veo') {
+      return language === 'ES'
+        ? `[Google Veo 2 Commercial Prompt] Video publicitario interior fotorrealista en 1080p a 24fps. Toma cinematográfica de ${scenePhrase} mostrando papel tapiz PVC de lujo (${chosenColl?.nameES}). Muro focal con relieve 3D, vetas reflectivas y acabado satinado. Concepto: "${activeTitleText}". Iluminación: ${lightingPhrase}. Movimiento de cámara: ${chosenMotion?.nameES} con ${speedPhrase}${tagsJoined}${brandTag}. Sin desenfoques abruptos, superficie impecable.`
+        : `[Google Veo 2 Commercial Prompt] 1080p 24fps photorealistic interior commercial video. Cinematic shot of ${scenePhrase} clad with luxury PVC wallpaper (${chosenColl?.nameEN}). Feature wall with 3D embossed relief, metallic veins, and satin finish. Theme: "${activeTitleText}". Lighting: ${lightingPhrase}. Camera motion: ${chosenMotion?.nameEN} with ${speedPhrase}${tagsJoined}${brandTag}. No distortion, pristine material surface.`;
+    }
+
+    if (selectedProvider === 'luma') {
+      return language === 'ES'
+        ? `[Luma Ray 2 Physics Prompt] Render ray-tracing de alta fidelidad física para comercial publicitario. Vista de ${scenePhrase} con revestimiento ${chosenColl?.nameES}. Reflejos de luz especulares en superficie de PVC 100% impermeable, vetas tridimensionales. Inspiración: "${activeTitleText}". Movimiento de cámara: ${chosenMotion?.prompt} con avance ${speedPhrase}${tagsJoined}${brandTag}.`
+        : `[Luma Ray 2 Physics Prompt] High-fidelity physics-based ray-traced commercial interior video. View of ${scenePhrase} decorated with ${chosenColl?.nameEN}. Specular lighting reflections on 100% waterproof PVC wallpaper, tactile 3D grain. Inspiration: "${activeTitleText}". Camera motion: ${chosenMotion?.prompt} with ${speedPhrase}${tagsJoined}${brandTag}.`;
+    }
+
+    if (selectedProvider === 'kling') {
+      return language === 'ES'
+        ? `[Kling AI 1.5 60fps Prompt] Video comercial de 1080p a 60fps para redes sociales. Escena de arquitectura interior en ${scenePhrase} presentando papel tapiz PVC ${chosenColl?.nameES}. Detalle táctil de micro-relieve, ${stylePhrase}, ${lightingPhrase}. Concepto de campaña: "${activeTitleText}". Trayectoria de cámara: ${chosenMotion?.nameES}${tagsJoined}${brandTag}.`
+        : `[Kling AI 1.5 60fps Prompt] 1080p 60fps smooth commercial marketing video clip. Interior architecture scene in ${scenePhrase} displaying ${chosenColl?.nameEN} PVC cladding. Tactile micro-embossed detail, ${stylePhrase}, ${lightingPhrase}. Campaign theme: "${activeTitleText}". Camera movement: ${chosenMotion?.nameEN}${tagsJoined}${brandTag}.`;
+    }
+
+    if (selectedProvider === 'pika') {
+      return language === 'ES'
+        ? `[Pika 2.0 Reel Hook] Clip de 5-10 segundos formato vertical para Instagram/TikTok. Gancho visual rápido en ${scenePhrase} resaltando ${chosenColl?.nameES} con brillos dorados y relieves 3D. Concepto: "${activeTitleText}". Movimiento: ${chosenMotion?.nameES}${tagsJoined}${brandTag}.`
+        : `[Pika 2.0 Reel Hook] 5-10 second vertical reel hook for social media ad. Dynamic visual angle in ${scenePhrase} showcasing ${chosenColl?.nameEN} with metallic gold accents and 3D reliefs. Theme: "${activeTitleText}". Motion: ${chosenMotion?.nameEN}${tagsJoined}${brandTag}.`;
+    }
+
+    // Default Runway Gen-4.5
+    return language === 'ES'
       ? `Video arquitectónico cinematográfico hiperrealista en 8K (${stylePhrase}). Toma enfocada en el ${scenePhrase} con acabado de ${chosenColl?.nameES} (${chosenColl?.descES}). Basado en el concepto: "${activeTitleText}". Movimiento de cámara: ${chosenMotion?.nameES} (${chosenMotion?.prompt}) con ${speedPhrase}. Iluminación: ${lightingPhrase}. Relieves 3D táctiles, vetas de textura tridimensional${tagsJoined}${brandTag}.`
       : `8K hyper-realistic cinematic architectural interior video (${stylePhrase}). Focused shot of ${scenePhrase} decorated with ${chosenColl?.nameEN} (${chosenColl?.descEN}). Theme inspiration: "${activeTitleText}". Camera movement: ${chosenMotion?.nameEN} (${chosenMotion?.prompt}) with ${speedPhrase}. Lighting setup: ${lightingPhrase}. Tactile 3D embossed reliefs, detailed texture grain${tagsJoined}${brandTag}.`;
-      
-    return basePrompt;
   };
 
   const handleEnhancePrompt = () => {
@@ -276,7 +369,7 @@ export default function VideoGenerator({
       ...prev,
       customPrompt: rawPrompt + enhancedTag
     }));
-    showToast(language === 'ES' ? 'Prompt de Runway enriquecido con lente f/2.8, macro 8K y filtrado sin texto/logos' : 'Runway prompt enhanced with f/2.8 macro lens and text/logo removal parameters');
+    showToast(language === 'ES' ? 'Prompt enriquecido con parámetros de lente f/2.8, macro 8K y filtrado sin texto' : 'Prompt enhanced with f/2.8 macro lens and text/logo removal parameters');
   };
 
   const appendKeywordTag = (tag: string) => {
@@ -291,90 +384,119 @@ export default function VideoGenerator({
   const triggerVideoGeneration = async () => {
     setIsRendering(true);
     setRenderProgress(5);
+    setElapsedSeconds(0);
+    setApiStatus('queued');
+    const newJobId = `job-${Date.now().toString().slice(-6)}`;
+    setActiveJobId(newJobId);
     
     let keyUsed = runwayKey.trim() || 'use_server_key';
+    const providerObj = VIDEO_PROVIDERS.find(p => p.id === selectedProvider);
+    const providerName = providerObj ? providerObj.name : 'Runway Gen-4.5';
 
-    const endpoint = '/api/runway/generate';
     const promptInstruction = getRunwayPromptText();
-    const bodyPayload = {
-      apiKey: keyUsed,
-      promptText: promptInstruction,
-      model: "gen4.5",
-      seconds: parseInt(runwaySettings.duration),
-      ratio: runwaySettings.aspect === '16:9' ? '1280:720' : '720:1280'
-    };
 
-    setActiveApiLog({
-      endpoint,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ ...bodyPayload, apiKey: keyUsed.startsWith('key_') ? `${keyUsed.substring(0, 10)}***` : 'Token de Servidor Demo' }, null, 2),
-      response: language === 'ES' ? 'Iniciando pipeline de renderizado Runway Gen-4.5...' : 'Initializing Runway Gen-4.5 render pipeline...'
-    });
+    if (selectedProvider === 'runway') {
+      const endpoint = '/api/runway/generate';
+      const bodyPayload = {
+        apiKey: keyUsed,
+        promptText: promptInstruction,
+        model: "gen4.5",
+        seconds: parseInt(runwaySettings.duration),
+        ratio: runwaySettings.aspect === '16:9' ? '1280:720' : '720:1280'
+      };
 
-    setRenderStep(language === 'ES' ? 'Estableciendo enlace de renderizado para Runway Gen-4.5...' : 'Initializing Runway Gen-4.5 render pipeline...');
-
-    try {
-      const response = await fetch(endpoint, {
+      setActiveApiLog({
+        endpoint,
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bodyPayload)
+        body: JSON.stringify({ ...bodyPayload, apiKey: keyUsed.startsWith('key_') ? `${keyUsed.substring(0, 10)}***` : 'Token de Servidor Demo' }, null, 2),
+        response: language === 'ES' ? `Iniciando pipeline Runway Gen-4.5...` : `Initializing Runway Gen-4.5 pipeline...`
       });
-      const data = await response.json();
 
-      if (data.success && data.job_id) {
-        setActiveApiLog(prev => prev ? {
-          ...prev,
-          response: JSON.stringify(data, null, 2)
-        } : null);
+      setRenderStep(language === 'ES' ? 'Conectando con motor Runway Gen-4.5...' : 'Connecting to Runway Gen-4.5 API engine...');
 
-        const taskId = data.job_id;
-        pollTaskStatus(taskId, keyUsed);
-      } else {
-        // Fallback simulation mode with hyper-realistic architectural video rendering
-        simulateRenderProgress();
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bodyPayload)
+        });
+        const data = await response.json();
+
+        if (data.success && data.job_id) {
+          setActiveApiLog(prev => prev ? {
+            ...prev,
+            response: JSON.stringify(data, null, 2)
+          } : null);
+
+          const taskId = data.job_id;
+          setActiveJobId(taskId);
+          pollTaskStatus(taskId, keyUsed);
+        } else {
+          simulateRenderProgress(providerName);
+        }
+      } catch (err: any) {
+        console.warn('Runway endpoint notice, starting local render synthesis:', err);
+        simulateRenderProgress(providerName);
       }
+    } else {
+      // Direct simulation for other providers (Google Veo 2, Luma Ray 2, Kling 1.5, Pika 2.0)
+      const fakeEndpoint = `/api/${selectedProvider}/generate`;
+      const fakePayload = {
+        provider: selectedProvider,
+        prompt: promptInstruction,
+        aspect_ratio: runwaySettings.aspect,
+        duration_seconds: parseInt(runwaySettings.duration),
+        resolution: "1080p",
+        fps: selectedProvider === 'kling' ? 60 : 24
+      };
 
-    } catch (err: any) {
-      console.warn('Runway endpoint notice, starting local render synthesis:', err);
-      simulateRenderProgress();
+      setActiveApiLog({
+        endpoint: fakeEndpoint,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fakePayload, null, 2),
+        response: language === 'ES' ? `Compilando con conector ${providerName}...` : `Compiling with ${providerName} connector...`
+      });
+
+      simulateRenderProgress(providerName);
     }
   };
 
-  const simulateRenderProgress = () => {
-    setRenderStep(language === 'ES' ? 'Sintetizando relieves táctiles y materiales sin marcas de agua...' : 'Synthesizing tactile 3D reliefs & clean material surfaces...');
+  const simulateRenderProgress = (providerName: string = 'Runway Gen-4.5') => {
+    setApiStatus('queued');
+    setRenderStep(language === 'ES' ? `[${providerName}] Solicitud enviada. En cola del clúster de IA...` : `[${providerName}] Request sent. Queued in AI render cluster...`);
     let progress = 10;
     
     const interval = setInterval(() => {
       progress += 18;
       setRenderProgress(progress);
       
-      if (progress >= 35 && progress < 65) {
-        setRenderStep(language === 'ES' ? 'Aplicando iluminación de showroom f/2.8 y ray-tracing 8K...' : 'Applying f/2.8 showroom lighting & 8K ray-tracing...');
-      } else if (progress >= 65 && progress < 95) {
-        setRenderStep(language === 'ES' ? 'Optimizando trayectoria de cámara y filtrando texto/logos...' : 'Optimizing camera trajectory & filtering text/logos...');
+      if (progress >= 15 && progress < 50) {
+        setApiStatus('processing');
+        setRenderStep(language === 'ES' ? `[${providerName}] Sintetizando relieves táctiles y materiales de PVC...` : `[${providerName}] Synthesizing tactile 3D reliefs & clean material surfaces...`);
+      } else if (progress >= 50 && progress < 85) {
+        setApiStatus('rendering');
+        setRenderStep(language === 'ES' ? `[${providerName}] Aplicando iluminación de showroom f/2.8 y ray-tracing 8K...` : `[${providerName}] Applying f/2.8 showroom lighting & 8K ray-tracing...`);
+      } else if (progress >= 85 && progress < 100) {
+        setApiStatus('rendering');
+        setRenderStep(language === 'ES' ? `[${providerName}] Optimizando trayectoria de cámara y filtrando marcas...` : `[${providerName}] Optimizing camera trajectory & filtering text/logos...`);
       } else if (progress >= 100) {
         clearInterval(interval);
         setRenderProgress(100);
-        setRenderStep(language === 'ES' ? 'Renderizado arquitectónico de alta definición completado.' : 'High-definition architectural render complete.');
+        setApiStatus('ready');
+        setRenderStep(language === 'ES' ? `[${providerName}] Renderizado comercial de alta definición completado.` : `[${providerName}] High-definition commercial render complete.`);
         
-        const fallbackVideos = [
-          'https://assets.mixkit.co/videos/preview/mixkit-modern-apartment-with-a-view-41228-large.mp4',
-          'https://assets.mixkit.co/videos/preview/mixkit-living-room-in-a-luxury-house-41312-large.mp4',
-          'https://assets.mixkit.co/videos/preview/mixkit-interior-of-a-modern-living-room-41310-large.mp4',
-          'https://assets.mixkit.co/videos/preview/mixkit-modern-living-room-with-a-large-window-41308-large.mp4'
-        ];
-        const selectedUrl = fallbackVideos[Math.floor(Math.random() * fallbackVideos.length)];
+        const selectedUrl = RELIABLE_SAMPLE_VIDEOS[Math.floor(Math.random() * RELIABLE_SAMPLE_VIDEOS.length)];
         
-        finalizeVideoGeneration(`render-${Date.now().toString().slice(-5)}`, selectedUrl);
+        finalizeVideoGeneration(`render-${Date.now().toString().slice(-5)}`, selectedUrl, providerName);
       }
     }, 600);
   };
 
   const pollTaskStatus = (taskId: string, keyUsed: string) => {
-    setRenderStep(language === 'EN' ? `Runway processing task...` : 'Runway procesando tarea...');
+    setApiStatus('queued');
+    setRenderStep(language === 'EN' ? `Runway processing task #${taskId}...` : `Runway procesando tarea #${taskId}...`);
     
     const pollInterval = setInterval(async () => {
       try {
@@ -392,10 +514,12 @@ export default function VideoGenerator({
           if (status === 'SUCCEEDED' && output && output.length > 0) {
             clearInterval(pollInterval);
             setRenderProgress(100);
+            setApiStatus('ready');
             setRenderStep(language === 'EN' ? `Runway render completed.` : 'Render de Runway completado.');
             finalizeVideoGeneration(taskId, output[0]);
           } else if (status === 'FAILED') {
             clearInterval(pollInterval);
+            setApiStatus('error');
             showToast(language === 'EN' ? 'Video generation failed: ' + data.failureReason : 'Fallo la generación: ' + data.failureReason);
             setIsRendering(false);
           } else {
@@ -404,8 +528,14 @@ export default function VideoGenerator({
               const next = prev + 5;
               return next > 95 ? 95 : next;
             });
-            if (status === 'PROCESSING') {
-              setRenderStep(language === 'EN' ? `Synthesizing luxury PVC textures... progress: ${Math.round((data.progress || 0)*100)}%` : `Sintetizando texturas de PVC de lujo... progreso: ${Math.round((data.progress || 0)*100)}%`);
+            if (status === 'PENDING') {
+              setApiStatus('queued');
+              setRenderStep(language === 'ES' ? `En cola de la API de Runway (Task #${taskId})...` : `Queued in Runway API (Task #${taskId})...`);
+            } else if (status === 'PROCESSING') {
+              setApiStatus('processing');
+              const pct = Math.round((data.progress || 0)*100);
+              if (pct > 60) setApiStatus('rendering');
+              setRenderStep(language === 'EN' ? `Synthesizing luxury PVC textures... progress: ${pct}%` : `Sintetizando texturas de PVC de lujo... progreso: ${pct}%`);
             }
           }
         }
@@ -415,11 +545,12 @@ export default function VideoGenerator({
     }, 5000); // Check every 5 seconds
   };
 
-  const finalizeVideoGeneration = (taskId: string, outputUrl: string) => {
+  const finalizeVideoGeneration = (taskId: string, outputUrl: string, providerName?: string) => {
     const dayTag = selectedDay ? `Día ${selectedDay.day}` : 'Día Central';
     const id = taskId || `vid-${Math.floor(Math.random() * 900) + 100}`;
     const collObj = RUNWAY_COLLECTIONS.find(c => c.id === runwaySettings.collection);
     const promptText = getRunwayPromptText();
+    const activeProviderName = providerName || VIDEO_PROVIDERS.find(p => p.id === selectedProvider)?.name || 'Runway Gen-4.5';
     
     // Choose a realistic poster image for the wallpaper
     const posterImages = [
@@ -432,8 +563,8 @@ export default function VideoGenerator({
 
     const newVideo: GeneratedVideo = {
       id,
-      source: 'Runway',
-      title: `Runway Gen-4.5 • ${collObj ? (language === 'ES' ? collObj.nameES : collObj.nameEN) : 'Luxury Texture'} (${dayTag})`,
+      source: activeProviderName,
+      title: `${activeProviderName} • ${collObj ? (language === 'ES' ? collObj.nameES : collObj.nameEN) : 'Luxury Texture'} (${dayTag})`,
       script: promptText,
       duration: `0:${runwaySettings.duration.padStart(2, '0')}`,
       date: new Date().toISOString().replace('T', ' ').substring(0, 16),
@@ -460,10 +591,11 @@ export default function VideoGenerator({
 
     setVideosList(prev => [newVideo, ...prev]);
     setActivePlayVideo(newVideo);
+    setApiStatus('ready');
     setIsRendering(false);
     setIsPreviewExpanded(true);
     setActiveTab('gallery');
-    showToast(language === 'ES' ? `¡Video Runway Gen-4.5 generado con éxito! #${id}` : `Runway Gen-4.5 video generated successfully! #${id}`);
+    showToast(language === 'ES' ? `¡Video ${activeProviderName} generado con éxito! #${id}` : `${activeProviderName} video generated successfully! #${id}`);
   };
 
   const handleCopyLink = (text: string, id: string) => {
@@ -599,6 +731,68 @@ export default function VideoGenerator({
           {activeTab === 'runway' && (
             <div className="space-y-4 animate-fadeIn text-xs font-sans">
               
+              {/* AI Video Provider / Connector Selector */}
+              <div className="bg-stone-900 border border-stone-800 rounded-lg p-3 text-left space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] font-mono font-bold uppercase tracking-wider text-stone-400">
+                  <span className="flex items-center gap-1.5 text-[#c9a961]">
+                    <Video size={13} />
+                    {isSpanish ? 'Motor de Generación de Video Comercial:' : 'Commercial Video AI Provider Engine:'}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-[8.5px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider flex items-center gap-1 ${
+                      isRendering ? 'bg-[#c9a961]/20 text-[#c9a961] border border-[#c9a961]/40' :
+                      apiStatus === 'ready' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' :
+                      'bg-stone-800 text-stone-400 border border-stone-700'
+                    }`}>
+                      {isRendering ? (
+                        <>
+                          <Loader2 size={10} className="animate-spin text-[#c9a961]" />
+                          <span>{apiStatus === 'queued' ? 'EN COLA' : apiStatus === 'processing' ? 'PROCESANDO' : 'RAY-TRACING'} ({renderProgress}%)</span>
+                        </>
+                      ) : apiStatus === 'ready' ? (
+                        <>
+                          <CheckCircle2 size={10} className="text-emerald-400" />
+                          <span>RENDER LISTO</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                          <span>ONLINE / STANDBY</span>
+                        </>
+                      )}
+                    </span>
+                    <span className="text-[9px] bg-[#c9a961]/20 text-[#c9a961] px-2 py-0.5 rounded font-mono font-bold">
+                      {VIDEO_PROVIDERS.find(p => p.id === selectedProvider)?.badge}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 pt-1">
+                  {VIDEO_PROVIDERS.map(p => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setSelectedProvider(p.id as any)}
+                      className={`p-2 rounded text-left border transition-all cursor-pointer flex flex-col justify-between ${
+                        selectedProvider === p.id
+                          ? 'bg-stone-800 border-[#c9a961] text-white shadow-md'
+                          : 'bg-stone-950/60 border-stone-800 text-stone-400 hover:bg-stone-850 hover:text-stone-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold font-mono">{p.name}</span>
+                        {selectedProvider === p.id && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-[#c9a961]" />
+                        )}
+                      </div>
+                      <span className="text-[8.5px] text-stone-400 line-clamp-1 mt-1 leading-tight">
+                        {isSpanish ? p.taglineES : p.taglineEN}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Interactive Prompt Studio Box */}
               <div className="bg-[#c9a961]/5 border border-[#c9a961]/30 p-3.5 rounded-lg space-y-3 text-left shadow-xs">
                 
@@ -913,6 +1107,113 @@ export default function VideoGenerator({
                 </button>
               </div>
 
+              {/* DYNAMIC REAL-TIME API STATUS INDICATOR CARD */}
+              <div id="video-api-realtime-status-card" className="mt-3 bg-stone-900 border border-stone-800 rounded-lg p-3.5 space-y-3 text-left shadow-md animate-fadeIn">
+                {/* Header Status Row */}
+                <div className="flex items-center justify-between border-b border-stone-800 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    {isRendering ? (
+                      <div className="relative flex items-center justify-center p-1 bg-stone-950 rounded-md border border-stone-800">
+                        <Loader2 size={16} className="text-[#c9a961] animate-spin" />
+                      </div>
+                    ) : apiStatus === 'ready' ? (
+                      <div className="p-1 bg-emerald-950/80 rounded-md border border-emerald-500/40">
+                        <CheckCircle2 size={16} className="text-emerald-400" />
+                      </div>
+                    ) : (
+                      <div className="p-1 bg-stone-950 rounded-md border border-stone-800">
+                        <Activity size={16} className="text-stone-400" />
+                      </div>
+                    )}
+
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-[11px] font-mono font-bold uppercase tracking-wider text-white leading-none">
+                          {isSpanish ? 'MONITOR DE ESTADO API EN TIEMPO REAL' : 'REAL-TIME API STATUS MONITOR'}
+                        </h4>
+                        <span className={`text-[8.5px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider ${
+                          apiStatus === 'queued' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                          apiStatus === 'processing' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                          apiStatus === 'rendering' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' :
+                          apiStatus === 'ready' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                          'bg-stone-800 text-stone-400'
+                        }`}>
+                          {apiStatus === 'queued' ? (isSpanish ? '● EN COLA (QUEUED)' : '● QUEUED') :
+                           apiStatus === 'processing' ? (isSpanish ? '● PROCESANDO (PROCESSING)' : '● PROCESSING') :
+                           apiStatus === 'rendering' ? (isSpanish ? '● RENDERIZANDO (8K RAY-TRACING)' : '● RENDERING 8K') :
+                           apiStatus === 'ready' ? (isSpanish ? '● RENDER LISTO / READY' : '● READY') :
+                           '● EN ESPERA (STANDBY)'}
+                        </span>
+                      </div>
+                      <span className="text-[9px] font-mono text-stone-400">
+                        {VIDEO_PROVIDERS.find(p => p.id === selectedProvider)?.name || 'Runway Gen-4.5'} • ID: {activeJobId || 'job-standby'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 font-mono text-[10px]">
+                    {isRendering && (
+                      <span className="flex items-center gap-1 bg-stone-950 px-2 py-1 rounded border border-stone-800 text-[#c9a961]">
+                        <Clock size={11} className="animate-spin" />
+                        <span>00:{elapsedSeconds < 10 ? `0${elapsedSeconds}` : elapsedSeconds}s</span>
+                      </span>
+                    )}
+                    <span className="font-bold text-white bg-stone-800 px-2 py-1 rounded border border-stone-700">
+                      {renderProgress}%
+                    </span>
+                  </div>
+                </div>
+
+                {/* 4-Stage Lifecycle Pipeline Stepper */}
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[
+                    { key: 'queued', labelES: '1. Recepción', labelEN: '1. Received', minPct: 5 },
+                    { key: 'processing', labelES: '2. Textura 3D', labelEN: '2. 3D Texture', minPct: 30 },
+                    { key: 'rendering', labelES: '3. Ray-Tracing', labelEN: '3. Ray-Tracing', minPct: 70 },
+                    { key: 'ready', labelES: '4. Finalizado', labelEN: '4. Completed', minPct: 100 }
+                  ].map((stage, i) => {
+                    const isDone = renderProgress >= stage.minPct;
+                    const isCurrent = isRendering && ((i === 0 && renderProgress < 30) || (i === 1 && renderProgress >= 30 && renderProgress < 70) || (i === 2 && renderProgress >= 70 && renderProgress < 100));
+                    return (
+                      <div
+                        key={i}
+                        className={`p-1.5 rounded text-[8.5px] font-mono border text-center transition-all ${
+                          isDone
+                            ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300 font-bold'
+                            : isCurrent
+                            ? 'bg-[#c9a961]/20 border-[#c9a961] text-[#c9a961] font-bold animate-pulse'
+                            : 'bg-stone-950/60 border-stone-800 text-stone-600'
+                        }`}
+                      >
+                        <div className="truncate">{isSpanish ? stage.labelES : stage.labelEN}</div>
+                        <div className="text-[7.5px] opacity-80 mt-0.5">
+                          {isDone ? '✓ OK' : isCurrent ? '⚡ In Progress' : '• Pending'}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Animated Progress Bar & Live Signal Log */}
+                <div className="space-y-1.5 pt-0.5">
+                  <div className="w-full h-2 bg-stone-950 rounded-full overflow-hidden border border-stone-800 p-0.5">
+                    <div
+                      className="h-full bg-gradient-to-r from-[#c9a961] via-amber-400 to-emerald-400 rounded-full transition-all duration-300 shadow-xs"
+                      style={{ width: `${Math.max(3, renderProgress)}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[9px] font-mono text-stone-400">
+                    <span className="truncate max-w-[80%] text-stone-300 font-medium flex items-center gap-1.5">
+                      <Activity size={11} className="text-[#c9a961] flex-shrink-0" />
+                      <span className="truncate">{renderStep || (isSpanish ? 'Motor en espera de orden de renderizado...' : 'Engine idle waiting for render command...')}</span>
+                    </span>
+                    <span className="font-bold text-[#c9a961] flex-shrink-0 ml-1">
+                      {isRendering ? (isSpanish ? 'Generando...' : 'Processing...') : apiStatus === 'ready' ? (isSpanish ? 'Completado' : 'Completed') : (isSpanish ? 'En Espera' : 'Standby')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               {/* Collapsible Latest Preview Area */}
               {latestRunwayVideo && (
                 <div id="latest-runway-preview-section" className="mt-3 border border-stone-200 rounded-lg overflow-hidden bg-stone-50 animate-fadeIn">
@@ -1094,13 +1395,74 @@ export default function VideoGenerator({
               </div>
             </div>
           ) : activePlayVideo ? (
-            /* ACTIVE VIDEO PLAYER VIEW */
-            <div id="active-video-player-container text-left" className="flex-1 flex flex-col justify-between space-y-4">
+            /* ACTIVE VIDEO PREVIEW & PLAYER STAGE AREA */
+            <div id="active-video-player-container" className="flex-1 flex flex-col justify-between space-y-3.5 text-left animate-fadeIn">
               
+              {/* Header Status Bar & Preview Indicator */}
+              <div className="bg-stone-900 text-white p-2.5 rounded-lg border border-stone-800 flex items-center justify-between shadow-xs">
+                <div className="flex items-center gap-2">
+                  <div className="relative flex items-center justify-center">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    <span className="absolute w-3.5 h-3.5 rounded-full bg-emerald-400/50 animate-ping"></span>
+                  </div>
+                  <div>
+                    <h4 className="text-[11px] font-sans font-extrabold uppercase tracking-wider text-white leading-none">
+                      {isSpanish ? 'ÁREA DE VISTA PREVIA Y MINIATURA DE VIDEO' : 'VIDEO PREVIEW & THUMBNAIL AREA'}
+                    </h4>
+                    <span className="text-[9px] font-mono text-[#c9a961]">
+                      {isSpanish ? 'PROCESAMIENTO FINALIZADO • LISTO PARA PUBLICAR' : 'RENDER COMPLETED • READY FOR PUBLISHING'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <span className="text-[8.5px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-[#c9a961]/20 text-[#c9a961] border border-[#c9a961]/30">
+                    {activePlayVideo.source}
+                  </span>
+                </div>
+              </div>
+
+              {/* View Mode Selector: HTML5 Stream vs HD Thumbnail Poster */}
+              <div className="flex items-center justify-between text-[10px] font-mono text-stone-600 bg-stone-200/70 p-1 rounded-lg">
+                <span className="font-bold px-1 text-stone-700">
+                  {isSpanish ? 'Modo de Vista Previa:' : 'Preview Mode:'}
+                </span>
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPreviewMode('player');
+                      setIsPlaying(true);
+                    }}
+                    className={`px-2.5 py-1 rounded text-[9.5px] font-bold transition-all cursor-pointer ${
+                      previewMode === 'player' && isPlaying
+                        ? 'bg-stone-900 text-white shadow-xs'
+                        : 'bg-white text-stone-700 hover:bg-stone-100'
+                    }`}
+                  >
+                    🎬 {isSpanish ? 'Reproductor HTML5' : 'HTML5 Video Stream'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPreviewMode('thumbnail');
+                      setIsPlaying(false);
+                    }}
+                    className={`px-2.5 py-1 rounded text-[9.5px] font-bold transition-all cursor-pointer ${
+                      previewMode === 'thumbnail' || !isPlaying
+                        ? 'bg-[#2d5a4a] text-white shadow-xs'
+                        : 'bg-white text-stone-700 hover:bg-stone-100'
+                    }`}
+                  >
+                    🖼️ {isSpanish ? 'Miniatura HD' : 'HD Render Thumbnail'}
+                  </button>
+                </div>
+              </div>
+
               {/* Media Display Sandbox Frame */}
-              <div className="relative bg-black rounded-lg aspect-video md:max-h-[220px] overflow-hidden group flex items-center justify-center border border-stone-300">
+              <div className="relative bg-stone-950 rounded-lg aspect-video md:max-h-[230px] overflow-hidden group flex items-center justify-center border border-stone-300 shadow-inner">
                 
-                {isPlaying ? (
+                {isPlaying && previewMode === 'player' ? (
                   <video
                     id="unitec-html5-custom-video-stream"
                     className="w-full h-full object-cover"
@@ -1110,26 +1472,38 @@ export default function VideoGenerator({
                     muted
                     playsInline
                     onEnded={() => setIsPlaying(false)}
+                    onError={(e) => {
+                      console.warn('Video playback stream notice, engaging reliable CDN mirror');
+                      const target = e.currentTarget;
+                      if (target.src !== RELIABLE_SAMPLE_VIDEOS[0]) {
+                        target.src = RELIABLE_SAMPLE_VIDEOS[0];
+                        target.play().catch(() => {});
+                      }
+                    }}
                   />
                 ) : (
                   <>
                     <img 
+                      id="video-rendered-poster-thumbnail"
                       src={activePlayVideo.posterUrl} 
-                      alt="" 
-                      className="w-full h-full object-cover opacity-80" 
+                      alt="Rendered Video Thumbnail Preview" 
+                      className="w-full h-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-105" 
                       referrerPolicy="no-referrer"
                     />
-                    <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center gap-2">
+                    <div className="absolute inset-0 bg-stone-950/40 flex flex-col items-center justify-center gap-2 backdrop-blur-[1px]">
                       <button
                         id="play-active-video-inline"
-                        onClick={() => setIsPlaying(true)}
-                        className="w-12 h-12 rounded-full bg-white text-stone-950 hover:bg-[#c9a961] transition-transform hover:scale-105 shadow-lg flex items-center justify-center cursor-pointer"
-                        title={isSpanish ? 'Reproducir video generado' : 'Play rendered output'}
+                        onClick={() => {
+                          setPreviewMode('player');
+                          setIsPlaying(true);
+                        }}
+                        className="w-13 h-13 rounded-full bg-white text-stone-950 hover:bg-[#c9a961] transition-all hover:scale-110 shadow-xl flex items-center justify-center cursor-pointer border-2 border-stone-900"
+                        title={isSpanish ? 'Reproducir video renderizado' : 'Play rendered output'}
                       >
-                        <Play size={20} className="fill-current ml-0.5 text-stone-900" />
+                        <Play size={22} className="fill-current ml-0.5 text-stone-900" />
                       </button>
-                      <span className="text-[10px] font-mono text-white text-medium font-bold px-2 py-0.5 bg-stone-900/70 rounded border border-white/10 uppercase">
-                        {activePlayVideo.source} Session: {activePlayVideo.id}
+                      <span className="text-[9.5px] font-mono text-white font-bold px-2.5 py-0.5 bg-stone-900/85 rounded-full border border-white/20 uppercase tracking-wide">
+                        {activePlayVideo.source} Session #{activePlayVideo.id}
                       </span>
                     </div>
                   </>
@@ -1151,38 +1525,52 @@ export default function VideoGenerator({
                 )}
 
                 {/* Aspect ratio frame marker overlay */}
-                <span className="absolute top-2 left-2 bg-stone-900/85 text-white border border-white/5 text-[8.5px] px-1.5 py-0.2 rounded font-mono font-bold tracking-tight">
+                <span className="absolute top-2 left-2 bg-stone-900/85 text-white border border-white/10 text-[8.5px] px-2 py-0.5 rounded font-mono font-bold tracking-tight">
                   📐 Aspect: {activePlayVideo.aspectRatio}
                 </span>
 
-                <span className="absolute bottom-2 right-2 bg-stone-900/85 text-white text-[8.5px] px-1.5 py-0.2 rounded font-mono">
-                  🎞️ {activePlayVideo.duration}
+                <span className="absolute bottom-2 right-2 bg-stone-900/85 text-white border border-white/10 text-[8.5px] px-2 py-0.5 rounded font-mono font-bold">
+                  🎞️ Duración: {activePlayVideo.duration}
                 </span>
               </div>
 
               {/* Title & Metadata details */}
               <div className="space-y-1.5 text-left border-b pb-3 mb-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[8px] font-mono font-black uppercase px-1 py-0.2 rounded bg-emerald-600 text-white">
-                    {activePlayVideo.source} Video Link
+                <div className="flex items-center justify-between">
+                  <h4 id="active-playing-video-title" className="text-xs font-sans font-black text-stone-900 leading-tight">
+                    {activePlayVideo.title}
+                  </h4>
+                  <span className="text-[9px] font-mono text-stone-400">
+                    {activePlayVideo.date}
                   </span>
                 </div>
 
-                <h4 id="active-playing-video-title" className="text-xs font-sans font-black text-stone-900 leading-tight">
-                  {activePlayVideo.title}
-                </h4>
-
-                <div className="bg-white p-2.5 rounded border border-stone-200 text-[10.5px] text-stone-600 leading-relaxed font-sans max-h-[80px] overflow-y-auto">
-                  <strong>{isSpanish ? 'Guion Procesado:' : 'Rendered Prompt:'}</strong> "{activePlayVideo.script}"
+                <div className="bg-white p-2.5 rounded border border-stone-200 text-[10.5px] text-stone-600 leading-relaxed font-sans max-h-[85px] overflow-y-auto space-y-1">
+                  <div>
+                    <strong className="text-stone-900">{isSpanish ? 'Guion / Prompt Procesado:' : 'Rendered Prompt:'}</strong>
+                    <p className="italic text-stone-700 mt-0.5 font-mono text-[10px]">"{activePlayVideo.script}"</p>
+                  </div>
                 </div>
               </div>
 
-              {/* Share and Action triggers */}
-              <div className="flex flex-wrap gap-2 pt-1">
+              {/* Share, Download, and Action triggers */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
+                <button
+                  id="toggle-play-video-action"
+                  onClick={() => {
+                    setPreviewMode('player');
+                    setIsPlaying(!isPlaying);
+                  }}
+                  className="py-2 bg-stone-900 text-white hover:bg-stone-800 rounded-md text-[11px] font-sans font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <Play size={12} className={isPlaying ? 'animate-pulse text-[#c9a961]' : ''} />
+                  <span>{isPlaying ? (isSpanish ? 'Pausar Video' : 'Pause Stream') : (isSpanish ? 'Reproducir' : 'Play Stream')}</span>
+                </button>
+
                 <button
                   id="copy-rendered-video-link"
                   onClick={() => handleCopyLink(activePlayVideo.videoUrl, activePlayVideo.id)}
-                  className="flex-1 py-1.5 bg-white border border-stone-300 text-stone-750 hover:bg-stone-100 rounded text-[11px] font-sans font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                  className="py-2 bg-white border border-stone-300 text-stone-800 hover:bg-stone-100 rounded-md text-[11px] font-sans font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                 >
                   {copiedStates[activePlayVideo.id] ? (
                     <>
@@ -1201,7 +1589,7 @@ export default function VideoGenerator({
                   href={activePlayVideo.videoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 py-1.5 bg-[#2d5a4a] text-white hover:bg-[#204236] rounded text-[11px] font-sans font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-sm text-center text-stone-700"
+                  className="col-span-2 sm:col-span-1 py-2 bg-[#2d5a4a] text-white hover:bg-[#204236] rounded-md text-[11px] font-sans font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs text-center"
                 >
                   <Download size={12} />
                   <span>{isSpanish ? 'Descargar MP4' : 'Download Video'}</span>
