@@ -45,10 +45,91 @@ interface GeneratedVideo {
 }
 
 const RUNWAY_COLLECTIONS = [
-  { id: 'pvc_metallic', nameES: 'Papel Tapiz PVC Metálico de Lujo', nameEN: 'Luxury Metallic Foil PVC Wallpaper', descES: 'Acabados con vetas doradas reflectivas y textura táctil profunda de micro-relieve.', descEN: 'Gold leaf veins and high-end reflective foil textures with deep tactile micro-embossing.' },
-  { id: 'pvc_marble_3d', nameES: 'Mármol Imperial 3D Impermeable', nameEN: 'Impermeable 3D Imperial Marble', descES: 'Vetas de mármol Carrara tridimensionales con acabado satinado anti-humedad.', descEN: 'Three-dimensional Carrara marble veins with satin moisture-resistant finish.' },
-  { id: 'pvc_classic_damask', nameES: 'Damasco Clásico Texturizado', nameEN: 'Textured Classic Damask PVC', descES: 'Relieves de hilo de seda europea con patrones damasquinados tridimensionales.', descEN: 'European silk thread reliefs with three-dimensional damask weave patterns.' },
-  { id: 'pvc_wood_grooves', nameES: 'Paneles Acanalados de WPC y PVC', nameEN: 'WPC & PVC Fluted Wall Slats', descES: 'Lamas acanaladas de madera coextruida con acabado de roble natural y vetas mates.', descEN: 'Co-extruded fluted wood slats with natural oak tactile grain and matte finish.' }
+  { 
+    id: 'pvc_metallic', 
+    nameES: 'Papel Tapiz PVC Metálico de Lujo', 
+    nameEN: 'Luxury Metallic Foil PVC Wallpaper', 
+    descES: 'Acabados con vetas doradas y de latón reflectivas con textura táctil profunda de micro-relieve.', 
+    descEN: 'Gold and brass leaf veins with high-end reflective foil textures & micro-embossing.' 
+  },
+  { 
+    id: 'pvc_marble_3d', 
+    nameES: 'Mármol Imperial 3D & Carrara Calacatta', 
+    nameEN: '3D Imperial Carrara & Calacatta Marble', 
+    descES: 'Placas tridimensionales con vetas continuas de mármol de gran formato y brillo satinado.', 
+    descEN: 'Three-dimensional large format Carrara marble slabs with continuous satin veins.' 
+  },
+  { 
+    id: 'pvc_classic_damask', 
+    nameES: 'Damasco Clásico Europeo Texturizado', 
+    nameEN: 'Textured Classic European Damask', 
+    descES: 'Relieves de hilo de seda imperial con patrones damasquinados tridimensionales de alta costura.', 
+    descEN: 'European silk thread reliefs with three-dimensional haute couture damask weaves.' 
+  },
+  { 
+    id: 'pvc_wood_grooves', 
+    nameES: 'Paneles Acanalados de WPC & Madera Coextruida', 
+    nameEN: 'WPC & Co-extruded Wood Fluted Slats', 
+    descES: 'Lamas acanaladas de madera de roble, nogal y teca con acabado mate de vetas orgánicas.', 
+    descEN: 'Co-extruded fluted wood slats in oak, walnut, and teak with matte tactile grain.' 
+  },
+  { 
+    id: 'stone_veneer_3d', 
+    nameES: 'Piedra Flexible & Laja Slate 3D Natural', 
+    nameEN: '3D Natural Slate & Flexible Stone Veneer', 
+    descES: 'Muro de acento con textura rústica de piedra natural en bajorrelieve y matices minerales de lujo.', 
+    descEN: 'Feature wall with natural rustic stone texture in bas-relief and luxury mineral tones.' 
+  },
+  { 
+    id: 'polished_concrete', 
+    nameES: 'Concreto Pulido & Microcemento Moderno', 
+    nameEN: 'Polished Concrete & Modern Microcement', 
+    descES: 'Estética arquitectónica brutalista sofisticada con textura suave satinada y matices neutros.', 
+    descEN: 'Sophisticated brutalist architectural aesthetic with soft satin texture and neutral tones.' 
+  },
+  { 
+    id: 'velvet_padded_panels', 
+    nameES: 'Paneles Acolchados de Terciopelo & Cuero', 
+    nameEN: 'Velvet & Leather Padded Upholstered Panels', 
+    descES: 'Paredes tapizadas geométricas con costuras en relieve 3D y lujo acústico residencial.', 
+    descEN: 'Geometric upholstered walls with 3D embossed seams and high-end residential luxury.' 
+  },
+  { 
+    id: 'venetian_plaster', 
+    nameES: 'Estuco Veneciano Artesanal Espejado Satín', 
+    nameEN: 'Artisanal Satin Venetian Plaster', 
+    descES: 'Acabado de estuco italiano aplicado a espátula con reflejos de luz de terciopelo y profundidad.', 
+    descEN: 'Spatula-applied Italian plaster finish with velvet light reflections and visual depth.' 
+  },
+  { 
+    id: 'brick_relief_3d', 
+    nameES: 'Ladrillo Decorativo Relieve 3D Rústico Urbano', 
+    nameEN: '3D Rustic & Urban Brick Wall Relief', 
+    descES: 'Pared de arcilla y terracota con relieve 3D marcado, pátina artesanal e iluminación cálida.', 
+    descEN: 'Terracotta brick wall with pronounced 3D relief, artisan patina, and warm spotlighting.' 
+  },
+  { 
+    id: 'bronze_glass_mirror', 
+    nameES: 'Cristal Templado & Espejo Bronce/Dorado', 
+    nameEN: 'Tempered Glass & Bronze Mirror Panel', 
+    descES: 'Muro reflectivo de alto impacto con biseles de bronce, reflejos especulares e iluminación LED.', 
+    descEN: 'High-impact reflective feature wall with bronze bevels, specular reflections & LED glow.' 
+  }
+];
+
+const THREE_D_WORDS_OPTIONS = [
+  { id: 'gold_floating_3d', labelES: 'Palabras 3D Flotantes en Oro y Bronce', labelEN: 'Floating 3D Words in Extruded Gold', promptES: 'palabras y letras 3D extruidas en oro y bronce reflectivo con relieve tridimensional flotando elegantemente sobre la pared', promptEN: 'extruded 3D words and lettering in reflective gold and bronze floating gracefully on the feature wall' },
+  { id: 'backlit_led_3d', labelES: 'Letras 3D Retroiluminadas con Luz LED', labelEN: 'Backlit LED 3D Letters & Typography', promptES: 'tipografía y letras 3D retroiluminadas con halo de luz LED cálida integradas sobre la textura de la pared', promptEN: '3D typography and lettering backlit with a warm LED glow halo integrated into the wall texture' },
+  { id: 'embossed_logo_3d', labelES: 'Logotipo y Texto 3D en Relieve Metálico', labelEN: 'Metal Embossed 3D Logo & Text', promptES: 'logotipo e inscripción tipográfica 3D en relieve metálico de alta precisión tallado sobre el material de la pared', promptEN: 'high-precision metal embossed 3D logo and lettering carved directly onto the wall material' },
+  { id: 'architectural_signage_3d', labelES: 'Rótulo Arquitectónico 3D Grabado en Bajorrelieve', labelEN: 'Architectural 3D Bas-Relief Signage', promptES: 'rótulo arquitectónico en bajorrelieve 3D esculpido sobre la pared con sombras profundas y elegantes', promptEN: 'architectural 3D bas-relief signage sculpted onto the wall surface with deep dramatic shadows' },
+  { id: 'none', labelES: 'Sin Texto 3D (Solo Textura de Pared)', labelEN: 'No 3D Text (Clean Wall Texture)', promptES: 'superficie limpia de pared sin texto ni marcas', promptEN: 'clean wall surface without text or overlays' }
+];
+
+const LUXURY_STYLE_PRESETS = [
+  { id: 'ultra_luxury', labelES: 'Ultra Lujo: Detalle 8K f/2.8 & Destellos Dorados', labelEN: 'Ultra Luxury: 8K f/2.8 & Gold Reflections', promptES: 'acabado de ultra lujo de alta costura arquitectónica con destellos metálicos de oro y latón cepillado, render fotorrealista en 8K', promptEN: 'ultra luxury architectural haute-couture finish with gold and brushed brass metallic highlights, 8K photorealistic render' },
+  { id: 'presidential_suite', labelES: 'Suite Presidencial: Elegancia Ejecutiva 5★', labelEN: 'Presidential Suite: 5-Star Elegance', promptES: 'elegancia ejecutiva de suite presidencial de hotel 5 estrellas, ambiente sofisticado con muebles italianos y luz focal', promptEN: '5-star hotel presidential suite executive elegance, sophisticated ambience with Italian furniture and focal lighting' },
+  { id: 'boutique_showroom', labelES: 'Showroom Boutique: Iluminación de Estudio', labelEN: 'Boutique Showroom: Studio Lighting', promptES: 'ambiente de showroom boutique internacional con iluminación de estudio softbox, sombras suaves y matices metálicos', promptEN: 'international boutique showroom ambience with softbox studio lighting, smooth shadows and metallic accents' },
+  { id: 'modern_minimalist_luxury', labelES: 'Lujo Minimalista Moderno: Enfoque Táctil', labelEN: 'Modern Minimalist Luxury: Tactile Focus', promptES: 'lujo minimalista contemporáneo enfocado en la riqueza táctil del material, líneas orgánicas y paleta de tonos cálidos', promptEN: 'contemporary minimalist luxury focused on rich material tactility, organic lines and warm tone palette' }
 ];
 
 const RUNWAY_MOTIONS = [
@@ -59,17 +140,21 @@ const RUNWAY_MOTIONS = [
 ];
 
 const DEFAULT_PROMPT_TAGS_ES = [
+  'Palabras 3D flotantes en oro y bronce',
+  'Muro de acento con relieve 3D',
   'Vetas doradas reflectivas 8K',
+  'Acabados de lujo de alta gama',
   '100% Impermeable y Lavable',
-  'Sin texto visual ni marcas ajenas',
-  'Retardante de fuego norma NSR-10'
+  'Iluminación de showroom f/2.8'
 ];
 
 const DEFAULT_PROMPT_TAGS_EN = [
+  'Floating 3D gold & bronze words',
+  '3D embossed feature wall',
   '8K Reflective Gold Veins',
+  'High-end luxury architectural finish',
   '100% Waterproof & Washable',
-  'No text or foreign watermarks',
-  'NSR-10 Fire retardant certified'
+  'f/2.8 Showroom lighting'
 ];
 
 const RELIABLE_SAMPLE_VIDEOS = [
@@ -170,6 +255,9 @@ export default function VideoGenerator({
 
   const [runwaySettings, setRunwaySettings] = useState({
     collection: 'pvc_metallic',
+    threeDWords: 'gold_floating_3d',
+    custom3DWordsText: 'UNITEC USA DESIGN',
+    luxuryStyle: 'ultra_luxury',
     motion: 'orbit_arc',
     lighting: 'showroom' as 'showroom' | 'daylight' | 'moody' | 'studio',
     scenePreset: 'living_room' as 'living_room' | 'hotel_suite' | 'executive_office' | 'sample_studio',
@@ -309,8 +397,10 @@ export default function VideoGenerator({
   const getRunwayPromptText = (): string => {
     if (runwaySettings.customPrompt) return runwaySettings.customPrompt;
     
-    const chosenColl = RUNWAY_COLLECTIONS.find(c => c.id === runwaySettings.collection);
-    const chosenMotion = RUNWAY_MOTIONS.find(m => m.id === runwaySettings.motion);
+    const chosenColl = RUNWAY_COLLECTIONS.find(c => c.id === runwaySettings.collection) || RUNWAY_COLLECTIONS[0];
+    const chosen3DWords = THREE_D_WORDS_OPTIONS.find(w => w.id === runwaySettings.threeDWords) || THREE_D_WORDS_OPTIONS[0];
+    const chosenLuxury = LUXURY_STYLE_PRESETS.find(l => l.id === runwaySettings.luxuryStyle) || LUXURY_STYLE_PRESETS[0];
+    const chosenMotion = RUNWAY_MOTIONS.find(m => m.id === runwaySettings.motion) || RUNWAY_MOTIONS[0];
     
     // Extract precise title or concept from selected day or month
     const dayTitle = selectedDay?.platforms?.instagram?.text?.slice(0, 140) || selectedDay?.imagePrompt || '';
@@ -321,42 +411,56 @@ export default function VideoGenerator({
     const scenePhrase = SCENE_PRESETS[runwaySettings.scenePreset];
     const stylePhrase = STYLE_MODIFIERS[runwaySettings.styleModifier];
     const speedPhrase = language === 'ES' 
-      ? (runwaySettings.cameraSpeed === 'slow' ? 'movimiento pausado y elegante' : runwaySettings.cameraSpeed === 'fast' ? 'movimiento dinámico y fluido' : 'movimiento moderado fluido')
-      : (runwaySettings.cameraSpeed === 'slow' ? 'slow elegant pacing' : runwaySettings.cameraSpeed === 'fast' ? 'dynamic fast pan' : 'moderate smooth pacing');
+      ? (runwaySettings.cameraSpeed === 'slow' ? 'movimiento pausado, ultrasuave y elegante' : runwaySettings.cameraSpeed === 'fast' ? 'movimiento dinámico y fluido de alta energía' : 'movimiento moderado fluido de precisión cinematográfica')
+      : (runwaySettings.cameraSpeed === 'slow' ? 'ultra-smooth slow elegant pacing' : runwaySettings.cameraSpeed === 'fast' ? 'dynamic high-energy pan' : 'moderate smooth cinematic pacing');
 
     const tagsJoined = promptTags.length > 0 ? `, ${promptTags.join(', ')}` : '';
     const brandTag = alwaysAddLogo 
-      ? (language === 'ES' ? ', con marca de agua y sello arquitectónico de UNITEC USA Design' : ', with subtle UNITEC USA Design architectural watermark placement')
+      ? (language === 'ES' ? ', con marca de agua y sello arquitectónico de alta gama de UNITEC USA Design' : ', with high-end UNITEC USA Design brand watermark placement')
       : '';
+
+    const wordsTextSnippet = runwaySettings.custom3DWordsText.trim() 
+      ? (language === 'ES' ? `con el texto 3D "${runwaySettings.custom3DWordsText.trim()}"` : `with 3D text "${runwaySettings.custom3DWordsText.trim()}"`)
+      : '';
+
+    const wordPromptSnippet = chosen3DWords.id !== 'none'
+      ? (language === 'ES' ? `, ${chosen3DWords.promptES} ${wordsTextSnippet}` : `, ${chosen3DWords.promptEN} ${wordsTextSnippet}`)
+      : '';
+
+    const wallDescription = language === 'ES'
+      ? `muro principal de acento revestido en ${chosenColl.nameES} (${chosenColl.descES})`
+      : `feature accent wall clad with ${chosenColl.nameEN} (${chosenColl.descEN})`;
+
+    const luxuryDescription = language === 'ES' ? chosenLuxury.promptES : chosenLuxury.promptEN;
 
     if (selectedProvider === 'veo') {
       return language === 'ES'
-        ? `[Google Veo 2 Commercial Prompt] Video publicitario interior fotorrealista en 1080p a 24fps. Toma cinematográfica de ${scenePhrase} mostrando papel tapiz PVC de lujo (${chosenColl?.nameES}). Muro focal con relieve 3D, vetas reflectivas y acabado satinado. Concepto: "${activeTitleText}". Iluminación: ${lightingPhrase}. Movimiento de cámara: ${chosenMotion?.nameES} con ${speedPhrase}${tagsJoined}${brandTag}. Sin desenfoques abruptos, superficie impecable.`
-        : `[Google Veo 2 Commercial Prompt] 1080p 24fps photorealistic interior commercial video. Cinematic shot of ${scenePhrase} clad with luxury PVC wallpaper (${chosenColl?.nameEN}). Feature wall with 3D embossed relief, metallic veins, and satin finish. Theme: "${activeTitleText}". Lighting: ${lightingPhrase}. Camera motion: ${chosenMotion?.nameEN} with ${speedPhrase}${tagsJoined}${brandTag}. No distortion, pristine material surface.`;
+        ? `[Google Veo 2 Commercial Video Prompt 8K] Video publicitario de arquitectura interior de ultra alta definición en 1080p a 24fps. Toma cinematográfica en ${scenePhrase} con un ${wallDescription}${wordPromptSnippet}. Estilo de lujo: ${luxuryDescription}. Concepto creativo de la campaña: "${activeTitleText}". Esquema de iluminación: ${lightingPhrase}. Movimiento de cámara: ${chosenMotion.nameES} (${chosenMotion.prompt}) con ${speedPhrase}, lente macro f/2.8, profundidad de campo suave${tagsJoined}${brandTag}. Superficie de pared impecable, relieve tridimensional táctil sin imperfecciones.`
+        : `[Google Veo 2 Commercial Video Prompt 8K] 1080p 24fps ultra high-definition photorealistic interior commercial video. Cinematic shot in ${scenePhrase} featuring a ${wallDescription}${wordPromptSnippet}. Luxury aesthetic: ${luxuryDescription}. Creative campaign theme: "${activeTitleText}". Lighting setup: ${lightingPhrase}. Camera motion: ${chosenMotion.nameEN} (${chosenMotion.prompt}) with ${speedPhrase}, macro f/2.8 lens, shallow depth-of-field${tagsJoined}${brandTag}. Flawless 3D tactile wall surface.`;
     }
 
     if (selectedProvider === 'luma') {
       return language === 'ES'
-        ? `[Luma Ray 2 Physics Prompt] Render ray-tracing de alta fidelidad física para comercial publicitario. Vista de ${scenePhrase} con revestimiento ${chosenColl?.nameES}. Reflejos de luz especulares en superficie de PVC 100% impermeable, vetas tridimensionales. Inspiración: "${activeTitleText}". Movimiento de cámara: ${chosenMotion?.prompt} con avance ${speedPhrase}${tagsJoined}${brandTag}.`
-        : `[Luma Ray 2 Physics Prompt] High-fidelity physics-based ray-traced commercial interior video. View of ${scenePhrase} decorated with ${chosenColl?.nameEN}. Specular lighting reflections on 100% waterproof PVC wallpaper, tactile 3D grain. Inspiration: "${activeTitleText}". Camera motion: ${chosenMotion?.prompt} with ${speedPhrase}${tagsJoined}${brandTag}.`;
+        ? `[Luma Ray 2 Physics Ray-Tracing Prompt] Renderizador fotorrealista de simulación física ray-tracing en 8K para comercial publicitario de alta gama. Escena en ${scenePhrase} con ${wallDescription}${wordPromptSnippet}. Estilo de lujo: ${luxuryDescription}. Reflejos especulares dorados, sombras suaves y relieve tridimensional táctil profundo. Concepto: "${activeTitleText}". Iluminación: ${lightingPhrase}. Trayectoria de cámara: ${chosenMotion.prompt} con avance ${speedPhrase}${tagsJoined}${brandTag}.`
+        : `[Luma Ray 2 Physics Ray-Tracing Prompt] 8K photorealistic physics-based ray-tracing render for luxury commercial advertising. Scene in ${scenePhrase} with ${wallDescription}${wordPromptSnippet}. Luxury aesthetic: ${luxuryDescription}. Specular gold reflections, soft shadows, and deep 3D tactile relief. Theme: "${activeTitleText}". Lighting: ${lightingPhrase}. Camera trajectory: ${chosenMotion.prompt} with ${speedPhrase}${tagsJoined}${brandTag}.`;
     }
 
     if (selectedProvider === 'kling') {
       return language === 'ES'
-        ? `[Kling AI 1.5 60fps Prompt] Video comercial de 1080p a 60fps para redes sociales. Escena de arquitectura interior en ${scenePhrase} presentando papel tapiz PVC ${chosenColl?.nameES}. Detalle táctil de micro-relieve, ${stylePhrase}, ${lightingPhrase}. Concepto de campaña: "${activeTitleText}". Trayectoria de cámara: ${chosenMotion?.nameES}${tagsJoined}${brandTag}.`
-        : `[Kling AI 1.5 60fps Prompt] 1080p 60fps smooth commercial marketing video clip. Interior architecture scene in ${scenePhrase} displaying ${chosenColl?.nameEN} PVC cladding. Tactile micro-embossed detail, ${stylePhrase}, ${lightingPhrase}. Campaign theme: "${activeTitleText}". Camera movement: ${chosenMotion?.nameEN}${tagsJoined}${brandTag}.`;
+        ? `[Kling AI 1.5 60fps Ultra Motion Prompt] Video comercial en 1080p a 60fps con movimiento de alta fidelidad para redes sociales. Toma de diseño interior en ${scenePhrase} mostrando ${wallDescription}${wordPromptSnippet}. Estilo de lujo: ${luxuryDescription}, ${stylePhrase}. Iluminación: ${lightingPhrase}. Concepto de campaña: "${activeTitleText}". Movimiento de cámara: ${chosenMotion.nameES} (${chosenMotion.prompt}) with ${speedPhrase}${tagsJoined}${brandTag}.`
+        : `[Kling AI 1.5 60fps Ultra Motion Prompt] 1080p 60fps smooth commercial marketing video clip. Interior design shot in ${scenePhrase} displaying ${wallDescription}${wordPromptSnippet}. Luxury aesthetic: ${luxuryDescription}, ${stylePhrase}. Lighting: ${lightingPhrase}. Campaign theme: "${activeTitleText}". Camera movement: ${chosenMotion.nameEN} (${chosenMotion.prompt}) with ${speedPhrase}${tagsJoined}${brandTag}.`;
     }
 
     if (selectedProvider === 'pika') {
       return language === 'ES'
-        ? `[Pika 2.0 Reel Hook] Clip de 5-10 segundos formato vertical para Instagram/TikTok. Gancho visual rápido en ${scenePhrase} resaltando ${chosenColl?.nameES} con brillos dorados y relieves 3D. Concepto: "${activeTitleText}". Movimiento: ${chosenMotion?.nameES}${tagsJoined}${brandTag}.`
-        : `[Pika 2.0 Reel Hook] 5-10 second vertical reel hook for social media ad. Dynamic visual angle in ${scenePhrase} showcasing ${chosenColl?.nameEN} with metallic gold accents and 3D reliefs. Theme: "${activeTitleText}". Motion: ${chosenMotion?.nameEN}${tagsJoined}${brandTag}.`;
+        ? `[Pika 2.0 Vertical Reel Hook Prompt] Clip publicitario de 5-10 segundos en formato vertical 9:16 para Instagram Reels y TikTok. Gancho visual cinemático en ${scenePhrase} resaltando ${wallDescription}${wordPromptSnippet}. Ambiente de lujo: ${luxuryDescription}. Concepto: "${activeTitleText}". Movimiento de cámara: ${chosenMotion.nameES} con ${speedPhrase}${tagsJoined}${brandTag}.`
+        : `[Pika 2.0 Vertical Reel Hook Prompt] 5-10 second vertical 9:16 reel hook for social media ad. Dynamic cinematic visual angle in ${scenePhrase} showcasing ${wallDescription}${wordPromptSnippet}. Luxury setting: ${luxuryDescription}. Theme: "${activeTitleText}". Camera motion: ${chosenMotion.nameEN} with ${speedPhrase}${tagsJoined}${brandTag}.`;
     }
 
     // Default Runway Gen-4.5
     return language === 'ES'
-      ? `Video arquitectónico cinematográfico hiperrealista en 8K (${stylePhrase}). Toma enfocada en el ${scenePhrase} con acabado de ${chosenColl?.nameES} (${chosenColl?.descES}). Basado en el concepto: "${activeTitleText}". Movimiento de cámara: ${chosenMotion?.nameES} (${chosenMotion?.prompt}) con ${speedPhrase}. Iluminación: ${lightingPhrase}. Relieves 3D táctiles, vetas de textura tridimensional${tagsJoined}${brandTag}.`
-      : `8K hyper-realistic cinematic architectural interior video (${stylePhrase}). Focused shot of ${scenePhrase} decorated with ${chosenColl?.nameEN} (${chosenColl?.descEN}). Theme inspiration: "${activeTitleText}". Camera movement: ${chosenMotion?.nameEN} (${chosenMotion?.prompt}) with ${speedPhrase}. Lighting setup: ${lightingPhrase}. Tactile 3D embossed reliefs, detailed texture grain${tagsJoined}${brandTag}.`;
+      ? `[Runway Gen-4.5 Ultra HD Video Prompt] Video cinematográfico hiperrealista de arquitectura interior en resolución 8K UHD (${stylePhrase}). Toma enfocada en el ${scenePhrase} que exhibe un ${wallDescription}${wordPromptSnippet}. Estilo de lujo de alta gama: ${luxuryDescription}. Basado en el concepto creativo: "${activeTitleText}". Movimiento de cámara 3D: ${chosenMotion.nameES} (${chosenMotion.prompt}) con ${speedPhrase}. Configuración de iluminación: ${lightingPhrase}. Textura táctil tridimensional profunda de micro-relieve, acabado sin imperfecciones y máxima calidad de renderizado${tagsJoined}${brandTag}.`
+      : `[Runway Gen-4.5 Ultra HD Video Prompt] 8K UHD hyper-realistic cinematic architectural interior video (${stylePhrase}). Focused shot of ${scenePhrase} featuring a ${wallDescription}${wordPromptSnippet}. High-end luxury aesthetic: ${luxuryDescription}. Creative theme inspiration: "${activeTitleText}". 3D camera movement: ${chosenMotion.nameEN} (${chosenMotion.prompt}) with ${speedPhrase}. Lighting setup: ${lightingPhrase}. Deep tactile 3D embossed texture, pristine material finish${tagsJoined}${brandTag}.`;
   };
 
   const handleEnhancePrompt = () => {
@@ -977,10 +1081,10 @@ export default function VideoGenerator({
                 </div>
               </div>
 
-              {/* Collection Selector */}
+              {/* Collection Selector (All Wall Types) */}
               <div className="space-y-1 text-left">
                 <label className="block text-[10px] uppercase font-mono tracking-wider text-stone-600 font-bold">
-                  🌟 {isSpanish ? '2. Colección de Papel Tapiz PVC:' : '2. PVC Wallpaper Collection:'}
+                  🌟 {isSpanish ? '2. Colección de Papel Tapiz PVC & Tipos de Pared:' : '2. PVC Wallpaper & Wall Material Types:'}
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {RUNWAY_COLLECTIONS.map(coll => (
@@ -1002,6 +1106,69 @@ export default function VideoGenerator({
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* 3D Words & Text Overlay Control */}
+              <div className="bg-[#2d5a4a]/5 border border-[#2d5a4a]/20 p-3 rounded-lg space-y-2 text-left">
+                <div className="flex items-center justify-between text-[10px] uppercase font-mono font-bold tracking-wider text-[#2d5a4a]">
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles size={12} className="text-[#c9a961]" />
+                    {isSpanish ? '3D Words & Tipografía Integrada en Pared:' : '3D Words & Wall Integrated Typography:'}
+                  </span>
+                  <span className="text-[9px] text-stone-500 font-normal normal-case">
+                    {isSpanish ? 'Agregue texto en relieve 3D sobre la pared' : 'Embed 3D embossed words on the wall'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="block text-[9px] uppercase font-mono text-stone-600 font-bold">
+                      {isSpanish ? 'Estilo de Palabras 3D:' : '3D Words Style:'}
+                    </label>
+                    <select
+                      value={runwaySettings.threeDWords}
+                      onChange={(e) => setRunwaySettings(prev => ({ ...prev, threeDWords: e.target.value }))}
+                      className="w-full bg-white border border-stone-300 rounded px-2 py-1.5 text-[10.5px] text-stone-850 focus:outline-[#2d5a4a]"
+                    >
+                      {THREE_D_WORDS_OPTIONS.map(opt => (
+                        <option key={opt.id} value={opt.id}>
+                          {isSpanish ? opt.labelES : opt.labelEN}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[9px] uppercase font-mono text-stone-600 font-bold">
+                      {isSpanish ? 'Texto / Palabras 3D a renderizar:' : 'Custom 3D Words String:'}
+                    </label>
+                    <input
+                      type="text"
+                      value={runwaySettings.custom3DWordsText}
+                      onChange={(e) => setRunwaySettings(prev => ({ ...prev, custom3DWordsText: e.target.value }))}
+                      placeholder={isSpanish ? 'Ej: "UNITEC USA DESIGN", "LUXURY WALLS"' : 'E.g. "UNITEC USA DESIGN", "LUXURY WALLS"'}
+                      className="w-full bg-white border border-stone-300 rounded px-2.5 py-1.5 text-[10.5px] text-stone-850 font-mono focus:outline-[#2d5a4a]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Luxury Aesthetic Level Selector */}
+              <div className="space-y-1 text-left">
+                <label className="block text-[10px] uppercase font-mono tracking-wider text-stone-600 font-bold">
+                  👑 {isSpanish ? 'Nivel de Lujo y Acabado de Alta Gama:' : 'Luxury Level & Architectural Finish:'}
+                </label>
+                <select
+                  value={runwaySettings.luxuryStyle}
+                  onChange={(e) => setRunwaySettings(prev => ({ ...prev, luxuryStyle: e.target.value }))}
+                  className="w-full bg-stone-50 border border-stone-200 rounded px-2.5 py-1.5 text-[11px] text-stone-850 focus:outline-[#2d5a4a] font-sans"
+                >
+                  {LUXURY_STYLE_PRESETS.map(lux => (
+                    <option key={lux.id} value={lux.id}>
+                      {isSpanish ? lux.labelES : lux.labelEN}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Camera Motion Selector & Style Modifier */}
@@ -1695,8 +1862,16 @@ export default function VideoGenerator({
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 font-mono text-[10px] pt-1">
                   <div className="p-2 bg-white rounded border border-stone-200">
-                    <span className="block font-bold text-[#2d5a4a]">4 Colecciones PVC</span>
-                    <span className="text-[9px] text-stone-500">Mármol, Metálico, Damasco, WPC</span>
+                    <span className="block font-bold text-[#2d5a4a]">10 Paredes/Materiales</span>
+                    <span className="text-[9px] text-stone-500">Mármol 3D, WPC, Tapiz, Piedra, Concreto</span>
+                  </div>
+                  <div className="p-2 bg-white rounded border border-stone-200">
+                    <span className="block font-bold text-[#2d5a4a]">5 Estilos Palabras 3D</span>
+                    <span className="text-[9px] text-stone-500">Oro/Bronce, LED, Relieve, Grabado</span>
+                  </div>
+                  <div className="p-2 bg-white rounded border border-stone-200">
+                    <span className="block font-bold text-[#2d5a4a]">4 Niveles de Lujo</span>
+                    <span className="text-[9px] text-stone-500">Ultra Lujo, Suite 5★, Showroom, Minimal</span>
                   </div>
                   <div className="p-2 bg-white rounded border border-stone-200">
                     <span className="block font-bold text-[#2d5a4a]">4 Movimientos Cámara</span>
@@ -1706,16 +1881,8 @@ export default function VideoGenerator({
                     <span className="block font-bold text-[#2d5a4a]">4 Iluminaciones</span>
                     <span className="text-[9px] text-stone-500">Showroom, Natural, Moody, Estudio</span>
                   </div>
-                  <div className="p-2 bg-white rounded border border-stone-200">
-                    <span className="block font-bold text-[#2d5a4a]">4 Ambientes</span>
-                    <span className="text-[9px] text-stone-500">Living, Hotel 5★, Oficina, Muestras</span>
-                  </div>
-                  <div className="p-2 bg-white rounded border border-stone-200">
-                    <span className="block font-bold text-[#2d5a4a]">4 Estilos Render</span>
-                    <span className="text-[9px] text-stone-500">Hiperreal 8K, Comercial, Macro, Bokeh</span>
-                  </div>
                   <div className="p-2 bg-white rounded border border-stone-200 bg-[#c9a961]/10 border-[#c9a961]">
-                    <span className="block font-bold text-stone-900">= 3,072+ Variaciones</span>
+                    <span className="block font-bold text-stone-900">= 32,000+ Variaciones</span>
                     <span className="text-[9px] text-[#2d5a4a] font-bold">Por cada idea de título</span>
                   </div>
                 </div>

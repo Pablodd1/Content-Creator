@@ -44,9 +44,35 @@ export default function App() {
           <div className="hidden md:flex items-center gap-2 text-sm text-slate-600 bg-slate-100 px-3 py-1.5 rounded-md border border-gray-200">
             <span>{language === 'EN' ? 'Current Campaign:' : 'Campaña actual:'}</span>
             <select className="bg-transparent font-semibold text-slate-800 outline-none cursor-pointer">
-              <option>Panel WPC</option>
-              <option>Luxury Decking</option>
+              <option>Panel WPC & Tapiz 3D</option>
+              <option>Luxury Decking & Mármol</option>
             </select>
+          </div>
+
+          {/* Language Toggle */}
+          <div className="flex items-center bg-slate-100 rounded-md p-0.5 border border-gray-200 text-xs font-bold">
+            <button
+              onClick={() => setLanguage('ES')}
+              className={`px-2.5 py-1 rounded transition-colors cursor-pointer flex items-center gap-1 ${
+                language === 'ES'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <span>🇪🇸</span>
+              <span>ES</span>
+            </button>
+            <button
+              onClick={() => setLanguage('EN')}
+              className={`px-2.5 py-1 rounded transition-colors cursor-pointer flex items-center gap-1 ${
+                language === 'EN'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <span>🇺🇸</span>
+              <span>EN</span>
+            </button>
           </div>
         </div>
 
