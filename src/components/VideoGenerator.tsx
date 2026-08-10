@@ -46,9 +46,9 @@ interface GeneratedVideo {
 
 const RUNWAY_COLLECTIONS = [
   { 
-    id: 'pvc_metallic', 
-    nameES: 'Papel Tapiz PVC Metálico de Lujo', 
-    nameEN: 'Luxury Metallic Foil PVC Wallpaper', 
+    id: 'ev_charger_demo', 
+    nameES: 'Demo Interfaz EV Charger', 
+    nameEN: 'EV Charger Interface Demo', 
     descES: 'Acabados con vetas doradas y de latón reflectivas con textura táctil profunda de micro-relieve.', 
     descEN: 'Gold and brass leaf veins with high-end reflective foil textures & micro-embossing.' 
   },
@@ -178,8 +178,16 @@ const VIDEO_PROVIDERS = [
     name: 'Google Veo 2',
     taglineES: 'Modelos de video fotorrealista 1080p de Google DeepMind',
     taglineEN: 'Google DeepMind 1080p commercial video generation',
-    badge: 'GOOGLE VEO',
+    badge: 'GOOGLE VEO 2',
     color: '#4285F4'
+  },
+  {
+    id: 'veo_3_1_fast',
+    name: 'Google Veo 3.1 Fast (Vertex AI)',
+    taglineES: 'La mejor opción para fotorrealismo extremo y velocidad en 8K',
+    taglineEN: 'Best for 8K Photorealism & Render Speed',
+    badge: 'VEO 3.1 FAST',
+    color: '#0F9D58'
   },
   {
     id: 'luma',
@@ -405,7 +413,7 @@ export default function VideoGenerator({
     // Extract precise title or concept from selected day or month
     const dayTitle = selectedDay?.platforms?.instagram?.text?.slice(0, 140) || selectedDay?.imagePrompt || '';
     const monthTheme = selectedMonth ? (language === 'ES' ? selectedMonth.themeES : selectedMonth.themeEN) : '';
-    const activeTitleText = dayTitle || monthTheme || (language === 'ES' ? 'Revestimientos de Papel Tapiz PVC y WPC de Lujo' : 'Luxury PVC & WPC Wall Cladding');
+    const activeTitleText = dayTitle || monthTheme || (language === 'ES' ? 'Electric Charger Monitor Locator' : 'Electric Charger Monitor Locator');
 
     const lightingPhrase = LIGHTING_PRESETS[runwaySettings.lighting];
     const scenePhrase = SCENE_PRESETS[runwaySettings.scenePreset];
@@ -437,6 +445,12 @@ export default function VideoGenerator({
       return language === 'ES'
         ? `[Google Veo 2 Commercial Video Prompt 8K] Video publicitario de arquitectura interior de ultra alta definición en 1080p a 24fps. Toma cinematográfica en ${scenePhrase} con un ${wallDescription}${wordPromptSnippet}. Estilo de lujo: ${luxuryDescription}. Concepto creativo de la campaña: "${activeTitleText}". Esquema de iluminación: ${lightingPhrase}. Movimiento de cámara: ${chosenMotion.nameES} (${chosenMotion.prompt}) con ${speedPhrase}, lente macro f/2.8, profundidad de campo suave${tagsJoined}${brandTag}. Superficie de pared impecable, relieve tridimensional táctil sin imperfecciones.`
         : `[Google Veo 2 Commercial Video Prompt 8K] 1080p 24fps ultra high-definition photorealistic interior commercial video. Cinematic shot in ${scenePhrase} featuring a ${wallDescription}${wordPromptSnippet}. Luxury aesthetic: ${luxuryDescription}. Creative campaign theme: "${activeTitleText}". Lighting setup: ${lightingPhrase}. Camera motion: ${chosenMotion.nameEN} (${chosenMotion.prompt}) with ${speedPhrase}, macro f/2.8 lens, shallow depth-of-field${tagsJoined}${brandTag}. Flawless 3D tactile wall surface.`;
+    }
+
+    if (selectedProvider === 'veo_3_1_fast') {
+      return language === 'ES'
+        ? `[Google Veo 3.1 Fast API - Vertex AI] Renderizado fotorrealista extremo de alta velocidad en 8K a 60fps. Toma cinematográfica veloz y precisa en ${scenePhrase} enfocando un ${wallDescription}${wordPromptSnippet}. Nivel de lujo arquitectónico: ${luxuryDescription}. Concepto de campaña: "${activeTitleText}". Configuración de luces: ${lightingPhrase}. Trayectoria dinámica: ${chosenMotion.nameES} (${chosenMotion.prompt}) con ${speedPhrase}, enfoque nítido perfecto${tagsJoined}${brandTag}. Relieve tridimensional impecable, respuesta visual inmediata.`
+        : `[Google Veo 3.1 Fast API - Vertex AI] 8K 60fps extreme photorealism high-speed render. Fast and precise cinematic shot in ${scenePhrase} focusing on a ${wallDescription}${wordPromptSnippet}. Architectural luxury level: ${luxuryDescription}. Campaign theme: "${activeTitleText}". Light setup: ${lightingPhrase}. Dynamic trajectory: ${chosenMotion.nameEN} (${chosenMotion.prompt}) with ${speedPhrase}, perfect sharp focus${tagsJoined}${brandTag}. Flawless 3D relief, immediate visual response.`;
     }
 
     if (selectedProvider === 'luma') {
@@ -552,7 +566,7 @@ export default function VideoGenerator({
         aspect_ratio: runwaySettings.aspect,
         duration_seconds: parseInt(runwaySettings.duration),
         resolution: "1080p",
-        fps: selectedProvider === 'kling' ? 60 : 24
+        fps: (selectedProvider === 'kling' || selectedProvider === 'veo_3_1_fast') ? 60 : 24
       };
 
       setActiveApiLog({
@@ -728,7 +742,7 @@ export default function VideoGenerator({
             {isSpanish ? 'Estudio de Video por IA Runway' : 'Runway AI Video Production Studio'}
           </h3>
           <p className="text-[10px] text-stone-400 font-sans">
-            {isSpanish ? 'Cree animaciones de texturas hiperrealistas de papel tapiz PVC de alta calidad con Runway Gen-4.5' : 'Generate hyper-realistic textured wallpaper animations with Runway Gen-4.5'}
+            {isSpanish ? 'Cree animaciones hiperrealistas del monitor de estaciones de carga eléctrica con Runway Gen-4.5' : 'Generate hyper-realistic EV charger monitor animations with Runway Gen-4.5'}
           </p>
         </div>
         
@@ -1841,9 +1855,9 @@ export default function VideoGenerator({
                 </h4>
                 <p className="text-[11px] text-stone-700">
                   {isSpanish ? (
-                    <>Cada prompt toma directamente el <strong>Título o Idea del Contenido del Día</strong> seleccionado en el Calendario (por ejemplo: <em>"{selectedDay?.platforms?.instagram?.text?.slice(0, 80) || 'Revestimientos de Papel Tapiz PVC y WPC de Lujo'}"</em>) y la fusiona cinemáticamente con la colección de PVC/WPC de UNITEC USA Design.</>
+                    <>Cada prompt toma directamente el <strong>Título o Idea del Contenido del Día</strong> seleccionado en el Calendario (por ejemplo: <em>"{selectedDay?.platforms?.instagram?.text?.slice(0, 80) || 'Electric Charger Monitor Locator'}"</em>) y la fusiona cinemáticamente con la colección de PVC/WPC de UNITEC USA Design.</>
                   ) : (
-                    <>Each prompt pulls directly from the <strong>Content Idea Title</strong> of the active calendar day (e.g. <em>"{selectedDay?.platforms?.instagram?.text?.slice(0, 80) || 'Luxury PVC & WPC Wall Cladding'}"</em>) and combines it with architectural material parameters.</>
+                    <>Each prompt pulls directly from the <strong>Content Idea Title</strong> of the active calendar day (e.g. <em>"{selectedDay?.platforms?.instagram?.text?.slice(0, 80) || 'Electric Charger Monitor Locator'}"</em>) and combines it with architectural material parameters.</>
                   )}
                 </p>
               </div>

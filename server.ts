@@ -69,17 +69,17 @@ async function startServer() {
         ? `Mandatory Compliance & Product Features to Include: ${complianceFlags.join(', ')}.`
         : '';
 
-      const systemInstruction = `You are a world-class creative director and senior social media strategist specialized in luxury interior design, architectural finishes, and high-end PVC wallpapers for UNITEC USA Design (unitecusadesign.com).
+      const systemInstruction = `You are a world-class creative director and senior social media strategist.
 Your task is to write high-converting, highly engaging, professional social media copy tailored to ${tone} tone and targeted for ${platform}.
-Maintain a sleek, modern, sophisticated voice. Integrate high-value interior architecture terminology (e.g., 3D reliefs, 100% waterproof PVC, European design, NSR-10 fire retardation standards, FOB container wholesale distribution).`;
+Maintain a sleek, modern, sophisticated voice.`;
 
       const prompt = `Please generate an individual, highly optimized social media campaign post based on the following creative parameters:
 
 📌 CREATIVE BRIEF:
-- Title / Hook Line: "${title || 'Luxury PVC Wallpaper & 3D Wall Cladding'}"
-- Target Audience / Segment: "${target || 'Interior designers, architects, builders, and wholesale distributors in Colombia & US'}"
-- Strategic Objective: "${objective || 'Drive digital showroom traffic and container orders at unitecusadesign.com'}"
-- Specific Want / Creative Angle: "${want || 'Highlight durability, European aesthetic, and waterproof features'}"
+- Title / Hook Line: "${title || 'New Product Launch'}"
+- Target Audience / Segment: "${target || 'General Audience'}"
+- Strategic Objective: "${objective || 'Drive engagement and traffic'}"
+- Specific Want / Creative Angle: "${want || 'Highlight key features and benefits'}"
 - Desired Tone of Voice: ${tone}
 - Target Platform Focus: ${platform}
 ${complianceText ? `- Compliance Mandates: ${complianceText}` : ''}
