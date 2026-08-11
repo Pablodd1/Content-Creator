@@ -76,35 +76,35 @@ Maintain a sleek, modern, sophisticated voice.`;
       const prompt = `Please generate an individual, highly optimized social media campaign post based on the following creative parameters:
 
 📌 CREATIVE BRIEF:
-- Title / Hook Line: "${title || 'New Product Launch'}"
-- Target Audience / Segment: "${target || 'General Audience'}"
-- Strategic Objective: "${objective || 'Drive engagement and traffic'}"
-- Specific Want / Creative Angle: "${want || 'Highlight key features and benefits'}"
+- Title / Hook Line: "${title || 'Lanzamiento de Campaña'}"
+- Target Audience / Segment: "${target || 'Audiencia General y Clientes Potenciales'}"
+- Strategic Objective: "${objective || 'Aumentar engagement, visibilidad y conversiones'}"
+- Specific Want / Creative Angle: "${want || 'Destacar beneficios clave y propuesta de valor'}"
 - Desired Tone of Voice: ${tone}
 - Target Platform Focus: ${platform}
 ${complianceText ? `- Compliance Mandates: ${complianceText}` : ''}
 
 REQUIRED OUTPUT FORMAT (Return clean text with these exact formatted sections):
 
-✨ [CAPTURE HOOK / HEADLINE]
-(Create a high-impact, attention-grabbing opening line)
+✨ [TITULAR IMPACTANTE / HOOK]
+(Crea una línea de apertura de alto impacto que capte la atención de inmediato)
 
-📖 [MAIN POST BODY]
-(Write 2-3 engaging, well-spaced paragraphs with subtle bullet points highlighting value propositions and material benefits)
+📖 [CUERPO DEL MENSAJE / POST]
+(Escribe 2-3 párrafos atractivos y bien estructurados con viñetas destacando la propuesta de valor y los beneficios principales)
 
-🔒 [TECHNICAL & COMPLIANCE SPECIFICATIONS]
-(Include waterproof, washable PVC details, NSR-10 safety standards, or container shipment terms where appropriate)
+🔒 [PUNTOS CLAVE Y ESPECIFICACIONES]
+(Incluye los aspectos técnicos, diferenciadores o características clave relevantes)
 
-🎯 [CALL TO ACTION]
-(Direct traffic to browse catalog / request sample boards at unitecusadesign.com)
+🎯 [LLAMADO A LA ACCIÓN / CALL TO ACTION]
+(Guía clara hacia el siguiente paso: visitar el sitio web, contactar por WhatsApp o solicitar más información)
 
-🎬 [PAIRED AI VISUAL ASSET PROMPT (Runway / Midjourney)]
-(Provide a ready-to-use high-definition visual prompt description for AI image or video generation of this product scene)
+🎬 [PROMPT PARA CREATIVO VISUAL (Runway / Midjourney / DALL-E)]
+(Proporciona una descripción detallada en español e inglés para generar la imagen o video publicitario acompañante)
 
-🏷️ [HASHTAGS]
-(Provide 10-12 highly targeted, high-performing hashtags for Instagram, LinkedIn, Facebook, and YouTube)
+🏷️ [HASHTAGS RECOMENDADOS]
+(Proporciona 10-12 hashtags estratégicos para maximizar el alcance en Instagram, Facebook, TikTok y LinkedIn)
 
-Language: Output strictly in ${language === 'EN' ? 'English' : 'Spanish (with high-end Colombian & US international terminology)'}.`;
+Language: Output strictly in Spanish.`;
 
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',

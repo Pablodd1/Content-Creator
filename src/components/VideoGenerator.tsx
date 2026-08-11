@@ -413,7 +413,7 @@ export default function VideoGenerator({
     // Extract precise title or concept from selected day or month
     const dayTitle = selectedDay?.platforms?.instagram?.text?.slice(0, 140) || selectedDay?.imagePrompt || '';
     const monthTheme = selectedMonth ? (language === 'ES' ? selectedMonth.themeES : selectedMonth.themeEN) : '';
-    const activeTitleText = dayTitle || monthTheme || (language === 'ES' ? 'Electric Charger Monitor Locator' : 'Electric Charger Monitor Locator');
+    const activeTitleText = dayTitle || monthTheme || 'Campaña Estratégica de Marketing';
 
     const lightingPhrase = LIGHTING_PRESETS[runwaySettings.lighting];
     const scenePhrase = SCENE_PRESETS[runwaySettings.scenePreset];
@@ -1855,9 +1855,9 @@ export default function VideoGenerator({
                 </h4>
                 <p className="text-[11px] text-stone-700">
                   {isSpanish ? (
-                    <>Cada prompt toma directamente el <strong>Título o Idea del Contenido del Día</strong> seleccionado en el Calendario (por ejemplo: <em>"{selectedDay?.platforms?.instagram?.text?.slice(0, 80) || 'Electric Charger Monitor Locator'}"</em>) y la fusiona cinemáticamente con la colección de PVC/WPC de UNITEC USA Design.</>
+                    <>Cada prompt toma directamente el <strong>Título o Idea del Contenido del Día</strong> seleccionado en el Calendario (por ejemplo: <em>"{selectedDay?.platforms?.instagram?.text?.slice(0, 80) || 'Demostración de Producto y Campaña'}"</em>) y la fusiona cinemáticamente con los parámetros de animación visual.</>
                   ) : (
-                    <>Each prompt pulls directly from the <strong>Content Idea Title</strong> of the active calendar day (e.g. <em>"{selectedDay?.platforms?.instagram?.text?.slice(0, 80) || 'Electric Charger Monitor Locator'}"</em>) and combines it with architectural material parameters.</>
+                    <>Each prompt pulls directly from the <strong>Content Idea Title</strong> of the active calendar day (e.g. <em>"{selectedDay?.platforms?.instagram?.text?.slice(0, 80) || 'Product & Campaign Showcase'}"</em>) and combines it with visual animation parameters.</>
                   )}
                 </p>
               </div>
