@@ -70,9 +70,8 @@ export interface ApiKeysConfig {
   openai: string;
   perplexity: string;
   googleTrends: string;
-  heygen?: string;
-  invideo?: string;
   runway?: string;
+  gemini?: string;
 }
 
 export interface CompanyTrainingConfig {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import VideoGenerator from './components/VideoGenerator';
 import {
   FileText,
@@ -11,23 +11,172 @@ import {
   Bell,
   Hash,
   CheckCircle,
-  Copy
+  Copy,
+  Eye,
+  Trash2,
+  X,
+  Plus,
+  RefreshCw,
+  FileCode,
+  Layers
 } from 'lucide-react';
+
+export interface AttachedFile {
+  id: string;
+  name: string;
+  sizeFormatted: string;
+  type: 'image' | 'text' | 'document';
+  mimeType: string;
+  dataUrl?: string;
+  textContent?: string;
+}
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('context');
   const [selectedCampaign, setSelectedCampaign] = useState('Campaña Estratégica General');
+  const [selectedTone, setSelectedTone] = useState<'Sales-driven' | 'Informational' | 'Community-centric'>('Sales-driven');
+  const [selectedPlatform, setSelectedPlatform] = useState('All Platforms');
   const [contextText, setContextText] = useState('');
-  const [docs, setDocs] = useState(['Ficha_Tecnica_Campana.pdf', 'Referencia_Producto.jpg', 'Guion_Estrategico.docx']);
+  
+  // Attached files state with full object details
+  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([
+    {
+      id: 'file-1',
+      name: 'Ficha_Tecnica_Campana.pdf',
+      sizeFormatted: '1.2 MB',
+      type: 'document',
+      mimeType: 'application/pdf',
+      textContent: 'FICHA TÉCNICA Y ESPECIFICACIONES:\n- Producto: Revestimiento Arquitectónico Premium 8K\n- Propuesta de valor: 100% Impermeable, acústico y lavable\n- Público objetivo: Arquitectos, diseñadores de interiores y desarrolladores residenciales en Miami y Latinoamérica.'
+    },
+    {
+      id: 'file-2',
+      name: 'Referencia_Visual_Producto.jpg',
+      sizeFormatted: '850 KB',
+      type: 'image',
+      mimeType: 'image/jpeg',
+      dataUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=400'
+    },
+    {
+      id: 'file-3',
+      name: 'Guion_Estrategico_Brief.docx',
+      sizeFormatted: '45 KB',
+      type: 'text',
+      mimeType: 'text/plain',
+      textContent: 'BRIEF DE MARKETING:\nObjetivo principal: Posicionar la marca como líder en innovación y acabados de lujo.\nMensaje clave: "Eleva tus espacios con texturas tridimensionales y elegancia atemporal".'
+    }
+  ]);
+
   const [generatedText, setGeneratedText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingImg, setIsGeneratingImg] = useState(false);
-  const [generatedImg, setGeneratedImg] = useState('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=200');
+  const [generatedImg, setGeneratedImg] = useState('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=600');
+  const [previewFile, setPreviewFile] = useState<AttachedFile | null>(null);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
+  // Helper to format file sizes
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  // Handle document/file uploads from local computer
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach((file: File) => {
+      const isText = file.type.startsWith('text/') || 
+                     file.name.endsWith('.txt') || 
+                     file.name.endsWith('.md') || 
+                     file.name.endsWith('.csv') || 
+                     file.name.endsWith('.json');
+
+      const isImg = file.type.startsWith('image/');
+
+      if (isImg) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const dataUrl = event.target?.result as string;
+          const newFile: AttachedFile = {
+            id: `file-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
+            name: file.name,
+            sizeFormatted: formatFileSize(file.size),
+            type: 'image',
+            mimeType: file.type || 'image/png',
+            dataUrl
+          };
+          setAttachedFiles(prev => [...prev, newFile]);
+        };
+        reader.readAsDataURL(file);
+      } else if (isText) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const textContent = event.target?.result as string;
+          const newFile: AttachedFile = {
+            id: `file-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
+            name: file.name,
+            sizeFormatted: formatFileSize(file.size),
+            type: 'text',
+            mimeType: file.type || 'text/plain',
+            textContent
+          };
+          setAttachedFiles(prev => [...prev, newFile]);
+          
+          // Optionally append to textarea
+          setContextText(prev => prev + (prev ? '\n\n' : '') + `--- Contenido de ${file.name} ---\n` + textContent);
+        };
+        reader.readAsText(file);
+      } else {
+        // Non-text documents (PDF, DOCX)
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const dataUrl = event.target?.result as string;
+          const newFile: AttachedFile = {
+            id: `file-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
+            name: file.name,
+            sizeFormatted: formatFileSize(file.size),
+            type: 'document',
+            mimeType: file.type || 'application/octet-stream',
+            dataUrl,
+            textContent: `Documento adjunto: ${file.name} (${formatFileSize(file.size)})`
+          };
+          setAttachedFiles(prev => [...prev, newFile]);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Reset input
+    if (e.target) e.target.value = '';
+  };
+
+  // Handle image specific upload
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFileUpload(e);
+  };
+
+  // Remove attached file
+  const handleRemoveFile = (fileId: string) => {
+    setAttachedFiles(prev => prev.filter(f => f.id !== fileId));
+  };
+
+  // Trigger Gemini Multimodal Post Generation
   const handleGenerateContent = async () => {
-    if (!contextText.trim()) return;
     setIsGenerating(true);
     try {
+      // Gather document text contents
+      const documentTexts = attachedFiles
+        .filter(f => f.textContent && f.textContent.trim().length > 0)
+        .map(f => `📄 [Archivo: ${f.name}]\n${f.textContent}`);
+
+      // Gather image base64 strings
+      const images = attachedFiles
+        .filter(f => f.type === 'image' && f.dataUrl && f.dataUrl.startsWith('data:image/'))
+        .map(f => f.dataUrl as string);
+
       const res = await fetch('/api/generate-universal-post', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -37,37 +186,39 @@ export default function App() {
           title: selectedCampaign,
           target: "Clientes potenciales y audiencia objetivo",
           objective: "Generar compromiso, visibilidad y conversiones de alto impacto",
+          tone: selectedTone,
+          platform: selectedPlatform,
+          documentTexts,
+          images
         })
       });
       const data = await res.json();
       if (data.success) {
         setGeneratedText(data.text);
+        setActiveTab('copies');
       } else {
         alert(data.error || 'Error al generar el contenido.');
       }
     } catch (err) {
       console.error(err);
-      alert('Error de conexión al generar el contenido');
+      alert('Error de conexión al generar el contenido.');
     }
     setIsGenerating(false);
   };
 
   // Download individual document representation
-  const handleDownloadDoc = (docName: string) => {
-    const content = `================================================
+  const handleDownloadDoc = (file: AttachedFile) => {
+    let content = `================================================
 DOCUMENTO DE CONTEXTO Y REFERENCIA
 ================================================
-Nombre del archivo: ${docName}
+Nombre del archivo: ${file.name}
+Tipo: ${file.type} (${file.mimeType})
+Tamaño: ${file.sizeFormatted}
 Campaña activa: ${selectedCampaign}
 Fecha de registro: ${new Date().toLocaleDateString('es-ES')}
 
-DESCRIPCIÓN DEL RECURSO:
-Este documento forma parte del paquete de contextualización utilizado por el equipo de marketing para alimentar el generador de contenido IA.
-
-INFORMACIÓN REGISTRADA:
-- Documento: ${docName}
-- Notas adicionales: "${contextText || 'Información de campaña para desarrollo de estrategia y contenido publicitario.'}"
-- Objetivo: Generación de copies, creativos visuales, video y agenda de publicación.
+DESCRIPCIÓN Y CONTENIDO REGISTRADO:
+${file.textContent || 'Archivo de referencia adjunto para análisis de campaña de marketing.'}
 
 ================================================
 CONTENT IA - PLATAFORMA ESTRATÉGICA DE MARKETING
@@ -77,7 +228,7 @@ CONTENT IA - PLATAFORMA ESTRATÉGICA DE MARKETING
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = docName.includes('.') ? docName : `${docName}.txt`;
+    a.download = file.name.includes('.') ? file.name : `${file.name}.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -89,20 +240,20 @@ RESUMEN EJECUTIVO DE CONTEXTUALIZACIÓN Y BRIEFING
 ================================================
 Fecha de generación: ${new Date().toLocaleDateString('es-ES')}
 Campaña seleccionada: ${selectedCampaign}
+Tono de voz: ${selectedTone}
+Plataforma objetivo: ${selectedPlatform}
 
-1. ARCHIVOS Y DOCUMENTOS ADJUNTOS EN CONTEXTO:
-${docs.map((d, i) => `   ${i + 1}. ${d}`).join('\n')}
+1. ARCHIVOS Y DOCUMENTOS ADJUNTOS EN CONTEXTO (${attachedFiles.length}):
+${attachedFiles.map((f, i) => `   ${i + 1}. [${f.type.toUpperCase()}] ${f.name} (${f.sizeFormatted})`).join('\n')}
 
 2. INSTRUCCIONES Y DETALLES DE CAMPAÑA:
 ${contextText.trim() ? contextText : 'Campaña estratégica enfocada en maximizar la visibilidad, la interacción orgánica y las conversiones del producto o servicio.'}
 
-3. OBJETIVOS ESTRATÉGICOS:
-- Adaptación de mensajes para Instagram, Facebook, TikTok y YouTube.
-- Prompts optimizados para generación de video e imágenes publicitarias.
-- Palabras clave y etiquetas para posicionamiento SEO en redes.
+3. CONTENIDO EXTRAÍDO DE DOCUMENTOS:
+${attachedFiles.filter(f => f.textContent).map(f => `--- ${f.name} ---\n${f.textContent}`).join('\n\n')}
 
 ================================================
-CONTENT IA - SISTEMA DE MARKETING
+CONTENT IA - SISTEMA DE MARKETING Y GENERACIÓN
 ================================================`;
 
     const blob = new Blob([summaryText], { type: 'text/plain;charset=utf-8' });
@@ -121,21 +272,23 @@ REPORTE GENERAL DE GENERACIÓN DE CONTENIDO Y MARKETING
 ================================================
 Fecha de emisión: ${new Date().toLocaleDateString('es-ES')}
 Campaña: ${selectedCampaign}
+Tono de Voz: ${selectedTone}
+Plataforma: ${selectedPlatform}
 
 ------------------------------------------------
 1. RESUMEN DEL CONTEXTO Y BRIEFING
 ------------------------------------------------
-Archivos de contexto: ${docs.join(', ')}
+Archivos de contexto (${attachedFiles.length}): ${attachedFiles.map(f => f.name).join(', ')}
 Indicaciones clave: "${contextText || 'Generación de contenido de alto impacto para campañas digitales.'}"
 
 ------------------------------------------------
 2. COPY GENERADO PARA REDES SOCIALES
 ------------------------------------------------
-${generatedText || `¡Transforma la presencia de tu marca con contenido diseñado para impactar! 🚀
+${generatedText || `✨ ¡Lleva tu marca al siguiente nivel con contenido estratégico! 🚀
 
 Publicaciones optimizadas para conectar con tu audiencia objetivo, transmitir una propuesta de valor clara y acelerar tus resultados. ✨
 
-#EstrategiaDigital #MarketingDeContenido #Lanzamiento #Posicionamiento #Campaña2025`}
+#MarketingDigital #EstrategiaDigital #Lanzamiento #Posicionamiento #Campaña2026`}
 
 ------------------------------------------------
 3. PALABRAS CLAVE Y HASHTAGS
@@ -151,10 +304,10 @@ Descripción visual: Escena profesional con iluminación de estudio softbox, est
 ------------------------------------------------
 5. CRONOGRAMA DE PUBLICACIÓN EN CALENDARIO
 ------------------------------------------------
-- Instagram: 23 Mayo 2025 - 10:00 AM
-- Facebook: 27 Mayo 2025 - 12:00 PM
-- TikTok: 30 Mayo 2025 - 09:00 AM
-- YouTube: 02 Junio 2025 - 06:00 PM
+- Instagram: 23 Mayo 2026 - 10:00 AM
+- Facebook: 27 Mayo 2026 - 12:00 PM
+- TikTok: 30 Mayo 2026 - 09:00 AM
+- YouTube: 02 Junio 2026 - 06:00 PM
 
 ================================================
 CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
@@ -172,9 +325,9 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
   const handleGenerateImage = () => {
     setIsGeneratingImg(true);
     setTimeout(() => {
-      setGeneratedImg('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=500&q=80');
+      setGeneratedImg('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=600&q=80');
       setIsGeneratingImg(false);
-    }, 2000);
+    }, 1800);
   };
 
   const navItems = [
@@ -189,24 +342,42 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
+      {/* Hidden File Inputs */}
+      <input 
+        type="file" 
+        className="hidden" 
+        ref={imageInputRef} 
+        accept="image/*" 
+        multiple 
+        onChange={handleImageUpload} 
+      />
+      <input 
+        type="file" 
+        className="hidden" 
+        ref={fileInputRef} 
+        accept=".txt,.md,.csv,.json,.pdf,.doc,.docx" 
+        multiple 
+        onChange={handleFileUpload} 
+      />
+
       {/* Top Header */}
-      <header className="sticky top-0 z-40 bg-white shadow-sm border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-white shadow-xs border-b border-gray-200 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-md">
-              <Sparkles size={16} />
+            <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md">
+              <Sparkles size={18} />
             </div>
-            <h1 className="font-sans font-black text-xl tracking-tight text-slate-800 uppercase">
+            <h1 className="font-black text-xl tracking-tight text-slate-900 uppercase">
               CONTENT IA
             </h1>
           </div>
           
-          <div className="hidden md:flex items-center gap-2 text-sm text-slate-600 bg-slate-100 px-3 py-1.5 rounded-md border border-gray-200">
-            <span>Campaña actual:</span>
+          <div className="hidden md:flex items-center gap-2 text-sm text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg border border-gray-200">
+            <span className="text-xs font-bold text-slate-500 uppercase">Campaña:</span>
             <select 
               value={selectedCampaign}
               onChange={(e) => setSelectedCampaign(e.target.value)}
-              className="bg-transparent font-semibold text-slate-800 outline-none cursor-pointer"
+              className="bg-transparent font-bold text-slate-800 outline-none cursor-pointer text-xs"
             >
               <option>Campaña Estratégica General</option>
               <option>Lanzamiento de Producto</option>
@@ -216,17 +387,17 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <button 
             onClick={() => { 
               setContextText(''); 
               setGeneratedText(''); 
-              setDocs(['Ficha_Tecnica_Campana.pdf']); 
+              setAttachedFiles([]); 
               setActiveTab('context'); 
             }} 
-            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-sans text-sm font-semibold rounded-md transition-all shadow-sm cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg transition-all shadow-sm cursor-pointer"
           >
-            <span className="text-lg leading-none">+</span>
+            <Plus size={16} />
             <span>Nuevo proyecto</span>
           </button>
           
@@ -234,11 +405,11 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
             onClick={() => alert('Sin nuevas notificaciones de campaña')} 
             className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
           >
-            <Bell size={20} />
-            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+            <Bell size={18} />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-blue-600 rounded-full"></span>
           </button>
 
-          <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold text-sm shadow-sm border border-gray-300">
+          <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-700 font-bold text-xs shadow-xs border border-gray-300">
             MK
           </div>
         </div>
@@ -247,8 +418,11 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
       {/* Main Content Area with Sidebar */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar */}
-        <aside className="w-64 bg-white border-r border-gray-200 flex flex-col justify-between py-6">
-          <div className="px-4 space-y-1">
+        <aside className="w-60 bg-white border-r border-gray-200 flex flex-col justify-between py-5 flex-shrink-0">
+          <div className="px-3 space-y-1">
+            <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Navegación
+            </div>
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -262,32 +436,27 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
                       setActiveTab(item.id);
                     }
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     isActive 
-                      ? 'bg-blue-50 text-blue-600 shadow-sm' 
+                      ? 'bg-blue-50 text-blue-600 shadow-xs' 
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
                 >
-                  <Icon size={18} className={isActive ? 'text-blue-600' : 'text-slate-400'} />
+                  <Icon size={17} className={isActive ? 'text-blue-600' : 'text-slate-400'} />
                   {item.label}
                 </button>
               );
             })}
           </div>
 
-          {/* Bottom Credits */}
-          <div className="px-6 pb-4">
-            <div className="bg-slate-50 border border-gray-200 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles size={16} className="text-purple-500" />
-                <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                  Créditos disponibles
-                </span>
+          {/* Credits Box */}
+          <div className="px-4 pb-2">
+            <div className="bg-slate-50 border border-gray-200 rounded-xl p-3.5">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[11px] font-bold text-slate-600">Archivos adjuntos</span>
+                <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">{attachedFiles.length}</span>
               </div>
-              <div className="text-2xl font-bold text-slate-800 mb-1">1,250</div>
-              <button className="text-blue-600 text-xs font-semibold hover:underline cursor-pointer">
-                Ver detalles &gt;
-              </button>
+              <p className="text-[11px] text-slate-500">Imágenes y documentos analizados por la IA.</p>
             </div>
           </div>
         </aside>
@@ -298,25 +467,25 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
             
             {/* Context Section */}
             {activeTab === "context" && (
-              <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-                <div className="flex items-center justify-between mb-6">
+              <section className="bg-white rounded-2xl p-6 shadow-xs border border-gray-200 space-y-6">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-sm">
+                    <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-xs">
                       <MessageSquare size={20} />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-slate-800">
+                      <h2 className="text-lg font-bold text-slate-900">
                         Contextualiza tu contenido
                       </h2>
                       <p className="text-xs text-slate-500">
-                        Sube documentos, guiones o añade notas para alimentar la generación.
+                        Sube imágenes y documentos desde tu equipo para enriquecer la generación con la IA de Gemini.
                       </p>
                     </div>
                   </div>
 
                   <button
                     onClick={handleDownloadContextSummary}
-                    className="flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg border border-gray-200 transition-colors shadow-xs cursor-pointer"
+                    className="flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg border border-gray-200 transition-colors cursor-pointer"
                     title="Descargar reporte completo de contexto"
                   >
                     <Download size={14} className="text-blue-600" />
@@ -324,122 +493,211 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
                   </button>
                 </div>
                 
-                {/* Documents List with Download & Remove Actions */}
-                <div className="mb-4">
-                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    Documentos y recursos adjuntos
+                {/* Upload Buttons Banner */}
+                <div className="bg-slate-50 border border-dashed border-gray-300 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div className="text-xs text-slate-600">
+                    <p className="font-bold text-slate-800">Carga archivos desde tu computadora:</p>
+                    <p className="text-slate-500">Acepta imágenes (.png, .jpg, .webp), textos (.txt, .md, .csv) y documentos (.pdf, .docx).</p>
                   </div>
-                  <div className="flex flex-wrap gap-3">
-                    {docs.map(doc => (
-                      <div key={doc} className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-slate-700 shadow-sm hover:border-blue-300 transition-all">
-                        <div className="p-1 bg-blue-100 text-blue-600 rounded">
-                          <FileText size={14}/>
-                        </div>
-                        <span className="font-medium text-xs text-slate-800">{doc}</span>
-                        
-                        <div className="flex items-center gap-1 ml-2 border-l border-gray-200 pl-2">
-                          <button 
-                            onClick={() => handleDownloadDoc(doc)} 
-                            title={`Descargar ${doc}`} 
-                            className="p-1 text-slate-500 hover:text-blue-600 transition-colors cursor-pointer"
-                          >
-                            <Download size={13} />
-                          </button>
-                          <button 
-                            onClick={() => setDocs(docs.filter(d => d !== doc))} 
-                            title="Eliminar documento" 
-                            className="p-1 text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                  
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button 
+                      onClick={() => imageInputRef.current?.click()} 
+                      className="flex items-center gap-2 text-xs font-bold bg-purple-50 hover:bg-purple-100 text-purple-700 px-3.5 py-2 rounded-lg border border-purple-200 shadow-xs transition-all cursor-pointer"
+                    >
+                      <ImageIcon size={15} /> + Cargar Imagen
+                    </button>
+
+                    <button 
+                      onClick={() => fileInputRef.current?.click()} 
+                      className="flex items-center gap-2 text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 px-3.5 py-2 rounded-lg border border-blue-200 shadow-xs transition-all cursor-pointer"
+                    >
+                      <FileText size={15} /> + Cargar Documento
+                    </button>
                   </div>
                 </div>
 
-                <div className="relative">
-                  <textarea 
-                    className="w-full bg-slate-50 border border-gray-200 rounded-xl p-4 pb-14 text-sm text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"
-                    rows={4}
-                    value={contextText}
-                    onChange={(e) => setContextText(e.target.value)}
-                    placeholder="Escribe instrucciones, detalles del producto o los objetivos de tu campaña de marketing..."
-                  ></textarea>
-
-                  <div className="absolute bottom-3 left-4 flex items-center gap-3 text-slate-500">
-                    <button 
-                      onClick={() => setDocs([...docs, `Imagen_Referencia_${docs.length + 1}.jpg`])} 
-                      className="flex items-center gap-1.5 text-xs font-semibold hover:text-slate-800 transition-colors bg-white px-2.5 py-1 rounded border border-gray-200 shadow-sm cursor-pointer"
-                    >
-                      <ImageIcon size={14} className="text-purple-600" /> + Imagen
-                    </button>
-                    <button 
-                      onClick={() => setDocs([...docs, `Documento_Campana_${docs.length + 1}.pdf`])} 
-                      className="flex items-center gap-1.5 text-xs font-semibold hover:text-slate-800 transition-colors bg-white px-2.5 py-1 rounded border border-gray-200 shadow-sm cursor-pointer"
-                    >
-                      <FileText size={14} className="text-blue-600" /> + Documento
-                    </button>
+                {/* Attached Files Grid */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                      Archivos cargados en el contexto ({attachedFiles.length})
+                    </span>
+                    {attachedFiles.length > 0 && (
+                      <button 
+                        onClick={() => setAttachedFiles([])} 
+                        className="text-[11px] font-bold text-red-600 hover:underline cursor-pointer"
+                      >
+                        Limpiar todos
+                      </button>
+                    )}
                   </div>
 
-                  <button 
-                    disabled={isGenerating || !contextText.trim()} 
-                    onClick={handleGenerateContent} 
-                    className="absolute bottom-3 right-4 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-sm disabled:opacity-50 cursor-pointer"
-                  >
-                    <Sparkles size={16} />
-                    {isGenerating ? 'Generando...' : 'Generar contenido'}
-                  </button>
+                  {attachedFiles.length === 0 ? (
+                    <div className="text-center py-8 bg-slate-50 rounded-xl border border-gray-200 text-slate-400 text-xs">
+                      No hay archivos adjuntos aún. Usa los botones de arriba para cargar tus recursos.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                      {attachedFiles.map(file => (
+                        <div 
+                          key={file.id} 
+                          className="flex items-center justify-between p-2.5 bg-white border border-gray-200 rounded-xl shadow-xs hover:border-blue-300 transition-all group"
+                        >
+                          <div className="flex items-center gap-2.5 overflow-hidden">
+                            {file.type === 'image' && file.dataUrl ? (
+                              <img 
+                                src={file.dataUrl} 
+                                alt={file.name} 
+                                className="w-10 h-10 object-cover rounded-lg border border-gray-200 flex-shrink-0"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+                                <FileText size={20} />
+                              </div>
+                            )}
+
+                            <div className="overflow-hidden">
+                              <p className="text-xs font-bold text-slate-800 truncate" title={file.name}>
+                                {file.name}
+                              </p>
+                              <p className="text-[10px] text-slate-400 font-semibold">
+                                {file.sizeFormatted} • {file.type.toUpperCase()}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                            <button 
+                              onClick={() => setPreviewFile(file)} 
+                              title="Previsualizar" 
+                              className="p-1.5 text-slate-400 hover:text-blue-600 rounded-md hover:bg-slate-100 cursor-pointer"
+                            >
+                              <Eye size={14} />
+                            </button>
+                            <button 
+                              onClick={() => handleDownloadDoc(file)} 
+                              title="Descargar" 
+                              className="p-1.5 text-slate-400 hover:text-blue-600 rounded-md hover:bg-slate-100 cursor-pointer"
+                            >
+                              <Download size={14} />
+                            </button>
+                            <button 
+                              onClick={() => handleRemoveFile(file.id)} 
+                              title="Eliminar" 
+                              className="p-1.5 text-slate-400 hover:text-red-600 rounded-md hover:bg-slate-100 cursor-pointer"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Tone and Platform Config */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Tono de voz:</label>
+                    <select 
+                      value={selectedTone}
+                      onChange={(e) => setSelectedTone(e.target.value as any)}
+                      className="w-full bg-slate-50 border border-gray-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-800 outline-none"
+                    >
+                      <option value="Sales-driven">Sales-driven (Persuasivo y Enfocado en Ventas)</option>
+                      <option value="Informational">Informational (Técnico e Educativo)</option>
+                      <option value="Community-centric">Community-centric (Cercano y Social)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Plataforma objetivo:</label>
+                    <select 
+                      value={selectedPlatform}
+                      onChange={(e) => setSelectedPlatform(e.target.value)}
+                      className="w-full bg-slate-50 border border-gray-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-800 outline-none"
+                    >
+                      <option value="All Platforms">Todas las redes (Instagram, FB, TikTok, YT)</option>
+                      <option value="Instagram">Instagram</option>
+                      <option value="Facebook">Facebook</option>
+                      <option value="TikTok">TikTok</option>
+                      <option value="LinkedIn">LinkedIn</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Text Area Input */}
+                <div className="relative">
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Instrucciones adicionales y detalles del producto:
+                  </label>
+                  <textarea 
+                    className="w-full bg-slate-50 border border-gray-200 rounded-xl p-4 pb-14 text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"
+                    rows={5}
+                    value={contextText}
+                    onChange={(e) => setContextText(e.target.value)}
+                    placeholder="Escribe aquí las instrucciones de tu campaña, oferta especial o detalles del producto..."
+                  ></textarea>
+
+                  <div className="absolute bottom-3 right-4 flex items-center gap-3">
+                    <button 
+                      disabled={isGenerating || (!contextText.trim() && attachedFiles.length === 0)} 
+                      onClick={handleGenerateContent} 
+                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-xs font-bold transition-all shadow-md disabled:opacity-50 cursor-pointer"
+                    >
+                      <Sparkles size={16} />
+                      {isGenerating ? 'Analizando archivos y generando...' : 'Generar contenido con IA'}
+                    </button>
+                  </div>
                 </div>
               </section>
             )}
 
-            {/* Copies & Keywords Row */}
+            {/* Copies Tab */}
             {(activeTab === "copies" || activeTab === "keywords") && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <section className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-slate-800">
-                      Copies por red social
+                <section className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-xs border border-gray-200 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-base font-bold text-slate-900">
+                      Copy Optimizado generado por IA
                     </h3>
                     <button
                       onClick={handleDownloadContentSummary}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs font-semibold rounded-lg border border-blue-200 transition-colors cursor-pointer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs font-bold rounded-lg border border-blue-200 transition-colors cursor-pointer"
                     >
                       <Download size={14} />
-                      <span>Descargar Resumen de Contenido</span>
+                      <span>Descargar Resumen</span>
                     </button>
                   </div>
 
-                  <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
-                    <button className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-sm font-semibold shadow-sm flex-shrink-0">
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    <button className="flex items-center gap-2 px-3.5 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg text-xs font-bold shadow-xs">
                       <span>Instagram</span>
-                      <div className="bg-white/20 p-0.5 rounded-full"><CheckCircle size={14}/></div>
+                      <CheckCircle size={13} />
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-slate-700 hover:bg-slate-50 rounded-xl text-sm font-semibold transition-colors flex-shrink-0 cursor-pointer">
-                      <span className="text-blue-600 font-bold">f</span> Facebook
+                    <button className="flex items-center gap-2 px-3.5 py-2 bg-white border border-gray-200 text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-bold transition-colors cursor-pointer">
+                      <span className="text-blue-600 font-black">f</span> Facebook
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-slate-700 hover:bg-slate-50 rounded-xl text-sm font-semibold transition-colors flex-shrink-0 cursor-pointer">
-                      <span className="font-bold">TikTok</span>
+                    <button className="flex items-center gap-2 px-3.5 py-2 bg-white border border-gray-200 text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-bold transition-colors cursor-pointer">
+                      <span className="font-black text-black">TikTok</span>
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-slate-700 hover:bg-slate-50 rounded-xl text-sm font-semibold transition-colors flex-shrink-0 cursor-pointer">
-                      <span className="text-red-600 font-bold">▶</span> YouTube
+                    <button className="flex items-center gap-2 px-3.5 py-2 bg-white border border-gray-200 text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-bold transition-colors cursor-pointer">
+                      <span className="text-red-600 font-black">▶</span> YouTube
                     </button>
                   </div>
                   
-                  <div className="bg-slate-50 border border-gray-200 rounded-xl p-4 relative group" id="copy-text-container">
-                    <h4 className="font-bold text-slate-800 mb-2 text-sm">Copy Optimizado para Instagram</h4>
-                    
-                    <div className="text-sm text-slate-700 leading-relaxed mb-4">
+                  <div className="bg-slate-50 border border-gray-200 rounded-xl p-5 relative group">
+                    <div className="text-xs text-slate-800 leading-relaxed font-mono">
                       {generatedText ? (
-                        <pre className="whitespace-pre-wrap font-sans text-sm">{generatedText}</pre>
+                        <pre className="whitespace-pre-wrap font-sans text-xs">{generatedText}</pre>
                       ) : (
-                        <div className="space-y-2">
-                          <p className="font-semibold text-slate-800">
-                            ¡Lleva tu estrategia publicitaria al siguiente nivel con contenido de alto impacto! 🚀
+                        <div className="space-y-3 font-sans">
+                          <p className="font-bold text-slate-900 text-sm">
+                            ¡Lleva la imagen de tu marca al siguiente nivel! 🚀
                           </p>
-                          <p className="text-slate-600 text-xs">
-                            Diseñado especialmente para destacar tu propuesta de valor, conectar de forma genuina con tu audiencia objetivo y acelerar las conversiones digitales. ✨
+                          <p className="text-slate-700 text-xs leading-relaxed">
+                            Diseñado con precisión estratégica para conectar de forma auténtica con tu audiencia objetivo, resaltar los beneficios más atractivos de tu producto y acelerar tus resultados comerciales. ✨
                           </p>
                           <p className="text-blue-600 font-bold text-xs">
                             #MarketingDigital #EstrategiaDeContenido #PublicidadDigital #Lanzamiento
@@ -448,65 +706,55 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
                       )}
                     </div>
                     
-                    <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button 
-                        onClick={handleDownloadContentSummary} 
-                        title="Descargar reporte completo de contenido" 
-                        className="p-1.5 bg-white text-slate-600 hover:text-blue-600 rounded-md shadow-sm border border-gray-200 cursor-pointer"
-                      >
-                        <Download size={14}/>
-                      </button>
+                    <div className="absolute top-4 right-4 flex items-center gap-1.5 opacity-90 transition-opacity">
                       <button 
                         onClick={() => { 
-                          const textToCopy = generatedText || "¡Lleva tu estrategia publicitaria al siguiente nivel con contenido de alto impacto! 🚀";
+                          const textToCopy = generatedText || "¡Lleva la imagen de tu marca al siguiente nivel!";
                           navigator.clipboard.writeText(textToCopy); 
                           alert("¡Copy copiado al portapapeles!"); 
                         }} 
-                        title="Copiar al portapapeles" 
-                        className="p-1.5 bg-white text-slate-600 hover:text-blue-600 rounded-md shadow-sm border border-gray-200 cursor-pointer"
+                        title="Copiar texto" 
+                        className="flex items-center gap-1 px-2.5 py-1.5 bg-white text-slate-700 hover:text-blue-600 text-xs font-bold rounded-lg shadow-xs border border-gray-200 cursor-pointer"
                       >
-                        <Copy size={14} />
+                        <Copy size={13} /> Copiar
                       </button>
                     </div>
                   </div>
                 </section>
 
-                <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 flex flex-col">
-                  <h3 className="text-lg font-bold text-slate-800 mb-4">
-                    Etiquetas y palabras clave
-                  </h3>
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {['estrategia digital', 'marketing de contenidos', 'redes sociales', 'lanzamiento', 'posicionamiento', 'growth'].map(tag => (
-                      <span key={tag} className="px-3 py-1.5 bg-slate-50 border border-gray-200 text-slate-600 text-xs font-semibold rounded-md flex items-center gap-1.5">
-                        {tag} <span className="text-slate-400 hover:text-slate-600 cursor-pointer">×</span>
-                      </span>
-                    ))}
+                <section className="bg-white rounded-2xl p-6 shadow-xs border border-gray-200 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900 mb-4">
+                      Etiquetas y palabras clave SEO
+                    </h3>
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      {['estrategia digital', 'marketing de contenidos', 'redes sociales', 'lanzamiento', 'posicionamiento', 'growth', 'innovacion'].map(tag => (
+                        <span key={tag} className="px-2.5 py-1 bg-slate-100 border border-gray-200 text-slate-700 text-xs font-bold rounded-md flex items-center gap-1">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between mt-auto">
+
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                     <button 
                       onClick={() => alert('Etiquetas copiadas al portapapeles')}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors shadow-sm cursor-pointer"
+                      className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-slate-700 hover:text-slate-900 transition-colors shadow-xs cursor-pointer"
                     >
-                      <Copy size={14} /> Copiar etiquetas
-                    </button>
-                    <button 
-                      onClick={() => alert('Etiquetas regeneradas')}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors shadow-sm cursor-pointer"
-                    >
-                      ↻ Regenerar
+                      <Copy size={14} /> Copiar hashtags
                     </button>
                   </div>
                 </section>
               </div>
             )}
 
-            {/* Generate Video - Full Width */}
+            {/* Video Tab */}
             {activeTab === "video" && (
-              <div id="video" className="w-full">
+              <div className="w-full">
                 <VideoGenerator
                   selectedDay={{
                     day: 23,
-                    date: '2025-05-23',
+                    date: '2026-05-23',
                     status: 'generated',
                     accuracyWarnings: [],
                     platforms: {
@@ -533,115 +781,110 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
               </div>
             )}
 
-            {/* Bottom Row */}
-            {(activeTab === "image" || activeTab === "calendar" || activeTab === "export") && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
-                {/* Image & Thumbnail */}
-                <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 flex flex-col">
-                  <h3 className="text-lg font-bold text-slate-800 mb-4">
-                    Imagen y miniatura
-                  </h3>
-                  <div className="flex gap-4 mb-4">
-                    <div className="flex-1 space-y-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-500 mb-1">Texto de la miniatura</label>
-                        <input type="text" className="w-full bg-slate-50 border border-gray-200 rounded-lg px-3 py-2 text-xs font-semibold text-slate-700 outline-none" value="¿LISTO PARA TRANSFORMAR TUS RESULTADOS?" readOnly />
-                        <div className="text-right text-[10px] text-slate-400 mt-1">28/50</div>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-500 mb-1">Descripción visual</label>
-                        <textarea className="w-full bg-slate-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-slate-700 resize-none outline-none" rows={3} value="Estudio profesional con iluminación suave, producto destacado e imagen fotorrealista 8K." readOnly></textarea>
-                        <div className="text-right text-[10px] text-slate-400 mt-1">82/120</div>
-                      </div>
+            {/* Image Tab */}
+            {activeTab === "image" && (
+              <div className="bg-white rounded-2xl p-6 shadow-xs border border-gray-200 space-y-6">
+                <h3 className="text-lg font-bold text-slate-900">
+                  Generación de imagen y miniatura de campaña
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Titular de la miniatura:</label>
+                      <input 
+                        type="text" 
+                        className="w-full bg-slate-50 border border-gray-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-800 outline-none" 
+                        defaultValue="¿LISTO PARA TRANSFORMAR TUS RESULTADOS?" 
+                      />
                     </div>
-                    <div className="w-28 h-36 bg-stone-200 rounded-lg overflow-hidden relative flex-shrink-0 shadow-inner">
-                      <img src={generatedImg} className="w-full h-full object-cover" alt="Preview"/>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-2">
-                        <span className="text-white font-bold text-[10px] leading-tight text-center w-full shadow-sm">¿LISTO PARA TRANSFORMAR TUS RESULTADOS?</span>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Prompt de imagen (Google Gemini / Imagen 3):</label>
+                      <textarea 
+                        className="w-full bg-slate-50 border border-gray-200 rounded-lg p-3 text-xs text-slate-800 resize-none outline-none" 
+                        rows={4} 
+                        defaultValue="Fotografía publicitaria hiperrealista 8K, iluminación de estudio softbox, estética limpia y moderna con paleta de colores corporativa y acabado elegante."
+                      ></textarea>
+                    </div>
+
+                    <button 
+                      onClick={handleGenerateImage} 
+                      disabled={isGeneratingImg} 
+                      className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
+                    >
+                      <Sparkles size={16} />
+                      {isGeneratingImg ? 'Generando imagen HD...' : 'Crear imagen publicitaria'}
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col items-center justify-center bg-slate-100 rounded-xl p-4 border border-gray-200">
+                    <div className="w-full max-w-xs aspect-square rounded-xl overflow-hidden relative shadow-md">
+                      <img src={generatedImg} className="w-full h-full object-cover" alt="Preview Generated"/>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-3">
+                        <span className="text-white font-black text-xs text-center w-full uppercase tracking-tight shadow-xs">
+                          ¿LISTO PARA TRANSFORMAR TUS RESULTADOS?
+                        </span>
                       </div>
                     </div>
                   </div>
-                  <button 
-                    onClick={handleGenerateImage} 
-                    disabled={isGeneratingImg} 
-                    className="w-full mt-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm disabled:opacity-50 cursor-pointer"
-                  >
-                    <Sparkles size={16} />
-                    {isGeneratingImg ? 'Generando imagen...' : 'Crear imagen'}
-                  </button>
-                </section>
+                </div>
+              </div>
+            )}
 
-                {/* Scheduling */}
-                <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 flex flex-col">
-                  <h3 className="text-lg font-bold text-slate-800 mb-4">
-                    Programación de contenido
-                  </h3>
-                  
-                  <div className="grid grid-cols-2 gap-4 h-full">
-                    <div className="flex flex-col">
-                      <div className="flex items-center justify-between mb-2">
-                        <button className="text-slate-400 hover:text-slate-600 cursor-pointer">&lt;</button>
-                        <div className="font-bold text-slate-800 text-sm">Mayo 2025</div>
-                        <button className="text-slate-400 hover:text-slate-600 cursor-pointer">&gt;</button>
-                      </div>
-                      <div className="grid grid-cols-7 gap-1 text-center mb-2">
-                        {['LUN','MAR','MIE','JUE','VIE','SAB','DOM'].map(d => (
-                          <div key={d} className="text-[9px] font-bold text-slate-400">{d}</div>
-                        ))}
-                      </div>
-                      <div className="grid grid-cols-7 gap-1 text-center text-xs">
-                        {Array.from({length: 31}).map((_, i) => (
-                          <div key={i} className={`aspect-square flex items-center justify-center rounded-full font-medium relative ${
-                            i+1 === 23 ? 'bg-blue-600 text-white shadow-sm' : 
-                            [12, 14, 18, 20, 27].includes(i+1) ? 'text-slate-800' : 'text-slate-500 hover:bg-slate-50 cursor-pointer'
-                          }`}>
-                            {i+1}
-                            {[12, 14, 18, 20, 27].includes(i+1) && <div className="absolute w-1 h-1 bg-pink-500 rounded-full bottom-0.5"></div>}
-                          </div>
-                        ))}
-                      </div>
+            {/* Calendar Tab */}
+            {activeTab === "calendar" && (
+              <div className="bg-white rounded-2xl p-6 shadow-xs border border-gray-200 space-y-6">
+                <h3 className="text-lg font-bold text-slate-900">
+                  Calendario de programación de contenido
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-slate-50 p-4 rounded-xl border border-gray-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="font-bold text-slate-800 text-sm">Mayo 2026</span>
                     </div>
 
-                    <div className="flex flex-col justify-between">
-                      <div>
-                        <div className="text-xs font-bold text-slate-800 mb-2">Publicaciones programadas</div>
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-[10px] font-medium text-slate-600 bg-slate-50 p-1.5 rounded border border-gray-100">
-                            <div className="flex items-center gap-1.5"><span className="text-pink-500 font-bold text-xs">IG</span> 23 may 2025</div>
-                            <div>🕒 10:00</div>
-                          </div>
-                          <div className="flex items-center justify-between text-[10px] font-medium text-slate-600 bg-slate-50 p-1.5 rounded border border-gray-100">
-                            <div className="flex items-center gap-1.5"><span className="text-blue-600 font-bold text-xs">f</span> 27 may 2025</div>
-                            <div>🕒 12:00</div>
-                          </div>
-                          <div className="flex items-center justify-between text-[10px] font-medium text-slate-600 bg-slate-50 p-1.5 rounded border border-gray-100">
-                            <div className="flex items-center gap-1.5"><span className="font-bold text-xs text-black">TT</span> 30 may 2025</div>
-                            <div>🕒 09:00</div>
-                          </div>
-                          <div className="flex items-center justify-between text-[10px] font-medium text-slate-600 bg-slate-50 p-1.5 rounded border border-gray-100">
-                            <div className="flex items-center gap-1.5"><span className="text-red-600 font-bold text-xs">YT</span> 02 jun 2025</div>
-                            <div>🕒 18:00</div>
-                          </div>
+                    <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                      {['LUN','MAR','MIE','JUE','VIE','SAB','DOM'].map(d => (
+                        <div key={d} className="text-[10px] font-bold text-slate-400 py-1">{d}</div>
+                      ))}
+                      {Array.from({length: 31}).map((_, i) => (
+                        <div key={i} className={`aspect-square flex items-center justify-center rounded-lg font-bold text-xs relative ${
+                          i+1 === 23 ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-700 hover:bg-slate-200 cursor-pointer'
+                        }`}>
+                          {i+1}
                         </div>
-                      </div>
-
-                      <div className="mt-4">
-                        <div className="text-xs font-semibold text-slate-500 mb-1">Fecha y hora</div>
-                        <div className="flex gap-2 mb-3">
-                          <input type="text" value="23/05/2025" className="w-full bg-slate-50 border border-gray-200 rounded text-xs px-2 py-1.5 text-slate-700 font-semibold outline-none" readOnly/>
-                          <input type="text" value="10:00" className="w-16 bg-slate-50 border border-gray-200 rounded text-xs px-2 py-1.5 text-slate-700 text-center font-semibold outline-none" readOnly/>
-                        </div>
-                        <button 
-                          onClick={() => alert('¡Publicaciones programadas exitosamente en el calendario!')} 
-                          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-sm cursor-pointer"
-                        >
-                          <Calendar size={14} />
-                          Programar publicaciones
-                        </button>
-                      </div>
+                      ))}
                     </div>
                   </div>
-                </section>
+
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-bold text-slate-700 uppercase">Publicaciones programadas</h4>
+                    <div className="space-y-2">
+                      <div className="p-3 bg-slate-50 rounded-lg border border-gray-200 text-xs font-semibold flex justify-between">
+                        <span>📷 Instagram Reel</span>
+                        <span className="text-blue-600 font-bold">23 Mayo - 10:00 AM</span>
+                      </div>
+                      <div className="p-3 bg-slate-50 rounded-lg border border-gray-200 text-xs font-semibold flex justify-between">
+                        <span>📘 Facebook Post</span>
+                        <span className="text-blue-600 font-bold">27 Mayo - 12:00 PM</span>
+                      </div>
+                      <div className="p-3 bg-slate-50 rounded-lg border border-gray-200 text-xs font-semibold flex justify-between">
+                        <span>🎵 TikTok Video</span>
+                        <span className="text-blue-600 font-bold">30 Mayo - 09:00 AM</span>
+                      </div>
+                    </div>
+
+                    <button 
+                      onClick={() => alert('¡Publicaciones programadas exitosamente!')} 
+                      className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-xs font-bold shadow-sm cursor-pointer"
+                    >
+                      <Calendar size={15} />
+                      Confirmar programación
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -649,31 +892,67 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
         </main>
       </div>
 
-      {/* Bottom Process Bar */}
-      <footer className="bg-white border-t border-gray-200 px-6 py-3 flex items-center gap-4 fixed bottom-0 left-0 right-0 z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-        <div className="text-sm font-bold text-slate-800 w-48">Flujo del proyecto</div>
-        <div className="flex-1 flex items-center max-w-4xl">
-          {['Contexto', 'Copies', 'Creativos', 'Video', 'Programación'].map((step, i) => (
-            <div key={step} className="flex items-center w-full">
-              <div className="flex items-center gap-2 flex-shrink-0">
-                {i < 2 ? (
-                  <div className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-sm">
-                    <CheckCircle size={14} />
-                  </div>
-                ) : i === 2 ? (
-                  <div className="w-6 h-6 rounded-full border-2 border-purple-500 flex items-center justify-center">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                  </div>
-                ) : (
-                  <div className="w-6 h-6 rounded-full border-2 border-gray-300"></div>
-                )}
-                <span className={`text-sm font-semibold ${
-                  i < 2 ? 'text-blue-600' : i === 2 ? 'text-purple-600' : 'text-slate-400'
-                }`}>{step}</span>
+      {/* File Preview Modal */}
+      {previewFile && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-xl border border-gray-200 max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div className="flex items-center gap-2">
+                <FileText className="text-blue-600" size={18} />
+                <span className="font-bold text-slate-800 text-sm truncate">{previewFile.name}</span>
               </div>
-              {i < 4 && <div className="flex-1 h-px bg-gray-300 mx-4"></div>}
+              <button 
+                onClick={() => setPreviewFile(null)} 
+                className="p-1 text-slate-400 hover:text-slate-800 rounded-lg cursor-pointer"
+              >
+                <X size={18} />
+              </button>
             </div>
-          ))}
+
+            <div className="flex-1 overflow-y-auto space-y-3 py-2">
+              {previewFile.type === 'image' && previewFile.dataUrl ? (
+                <img 
+                  src={previewFile.dataUrl} 
+                  alt={previewFile.name} 
+                  className="w-full max-h-80 object-contain rounded-xl border border-gray-200 bg-slate-50"
+                />
+              ) : (
+                <div className="bg-slate-50 border border-gray-200 rounded-xl p-4 text-xs font-mono text-slate-800 whitespace-pre-wrap leading-relaxed">
+                  {previewFile.textContent || 'No hay vista previa de texto disponible para este archivo.'}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
+              <button 
+                onClick={() => handleDownloadDoc(previewFile)} 
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 text-xs font-bold rounded-lg hover:bg-blue-100 cursor-pointer"
+              >
+                <Download size={14} /> Descargar
+              </button>
+              <button 
+                onClick={() => setPreviewFile(null)} 
+                className="px-4 py-1.5 bg-slate-200 text-slate-800 text-xs font-bold rounded-lg hover:bg-slate-300 cursor-pointer"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Process Footer */}
+      <footer className="bg-white border-t border-gray-200 px-6 py-2.5 flex items-center justify-between text-xs font-bold text-slate-600">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+          <span>CONTENT IA v2.5 • Sistema de Marketing Multimodal (Google Gemini & Runway)</span>
+        </div>
+        <div className="flex items-center gap-4 text-slate-400">
+          <span>Soporte activo</span>
+          <span>•</span>
+          <button onClick={handleDownloadContentSummary} className="hover:text-blue-600 cursor-pointer">
+            Exportar reporte global
+          </button>
         </div>
       </footer>
     </div>

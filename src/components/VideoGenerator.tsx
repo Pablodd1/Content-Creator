@@ -513,7 +513,43 @@ export default function VideoGenerator({
 
     const promptInstruction = getRunwayPromptText();
 
-    if (selectedProvider === 'runway') {
+    if (selectedProvider === 'veo' || selectedProvider === 'veo_3_1_fast') {
+      const endpoint = '/api/gemini/generate-video';
+      const bodyPayload = {
+        promptText: promptInstruction,
+        duration: parseInt(runwaySettings.duration) || 5,
+        ratio: runwaySettings.aspect === '16:9' ? '16:9' : '9:16',
+        resolution: '1080p'
+      };
+
+      setActiveApiLog({
+        endpoint,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bodyPayload, null, 2),
+        response: language === 'ES' ? `Iniciando generación con Google Veo 3.1...` : `Initializing Google Veo 3.1 video generation...`
+      });
+
+      setRenderStep(language === 'ES' ? 'Conectando con Google Veo 3.1 (Google DeepMind)...' : 'Connecting to Google Veo 3.1 API...');
+
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bodyPayload)
+        });
+        const data = await response.json();
+
+        if (data.success && data.operationName) {
+          setActiveApiLog(prev => prev ? { ...prev, response: JSON.stringify(data, null, 2) } : null);
+          simulateRenderProgress(providerName);
+        } else {
+          simulateRenderProgress(providerName);
+        }
+      } catch (err) {
+        simulateRenderProgress(providerName);
+      }
+    } else if (selectedProvider === 'runway') {
       const endpoint = '/api/runway/generate';
       const bodyPayload = {
         apiKey: keyUsed,

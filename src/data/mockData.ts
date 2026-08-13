@@ -256,9 +256,8 @@ export const DEFAULT_KEY_CONFIGS = {
   openai: "",
   perplexity: "",
   googleTrends: "",
-  heygen: "",
-  invideo: "",
-  runway: "55ae85c88ab9bcdbdc651530befc5c8e15bfd9c201f938803333ee1d7520aef539b935c1f1479942a23a4c3986f8bf95bfe6ac3f7413c751620b7ba2b1bcec3c"
+  runway: "55ae85c88ab9bcdbdc651530befc5c8e15bfd9c201f938803333ee1d7520aef539b935c1f1479942a23a4c3986f8bf95bfe6ac3f7413c751620b7ba2b1bcec3c",
+  gemini: ""
 };
 
 export const COLOMBIAN_HOLIDAYS_2026: Record<string, { es: string; en: string }> = {
