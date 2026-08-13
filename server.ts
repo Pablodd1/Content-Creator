@@ -41,7 +41,7 @@ function resolveRunwayApiKey(req: express.Request): string {
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = process.env.PORT || 3000;
 
   // JSON request parsing support
   app.use(express.json());
