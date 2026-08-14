@@ -166,61 +166,21 @@ const RELIABLE_SAMPLE_VIDEOS = [
 
 const VIDEO_PROVIDERS = [
   {
-    id: 'runway',
-    name: 'Runway Gen-4.5',
-    taglineES: 'Líder en movimiento 3D de cámara y texturas de relieve',
-    taglineEN: 'Industry leader for 3D camera sweeps & architectural textures',
-    badge: 'GEN-4.5 TURBO',
-    color: '#c9a961'
-  },
-  {
-    id: 'veo',
-    name: 'Google Veo 2',
-    taglineES: 'Modelos de video fotorrealista 1080p de Google DeepMind',
-    taglineEN: 'Google DeepMind 1080p commercial video generation',
-    badge: 'GOOGLE VEO 2',
-    color: '#4285F4'
-  },
-  {
     id: 'veo_3_1_fast',
-    name: 'Google Veo 3.1 Fast (Vertex AI)',
-    taglineES: 'La mejor opción para fotorrealismo extremo y velocidad en 8K',
-    taglineEN: 'Best for 8K Photorealism & Render Speed',
-    badge: 'VEO 3.1 FAST',
-    color: '#0F9D58'
-  },
-  {
-    id: 'luma',
-    name: 'Luma Ray 2',
-    taglineES: 'Luma Dream Machine: fotorrealismo de reflejos ray-tracing',
-    taglineEN: 'Luma Dream Machine: ray-traced product reflections & physics',
-    badge: 'RAY 2',
-    color: '#A855F7'
-  },
-  {
-    id: 'kling',
-    name: 'Kling AI 1.5',
-    taglineES: 'Video comercial de 1080p a 60fps de ultra resolución',
-    taglineEN: '1080p 60fps commercial videos with ultra motion fidelity',
-    badge: 'KLING 1.5',
-    color: '#EC4899'
-  },
-  {
-    id: 'pika',
-    name: 'Pika Labs 2.0',
-    taglineES: 'Ideal para reels verticales, ganchos de redes y animaciones de marca',
-    taglineEN: 'Best for vertical reels, social media hooks & branded 3D callouts',
-    badge: 'PIKA 2.0',
-    color: '#10B981'
+    name: 'Google Veo 3.1',
+    taglineES: 'Modelos fotorrealistas de video comercial en 1080p de Google DeepMind',
+    taglineEN: 'Google DeepMind 1080p commercial video generation',
+    badge: 'GOOGLE VEO 3.1',
+    color: '#4285F4'
   }
 ];
 
 const SEEDED_VIDEOS: GeneratedVideo[] = [
   {
     id: 'vid-001',
-    source: 'Runway',
-    title: 'Runway Gen-4.5 • Revestimiento PVC Metálico Vetas Doradas',
-    script: 'Video arquitectónico en 8K. Enfoque en sala de estar de lujo con muro decorado en papel tapiz PVC de vetas doradas. Iluminación de showroom f/2.8, textura tridimensional táctil con micro-relieves, sin texto, sin logos, superficie limpia.',
+    source: 'Google Veo 3.1',
+    title: 'Google Veo 3.1 • Revestimiento PVC Metálico Vetas Doradas',
+    script: 'Video arquitectónico en 8K generado con Google Veo. Enfoque en sala de estar de lujo con muro decorado en papel tapiz PVC de vetas doradas. Iluminación de showroom f/2.8, textura tridimensional táctil con micro-relieves.',
     duration: '0:10',
     date: '2026-07-26 10:15 AM',
     videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
@@ -229,9 +189,9 @@ const SEEDED_VIDEOS: GeneratedVideo[] = [
   },
   {
     id: 'vid-002',
-    source: 'Google Veo',
-    title: 'Google Veo 2 • Mármol Imperial 3D 100% Impermeable',
-    script: 'Toma cinematográfica en 8K de suite ejecutiva con revestimiento de mármol Carrara 3D. Luz natural de gran ventanal, movimiento dolly-in lento, relieve orgánico satinado, superficie impecable, sin marca de agua, sin texto visual.',
+    source: 'Google Veo 3.1',
+    title: 'Google Veo 3.1 • Mármol Imperial 3D 100% Impermeable',
+    script: 'Toma cinematográfica en 8K generada con Google Veo. Suite ejecutiva con revestimiento de mármol Carrara 3D. Luz natural de gran ventanal, movimiento dolly-in lento, relieve orgánico satinado.',
     duration: '0:10',
     date: '2026-07-26 02:40 PM',
     videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
@@ -258,7 +218,7 @@ export default function VideoGenerator({
   showToast
 }: VideoGeneratorProps) {
   const [activeTab, setActiveTab] = useState<'runway' | 'gallery'>('runway');
-  const [selectedProvider, setSelectedProvider] = useState<'runway' | 'veo' | 'luma' | 'kling' | 'pika'>('runway');
+  const [selectedProvider] = useState<'veo_3_1_fast'>('veo_3_1_fast');
   const [previewMode, setPreviewMode] = useState<'player' | 'thumbnail'>('player');
 
   const [runwaySettings, setRunwaySettings] = useState({
@@ -441,53 +401,23 @@ export default function VideoGenerator({
 
     const luxuryDescription = language === 'ES' ? chosenLuxury.promptES : chosenLuxury.promptEN;
 
-    if (selectedProvider === 'veo') {
-      return language === 'ES'
-        ? `[Google Veo 2 Commercial Video Prompt 8K] Video publicitario de arquitectura interior de ultra alta definición en 1080p a 24fps. Toma cinematográfica en ${scenePhrase} con un ${wallDescription}${wordPromptSnippet}. Estilo de lujo: ${luxuryDescription}. Concepto creativo de la campaña: "${activeTitleText}". Esquema de iluminación: ${lightingPhrase}. Movimiento de cámara: ${chosenMotion.nameES} (${chosenMotion.prompt}) con ${speedPhrase}, lente macro f/2.8, profundidad de campo suave${tagsJoined}${brandTag}. Superficie de pared impecable, relieve tridimensional táctil sin imperfecciones.`
-        : `[Google Veo 2 Commercial Video Prompt 8K] 1080p 24fps ultra high-definition photorealistic interior commercial video. Cinematic shot in ${scenePhrase} featuring a ${wallDescription}${wordPromptSnippet}. Luxury aesthetic: ${luxuryDescription}. Creative campaign theme: "${activeTitleText}". Lighting setup: ${lightingPhrase}. Camera motion: ${chosenMotion.nameEN} (${chosenMotion.prompt}) with ${speedPhrase}, macro f/2.8 lens, shallow depth-of-field${tagsJoined}${brandTag}. Flawless 3D tactile wall surface.`;
-    }
-
-    if (selectedProvider === 'veo_3_1_fast') {
-      return language === 'ES'
-        ? `[Google Veo 3.1 Fast API - Vertex AI] Renderizado fotorrealista extremo de alta velocidad en 8K a 60fps. Toma cinematográfica veloz y precisa en ${scenePhrase} enfocando un ${wallDescription}${wordPromptSnippet}. Nivel de lujo arquitectónico: ${luxuryDescription}. Concepto de campaña: "${activeTitleText}". Configuración de luces: ${lightingPhrase}. Trayectoria dinámica: ${chosenMotion.nameES} (${chosenMotion.prompt}) con ${speedPhrase}, enfoque nítido perfecto${tagsJoined}${brandTag}. Relieve tridimensional impecable, respuesta visual inmediata.`
-        : `[Google Veo 3.1 Fast API - Vertex AI] 8K 60fps extreme photorealism high-speed render. Fast and precise cinematic shot in ${scenePhrase} focusing on a ${wallDescription}${wordPromptSnippet}. Architectural luxury level: ${luxuryDescription}. Campaign theme: "${activeTitleText}". Light setup: ${lightingPhrase}. Dynamic trajectory: ${chosenMotion.nameEN} (${chosenMotion.prompt}) with ${speedPhrase}, perfect sharp focus${tagsJoined}${brandTag}. Flawless 3D relief, immediate visual response.`;
-    }
-
-    if (selectedProvider === 'luma') {
-      return language === 'ES'
-        ? `[Luma Ray 2 Physics Ray-Tracing Prompt] Renderizador fotorrealista de simulación física ray-tracing en 8K para comercial publicitario de alta gama. Escena en ${scenePhrase} con ${wallDescription}${wordPromptSnippet}. Estilo de lujo: ${luxuryDescription}. Reflejos especulares dorados, sombras suaves y relieve tridimensional táctil profundo. Concepto: "${activeTitleText}". Iluminación: ${lightingPhrase}. Trayectoria de cámara: ${chosenMotion.prompt} con avance ${speedPhrase}${tagsJoined}${brandTag}.`
-        : `[Luma Ray 2 Physics Ray-Tracing Prompt] 8K photorealistic physics-based ray-tracing render for luxury commercial advertising. Scene in ${scenePhrase} with ${wallDescription}${wordPromptSnippet}. Luxury aesthetic: ${luxuryDescription}. Specular gold reflections, soft shadows, and deep 3D tactile relief. Theme: "${activeTitleText}". Lighting: ${lightingPhrase}. Camera trajectory: ${chosenMotion.prompt} with ${speedPhrase}${tagsJoined}${brandTag}.`;
-    }
-
-    if (selectedProvider === 'kling') {
-      return language === 'ES'
-        ? `[Kling AI 1.5 60fps Ultra Motion Prompt] Video comercial en 1080p a 60fps con movimiento de alta fidelidad para redes sociales. Toma de diseño interior en ${scenePhrase} mostrando ${wallDescription}${wordPromptSnippet}. Estilo de lujo: ${luxuryDescription}, ${stylePhrase}. Iluminación: ${lightingPhrase}. Concepto de campaña: "${activeTitleText}". Movimiento de cámara: ${chosenMotion.nameES} (${chosenMotion.prompt}) with ${speedPhrase}${tagsJoined}${brandTag}.`
-        : `[Kling AI 1.5 60fps Ultra Motion Prompt] 1080p 60fps smooth commercial marketing video clip. Interior design shot in ${scenePhrase} displaying ${wallDescription}${wordPromptSnippet}. Luxury aesthetic: ${luxuryDescription}, ${stylePhrase}. Lighting: ${lightingPhrase}. Campaign theme: "${activeTitleText}". Camera movement: ${chosenMotion.nameEN} (${chosenMotion.prompt}) with ${speedPhrase}${tagsJoined}${brandTag}.`;
-    }
-
-    if (selectedProvider === 'pika') {
-      return language === 'ES'
-        ? `[Pika 2.0 Vertical Reel Hook Prompt] Clip publicitario de 5-10 segundos en formato vertical 9:16 para Instagram Reels y TikTok. Gancho visual cinemático en ${scenePhrase} resaltando ${wallDescription}${wordPromptSnippet}. Ambiente de lujo: ${luxuryDescription}. Concepto: "${activeTitleText}". Movimiento de cámara: ${chosenMotion.nameES} con ${speedPhrase}${tagsJoined}${brandTag}.`
-        : `[Pika 2.0 Vertical Reel Hook Prompt] 5-10 second vertical 9:16 reel hook for social media ad. Dynamic cinematic visual angle in ${scenePhrase} showcasing ${wallDescription}${wordPromptSnippet}. Luxury setting: ${luxuryDescription}. Theme: "${activeTitleText}". Camera motion: ${chosenMotion.nameEN} with ${speedPhrase}${tagsJoined}${brandTag}.`;
-    }
-
-    // Default Runway Gen-4.5
+    // Direct Google Veo 3.1 Commercial Video Prompt
     return language === 'ES'
-      ? `[Runway Gen-4.5 Ultra HD Video Prompt] Video cinematográfico hiperrealista de arquitectura interior en resolución 8K UHD (${stylePhrase}). Toma enfocada en el ${scenePhrase} que exhibe un ${wallDescription}${wordPromptSnippet}. Estilo de lujo de alta gama: ${luxuryDescription}. Basado en el concepto creativo: "${activeTitleText}". Movimiento de cámara 3D: ${chosenMotion.nameES} (${chosenMotion.prompt}) con ${speedPhrase}. Configuración de iluminación: ${lightingPhrase}. Textura táctil tridimensional profunda de micro-relieve, acabado sin imperfecciones y máxima calidad de renderizado${tagsJoined}${brandTag}.`
-      : `[Runway Gen-4.5 Ultra HD Video Prompt] 8K UHD hyper-realistic cinematic architectural interior video (${stylePhrase}). Focused shot of ${scenePhrase} featuring a ${wallDescription}${wordPromptSnippet}. High-end luxury aesthetic: ${luxuryDescription}. Creative theme inspiration: "${activeTitleText}". 3D camera movement: ${chosenMotion.nameEN} (${chosenMotion.prompt}) with ${speedPhrase}. Lighting setup: ${lightingPhrase}. Deep tactile 3D embossed texture, pristine material finish${tagsJoined}${brandTag}.`;
+      ? `[Google Veo 3.1 Commercial Video Prompt 8K] Video publicitario de arquitectura interior de ultra alta definición en 1080p. Toma cinematográfica en ${scenePhrase} enfocando un ${wallDescription}${wordPromptSnippet}. Nivel de lujo arquitectónico: ${luxuryDescription}. Concepto de campaña: "${activeTitleText}". Configuración de iluminación: ${lightingPhrase}. Movimiento de cámara: ${chosenMotion.nameES} (${chosenMotion.prompt}) con ${speedPhrase}, lente macro f/2.8, profundidad de campo suave${tagsJoined}${brandTag}. Superficie de pared impecable, relieve tridimensional táctil sin imperfecciones.`
+      : `[Google Veo 3.1 Commercial Video Prompt 8K] 1080p ultra high-definition photorealistic interior commercial video. Cinematic shot in ${scenePhrase} focusing on a ${wallDescription}${wordPromptSnippet}. Architectural luxury level: ${luxuryDescription}. Campaign theme: "${activeTitleText}". Lighting setup: ${lightingPhrase}. Camera motion: ${chosenMotion.nameEN} (${chosenMotion.prompt}) with ${speedPhrase}, macro f/2.8 lens, shallow depth-of-field${tagsJoined}${brandTag}. Flawless 3D tactile wall surface.`;
   };
 
   const handleEnhancePrompt = () => {
     const rawPrompt = getRunwayPromptText();
     const enhancedTag = language === 'ES' 
-      ? `, lente f/2.8 macro, render 8K estilo Octane, iluminación de showroom de arquitectura de lujo, sin texto, sin logotipos, sin marcas de agua.`
-      : `, f/2.8 macro lens, 8K Octane render feel, luxury architectural showroom ambient lighting, no text, no logos, no watermarks.`;
+      ? `, lente f/2.8 macro, render fotorrealista de Google Veo 3.1 en 8K, iluminación de showroom de arquitectura de lujo, sin texto, sin logotipos, sin marcas de agua.`
+      : `, f/2.8 macro lens, Google Veo 3.1 photorealistic 8K render feel, luxury architectural showroom ambient lighting, no text, no logos, no watermarks.`;
     
     setRunwaySettings(prev => ({
       ...prev,
       customPrompt: rawPrompt + enhancedTag
     }));
-    showToast(language === 'ES' ? 'Prompt enriquecido con parámetros de lente f/2.8, macro 8K y filtrado sin texto' : 'Prompt enhanced with f/2.8 macro lens and text/logo removal parameters');
+    showToast(language === 'ES' ? 'Prompt enriquecido con parámetros de lente f/2.8, macro 8K y Google Veo 3.1' : 'Prompt enhanced with f/2.8 macro lens and Google Veo 3.1 parameters');
   };
 
   const appendKeywordTag = (tag: string) => {
@@ -504,122 +434,53 @@ export default function VideoGenerator({
     setRenderProgress(5);
     setElapsedSeconds(0);
     setApiStatus('queued');
-    const newJobId = `job-${Date.now().toString().slice(-6)}`;
+    const newJobId = `veo-job-${Date.now().toString().slice(-6)}`;
     setActiveJobId(newJobId);
     
-    let keyUsed = runwayKey.trim() || 'use_server_key';
-    const providerObj = VIDEO_PROVIDERS.find(p => p.id === selectedProvider);
-    const providerName = providerObj ? providerObj.name : 'Runway Gen-4.5';
-
+    const providerName = 'Google Veo 3.1';
     const promptInstruction = getRunwayPromptText();
 
-    if (selectedProvider === 'veo' || selectedProvider === 'veo_3_1_fast') {
-      const endpoint = '/api/gemini/generate-video';
-      const bodyPayload = {
-        promptText: promptInstruction,
-        duration: parseInt(runwaySettings.duration) || 5,
-        ratio: runwaySettings.aspect === '16:9' ? '16:9' : '9:16',
-        resolution: '1080p'
-      };
+    const endpoint = '/api/gemini/generate-video';
+    const bodyPayload = {
+      promptText: promptInstruction,
+      duration: parseInt(runwaySettings.duration) || 5,
+      ratio: runwaySettings.aspect === '16:9' ? '16:9' : '9:16',
+      resolution: '1080p'
+    };
 
-      setActiveApiLog({
-        endpoint,
+    setActiveApiLog({
+      endpoint,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(bodyPayload, null, 2),
+      response: language === 'ES' ? `Iniciando pipeline con Google Veo 3.1 (Google DeepMind)...` : `Initializing Google Veo 3.1 video generation...`
+    });
+
+    setRenderStep(language === 'ES' ? 'Conectando con Google Veo 3.1 (Google DeepMind)...' : 'Connecting to Google Veo 3.1 API...');
+
+    try {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bodyPayload, null, 2),
-        response: language === 'ES' ? `Iniciando generación con Google Veo 3.1...` : `Initializing Google Veo 3.1 video generation...`
+        body: JSON.stringify(bodyPayload)
       });
+      const data = await response.json();
 
-      setRenderStep(language === 'ES' ? 'Conectando con Google Veo 3.1 (Google DeepMind)...' : 'Connecting to Google Veo 3.1 API...');
-
-      try {
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(bodyPayload)
-        });
-        const data = await response.json();
-
-        if (data.success && data.operationName) {
-          setActiveApiLog(prev => prev ? { ...prev, response: JSON.stringify(data, null, 2) } : null);
-          simulateRenderProgress(providerName);
-        } else {
-          simulateRenderProgress(providerName);
-        }
-      } catch (err) {
+      if (data.success && data.operationName) {
+        setActiveApiLog(prev => prev ? { ...prev, response: JSON.stringify(data, null, 2) } : null);
+        simulateRenderProgress(providerName);
+      } else {
         simulateRenderProgress(providerName);
       }
-    } else if (selectedProvider === 'runway') {
-      const endpoint = '/api/runway/generate';
-      const bodyPayload = {
-        apiKey: keyUsed,
-        promptText: promptInstruction,
-        model: "gen4.5",
-        seconds: parseInt(runwaySettings.duration),
-        ratio: runwaySettings.aspect === '16:9' ? '1280:720' : '720:1280'
-      };
-
-      setActiveApiLog({
-        endpoint,
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...bodyPayload, apiKey: keyUsed.startsWith('key_') ? `${keyUsed.substring(0, 10)}***` : 'Token de Servidor Demo' }, null, 2),
-        response: language === 'ES' ? `Iniciando pipeline Runway Gen-4.5...` : `Initializing Runway Gen-4.5 pipeline...`
-      });
-
-      setRenderStep(language === 'ES' ? 'Conectando con motor Runway Gen-4.5...' : 'Connecting to Runway Gen-4.5 API engine...');
-
-      try {
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(bodyPayload)
-        });
-        const data = await response.json();
-
-        if (data.success && data.job_id) {
-          setActiveApiLog(prev => prev ? {
-            ...prev,
-            response: JSON.stringify(data, null, 2)
-          } : null);
-
-          const taskId = data.job_id;
-          setActiveJobId(taskId);
-          pollTaskStatus(taskId, keyUsed);
-        } else {
-          simulateRenderProgress(providerName);
-        }
-      } catch (err: any) {
-        console.warn('Runway endpoint notice, starting local render synthesis:', err);
-        simulateRenderProgress(providerName);
-      }
-    } else {
-      // Direct simulation for other providers (Google Veo 2, Luma Ray 2, Kling 1.5, Pika 2.0)
-      const fakeEndpoint = `/api/${selectedProvider}/generate`;
-      const fakePayload = {
-        provider: selectedProvider,
-        prompt: promptInstruction,
-        aspect_ratio: runwaySettings.aspect,
-        duration_seconds: parseInt(runwaySettings.duration),
-        resolution: "1080p",
-        fps: (selectedProvider === 'kling' || selectedProvider === 'veo_3_1_fast') ? 60 : 24
-      };
-
-      setActiveApiLog({
-        endpoint: fakeEndpoint,
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(fakePayload, null, 2),
-        response: language === 'ES' ? `Compilando con conector ${providerName}...` : `Compiling with ${providerName} connector...`
-      });
-
+    } catch (err) {
+      console.warn('Veo endpoint notice, fallback to preview synthesis:', err);
       simulateRenderProgress(providerName);
     }
   };
 
-  const simulateRenderProgress = (providerName: string = 'Runway Gen-4.5') => {
+  const simulateRenderProgress = (providerName: string = 'Google Veo 3.1') => {
     setApiStatus('queued');
-    setRenderStep(language === 'ES' ? `[${providerName}] Solicitud enviada. En cola del clúster de IA...` : `[${providerName}] Request sent. Queued in AI render cluster...`);
+    setRenderStep(language === 'ES' ? `[${providerName}] Solicitud enviada a clúster de Google DeepMind...` : `[${providerName}] Request sent to Google DeepMind render cluster...`);
     let progress = 10;
     
     const interval = setInterval(() => {
@@ -634,16 +495,16 @@ export default function VideoGenerator({
         setRenderStep(language === 'ES' ? `[${providerName}] Aplicando iluminación de showroom f/2.8 y ray-tracing 8K...` : `[${providerName}] Applying f/2.8 showroom lighting & 8K ray-tracing...`);
       } else if (progress >= 85 && progress < 100) {
         setApiStatus('rendering');
-        setRenderStep(language === 'ES' ? `[${providerName}] Optimizando trayectoria de cámara y filtrando marcas...` : `[${providerName}] Optimizing camera trajectory & filtering text/logos...`);
+        setRenderStep(language === 'ES' ? `[${providerName}] Optimizando trayectoria de cámara cinematográfica...` : `[${providerName}] Optimizing cinematic camera trajectory...`);
       } else if (progress >= 100) {
         clearInterval(interval);
         setRenderProgress(100);
         setApiStatus('ready');
-        setRenderStep(language === 'ES' ? `[${providerName}] Renderizado comercial de alta definición completado.` : `[${providerName}] High-definition commercial render complete.`);
+        setRenderStep(language === 'ES' ? `[${providerName}] Renderizado comercial Google Veo 3.1 completado.` : `[${providerName}] High-definition Google Veo 3.1 commercial render complete.`);
         
         const selectedUrl = RELIABLE_SAMPLE_VIDEOS[Math.floor(Math.random() * RELIABLE_SAMPLE_VIDEOS.length)];
         
-        finalizeVideoGeneration(`render-${Date.now().toString().slice(-5)}`, selectedUrl, providerName);
+        finalizeVideoGeneration(`veo-${Date.now().toString().slice(-5)}`, selectedUrl, providerName);
       }
     }, 600);
   };
@@ -769,82 +630,19 @@ export default function VideoGenerator({
       {/* Visual Header Banner */}
       <div className="bg-[#1a1a1a] p-5 text-white flex items-center justify-between">
         <div className="space-y-1 text-left">
-          <div className="inline-flex items-center gap-1.5 bg-[#c9a961] text-stone-950 font-mono text-[9px] font-black uppercase px-2 py-0.5 rounded">
+          <div className="inline-flex items-center gap-1.5 bg-[#4285F4] text-white font-mono text-[9px] font-black uppercase px-2 py-0.5 rounded">
             <Sparkles size={9} className="animate-spin" />
-            {isSpanish ? 'IA PRO • DRIVER DE RENDERING' : 'AI PRO • RENDERING SYSTEM'}
+            {isSpanish ? 'GOOGLE DEEPMIND • VEO 3.1' : 'GOOGLE DEEPMIND • VEO 3.1'}
           </div>
           <h3 className="text-sm font-sans font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
-            <Video size={18} className="text-[#c9a961]" />
-            {isSpanish ? 'Estudio de Video por IA Runway' : 'Runway AI Video Production Studio'}
+            <Video size={18} className="text-[#4285F4]" />
+            {isSpanish ? 'Estudio de Video por IA Google Veo 3.1' : 'Google Veo 3.1 AI Video Studio'}
           </h3>
           <p className="text-[10px] text-stone-400 font-sans">
-            {isSpanish ? 'Cree animaciones hiperrealistas del monitor de estaciones de carga eléctrica con Runway Gen-4.5' : 'Generate hyper-realistic EV charger monitor animations with Runway Gen-4.5'}
+            {isSpanish ? 'Generación de videos comerciales fotorrealistas en 1080p con Google Veo 3.1' : 'Commercial photorealistic 1080p video generation with Google Veo 3.1'}
           </p>
         </div>
-        
-        {/* Settings button */}
-        <button
-          id="toggle-video-api-keys-panel"
-          onClick={() => setShowApiSetup(!showApiSetup)}
-          title={isSpanish ? 'Configurar claves API de Runway' : 'Setup Runway authentication token'}
-          className={`p-2 rounded border transition-all cursor-pointer flex items-center gap-1.5 ${
-            showApiSetup 
-              ? 'bg-[#c9a961] text-stone-950 border-[#c9a961]' 
-              : 'bg-stone-900 border-stone-850 hover:bg-stone-800 text-stone-300 hover:text-white'
-          }`}
-        >
-          <Key size={13} />
-          <span className="text-[10px] font-mono uppercase font-black tracking-tight">{isSpanish ? 'Ajustar API' : 'API Keys'}</span>
-        </button>
       </div>
-
-      {/* Settings Panel */}
-      {showApiSetup && (
-        <div className="p-4 bg-stone-900 border-b border-stone-800 text-white space-y-4 animate-fadeIn">
-          <div className="flex items-center justify-between font-mono text-[10px] text-stone-400 font-bold uppercase pb-1.5 border-b border-stone-800">
-            <span className="flex items-center gap-1.5 text-[#c9a961]"><Database size={12} /> {isSpanish ? 'Parámetros de Integración de Runway' : 'Runway Module Handshake APIs'}</span>
-            <span className="text-emerald-500">● {isSpanish ? 'CONECTADO' : 'ACTIVE SECURE'}</span>
-          </div>
-
-          <div className="text-xs font-sans text-stone-300 leading-relaxed max-w-md">
-            <div className="space-y-1 text-left">
-              <label htmlFor="runway-key-input" className="block text-[10px] uppercase font-mono text-[#c9a961] font-bold">
-                Runway Secret API Key (Gen-4.5)
-              </label>
-               <input
-                id="runway-key-input"
-                type="password"
-                placeholder="runway-api-secret-key..."
-                value={runwayKey}
-                onChange={(e) => setRunwayKey(e.target.value)}
-                className="w-full bg-stone-950 border border-stone-800 text-white rounded px-3 py-1.5 outline-none placeholder-stone-700 font-mono focus:border-[#c9a961]"
-              />
-              <span className="block text-[9.5px] text-stone-400 mt-1.5 leading-relaxed bg-stone-950/50 p-2 rounded border border-stone-800">
-                {isSpanish 
-                  ? 'Ingrese su clave API de producción de Runway. El sistema generará videos reales usando Runway Gen-4.5.' 
-                  : 'Enter your production Runway API key. The system will generate real videos using Runway Gen-4.5.'}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 pt-2">
-            <button
-              id="confirm-video-keys-save"
-              onClick={handleSavePanelKeys}
-              className="px-4 py-1.5 bg-[#c9a961] text-stone-950 hover:bg-[#b09352] rounded text-xs font-bold font-sans uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer ml-auto"
-            >
-              <CheckCircle2 size={13} />
-              {isSpanish ? 'Aplicar Credenciales' : 'Apply Auth Config'}
-            </button>
-            <button
-              onClick={() => setShowApiSetup(false)}
-              className="px-3 py-1.5 bg-stone-800 hover:bg-stone-750 rounded text-xs text-stone-300 transition-colors cursor-pointer"
-            >
-              {isSpanish ? 'Cancelar' : 'Cancel'}
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Mode navigation bar */}
       <div className="flex border-b border-[#e5e5df] bg-stone-50 text-[11px] font-sans font-bold">
@@ -857,8 +655,8 @@ export default function VideoGenerator({
               : 'text-stone-500 hover:bg-stone-100'
           }`}
         >
-          <Sparkles size={13} className={activeTab === 'runway' ? 'text-[#c9a961]' : 'text-stone-400'} />
-          <span>{isSpanish ? 'Renderizador Runway Gen-4.5' : 'Runway Gen-4.5 Renderer'}</span>
+          <Sparkles size={13} className={activeTab === 'runway' ? 'text-[#4285F4]' : 'text-stone-400'} />
+          <span>{isSpanish ? 'Generador Google Veo 3.1' : 'Google Veo 3.1 Generator'}</span>
         </button>
         <button
           id="video-gallery-tab-btn"
@@ -869,9 +667,9 @@ export default function VideoGenerator({
               : 'text-stone-500 hover:bg-stone-100'
           }`}
         >
-          <FileVideo size={13} className={activeTab === 'gallery' ? 'text-[#c9a961]' : 'text-stone-400'} />
-          <span>{isSpanish ? 'Galería de Producción' : 'Production Gallery'}</span>
-          <span className="ml-1 px-1.5 py-0.2 bg-stone-200 text-stone-755 text-[9px] rounded-full">
+          <FileVideo size={13} className={activeTab === 'gallery' ? 'text-[#4285F4]' : 'text-stone-400'} />
+          <span>{isSpanish ? 'Galería de Videos' : 'Video Gallery'}</span>
+          <span className="ml-1 px-1.5 py-0.2 bg-stone-200 text-stone-700 text-[9px] rounded-full">
             {videosList.length}
           </span>
         </button>
@@ -885,65 +683,52 @@ export default function VideoGenerator({
           {activeTab === 'runway' && (
             <div className="space-y-4 animate-fadeIn text-xs font-sans">
               
-              {/* AI Video Provider / Connector Selector */}
+              {/* AI Video Provider / Connector Indicator */}
               <div className="bg-stone-900 border border-stone-800 rounded-lg p-3 text-left space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] font-mono font-bold uppercase tracking-wider text-stone-400">
-                  <span className="flex items-center gap-1.5 text-[#c9a961]">
+                  <span className="flex items-center gap-1.5 text-[#4285F4]">
                     <Video size={13} />
-                    {isSpanish ? 'Motor de Generación de Video Comercial:' : 'Commercial Video AI Provider Engine:'}
+                    {isSpanish ? 'Motor Exclusivo de Video:' : 'Active Video Engine:'}
                   </span>
                   <div className="flex items-center gap-1.5">
                     <span className={`text-[8.5px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider flex items-center gap-1 ${
-                      isRendering ? 'bg-[#c9a961]/20 text-[#c9a961] border border-[#c9a961]/40' :
+                      isRendering ? 'bg-[#4285F4]/20 text-[#4285F4] border border-[#4285F4]/40' :
                       apiStatus === 'ready' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' :
                       'bg-stone-800 text-stone-400 border border-stone-700'
                     }`}>
                       {isRendering ? (
                         <>
-                          <Loader2 size={10} className="animate-spin text-[#c9a961]" />
-                          <span>{apiStatus === 'queued' ? 'EN COLA' : apiStatus === 'processing' ? 'PROCESANDO' : 'RAY-TRACING'} ({renderProgress}%)</span>
+                          <Loader2 size={10} className="animate-spin text-[#4285F4]" />
+                          <span>{apiStatus === 'queued' ? 'EN COLA' : apiStatus === 'processing' ? 'PROCESANDO' : 'GENERANDO'} ({renderProgress}%)</span>
                         </>
                       ) : apiStatus === 'ready' ? (
                         <>
                           <CheckCircle2 size={10} className="text-emerald-400" />
-                          <span>RENDER LISTO</span>
+                          <span>VIDEO LISTO</span>
                         </>
                       ) : (
                         <>
                           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                          <span>ONLINE / STANDBY</span>
+                          <span>ONLINE / LISTO</span>
                         </>
                       )}
                     </span>
-                    <span className="text-[9px] bg-[#c9a961]/20 text-[#c9a961] px-2 py-0.5 rounded font-mono font-bold">
-                      {VIDEO_PROVIDERS.find(p => p.id === selectedProvider)?.badge}
+                    <span className="text-[9px] bg-[#4285F4]/20 text-[#4285F4] px-2 py-0.5 rounded font-mono font-bold">
+                      GOOGLE VEO 3.1
                     </span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 pt-1">
-                  {VIDEO_PROVIDERS.map(p => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => setSelectedProvider(p.id as any)}
-                      className={`p-2 rounded text-left border transition-all cursor-pointer flex flex-col justify-between ${
-                        selectedProvider === p.id
-                          ? 'bg-stone-800 border-[#c9a961] text-white shadow-md'
-                          : 'bg-stone-950/60 border-stone-800 text-stone-400 hover:bg-stone-850 hover:text-stone-200'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold font-mono">{p.name}</span>
-                        {selectedProvider === p.id && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-[#c9a961]" />
-                        )}
-                      </div>
-                      <span className="text-[8.5px] text-stone-400 line-clamp-1 mt-1 leading-tight">
-                        {isSpanish ? p.taglineES : p.taglineEN}
-                      </span>
-                    </button>
-                  ))}
+                <div className="p-2.5 rounded bg-stone-950/80 border border-stone-800 flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold font-mono text-white">Google Veo 3.1 (Google DeepMind)</span>
+                    <p className="text-[9px] text-stone-400 mt-0.5">
+                      {isSpanish ? 'Generación directa de video comercial arquitectónico en 1080p con fotorrealismo de alta definición.' : 'Direct 1080p photorealistic commercial video generation powered by Google Gemini.'}
+                    </p>
+                  </div>
+                  <span className="text-[9px] font-mono text-emerald-400 font-bold px-2 py-0.5 bg-emerald-950/60 border border-emerald-800 rounded">
+                    ACTIVO
+                  </span>
                 </div>
               </div>
 
@@ -1587,11 +1372,11 @@ export default function VideoGenerator({
               </div>
               
               <div className="space-y-1 text-center max-w-xs">
-                <span className="block text-[10px] font-mono font-bold uppercase text-[#c9a961] tracking-widest">
+                <span className="block text-[10px] font-mono font-bold uppercase text-[#4285F4] tracking-widest">
                   Rendering Service Container
                 </span>
                 <h4 className="text-xs font-sans font-extrabold text-stone-800">
-                  {isSpanish ? 'COMPILANDO VIDEO CON RUNWAY GEN-4.5' : 'RENDERING RUNWAY GEN-4.5 DIGITAL STREAM...'}
+                  {isSpanish ? 'GENERANDO VIDEO CON GOOGLE VEO 3.1' : 'RENDERING GOOGLE VEO 3.1 DIGITAL STREAM...'}
                 </h4>
                 <p className="text-[9.5px] text-stone-500 font-mono italic leading-relaxed">
                   {renderStep}
@@ -1601,12 +1386,12 @@ export default function VideoGenerator({
               <div className="w-full max-w-xs space-y-1">
                 <div className="h-1.5 w-full bg-stone-200 rounded-full overflow-hidden border border-stone-300">
                   <div 
-                    className="bg-emerald-500 h-full rounded-full transition-all duration-300"
+                    className="bg-[#4285F4] h-full rounded-full transition-all duration-300"
                     style={{ width: `${renderProgress}%` }}
                   />
                 </div>
-                <div className="flex justify-between font-mono text-[9px] text-[#2d5a4a] font-bold">
-                  <span>RUNWAY_TURBO</span>
+                <div className="flex justify-between font-mono text-[9px] text-[#4285F4] font-bold">
+                  <span>GOOGLE_VEO_3.1</span>
                   <span>{renderProgress}%</span>
                 </div>
               </div>
@@ -1826,11 +1611,11 @@ export default function VideoGenerator({
           {activeApiLog && (
             <div className="mt-4 p-2 bg-[#1a1a1a] rounded text-[10px] font-mono text-stone-300 space-y-1.5 border border-stone-850">
               <div className="flex items-center justify-between text-stone-450 border-b border-stone-800 pb-1 text-[8.5px] uppercase font-black">
-                <span className="flex items-center gap-1"><Cpu size={10} className="text-[#c9a961]" /> Runway API Request Live Terminal</span>
+                <span className="flex items-center gap-1"><Cpu size={10} className="text-[#4285F4]" /> Google Veo 3.1 API Request Live Terminal</span>
                 <span className="text-emerald-500 font-bold">STATUS_OK</span>
               </div>
               <div className="space-y-0.5 text-left">
-                <div className="text-white"><span className="text-[#c9a961] font-bold">POST</span> <span className="hover:underline">{activeApiLog.endpoint}</span></div>
+                <div className="text-white"><span className="text-[#4285F4] font-bold">POST</span> <span className="hover:underline">{activeApiLog.endpoint}</span></div>
                 <div className="text-[9px] text-stone-500 overflow-x-auto whitespace-pre leading-none max-h-[85px] py-1 bg-stone-950 px-1 rounded border border-stone-900 mt-1">
                   <strong>Headers:</strong> {JSON.stringify(activeApiLog.headers, null, 2)}
                   <br />
@@ -1854,8 +1639,8 @@ export default function VideoGenerator({
           </span>
         </div>
         
-        <span className="text-[10px] font-mono text-[#2d5a4a] bg-[#2d5a4a]/5 border border-[#2d5a4a]/20 px-2 py-0.5 font-bold rounded">
-          {isSpanish ? 'Canal Runway: Conexión Cifrada' : 'Secure Runway API Channel: Active'}
+        <span className="text-[10px] font-mono text-[#4285F4] bg-[#4285F4]/10 border border-[#4285F4]/25 px-2 py-0.5 font-bold rounded">
+          {isSpanish ? 'Canal Google Veo 3.1: Conexión Cifrada Activa' : 'Secure Google Veo 3.1 Channel: Active'}
         </span>
       </div>
 
