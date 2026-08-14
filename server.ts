@@ -29,16 +29,6 @@ function getGeminiClient(): GoogleGenAI {
   return aiClient;
 }
 
-// Helper for resolving Runway API key
-function resolveRunwayApiKey(req: express.Request): string {
-  const authHeader = req.headers.authorization || '';
-  const headerKey = authHeader.replace(/^Bearer\s+/i, '').trim();
-  const bodyKey = (req.body && req.body.apiKey) ? req.body.apiKey.trim() : '';
-  const clientApiKey = headerKey || bodyKey;
-  const serverApiKey = process.env.RUNWAY_API_KEY ? process.env.RUNWAY_API_KEY.trim() : '';
-  return clientApiKey.startsWith('key_') ? clientApiKey : (serverApiKey.startsWith('key_') ? serverApiKey : clientApiKey);
-}
-
 async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
@@ -113,7 +103,7 @@ ${complianceText ? `- Compliance Mandates: ${complianceText}` : ''}`;
 🎯 [LLAMADO A LA ACCIÓN / CALL TO ACTION]
 (Guía clara hacia el siguiente paso: visitar el sitio web, contactar por WhatsApp o solicitar más información)
 
-🎬 [PROMPT PARA CREATIVO VISUAL (Runway / Gemini Veo / Midjourney)]
+🎬 [PROMPT PARA CREATIVO VISUAL (Google Veo 3.1 & Google Imagen 3)]
 (Proporciona una descripción detallada en español e inglés para generar la imagen o video publicitario acompañante)
 
 🏷️ [HASHTAGS RECOMENDADOS]
@@ -314,84 +304,33 @@ Language: Output strictly in Spanish.`;
     }
   });
 
-  // Proxy for Runway API task creation
-  app.post('/api/runway/generate', express.json(), async (req, res) => {
+  // Video Proxy Endpoint to safely stream MP4s with full CORS and Range support
+  app.get('/api/video-proxy', async (req, res) => {
     try {
-      const { promptText, model, seconds, ratio, options } = req.body;
-      const finalApiKey = resolveRunwayApiKey(req);
-
-      if (!finalApiKey || finalApiKey.length === 0 || finalApiKey === 'use_server_key') {
-        return res.status(200).json({ 
-          success: false, 
-          simulation: true,
-          message: 'No external Runway API Key provided. Running client-side high-definition synthesis pipeline.' 
-        });
+      const videoUrl = req.query.url as string;
+      if (!videoUrl) {
+        return res.status(400).send('URL query parameter required');
       }
 
-      // Initialize runway client with the provided key
-      const { RunwayML } = await import('@runwayml/sdk');
-      const runway = new RunwayML({ apiKey: finalApiKey });
-
-      // Create video generation task with safe fallback for models
-      let task;
-      try {
-        task = await (runway.textToVideo.create as any)({
-          model: model || 'gen4.5',
-          promptText: promptText,
-          ratio: ratio || '720:1280',
-          duration: seconds || 5
-        });
-      } catch (sdkError: any) {
-        console.warn('Runway gen4.5 attempt note, retrying with gen3a_turbo:', sdkError.message);
-        task = await (runway.textToVideo.create as any)({
-          model: 'gen3a_turbo',
-          promptText: promptText,
-          ratio: ratio || '720:1280',
-          duration: seconds || 5
-        });
-      }
-
-      res.json({
-        success: true,
-        job_id: (task as any).id,
+      const response = await fetch(videoUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
       });
+
+      if (!response.ok) {
+        return res.status(response.status).send(`Failed to fetch video: ${response.statusText}`);
+      }
+
+      res.setHeader('Content-Type', response.headers.get('content-type') || 'video/mp4');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+
+      const arrayBuffer = await response.arrayBuffer();
+      res.send(Buffer.from(arrayBuffer));
     } catch (error: any) {
-      console.error('Runway generation endpoint note:', error.message);
-      res.status(200).json({
-        success: false,
-        error: error.message || 'Failed to start Runway video generation. Using high-definition local synthesis fallback.'
-      });
-    }
-  });
-
-  // Proxy for Runway API task checking
-  app.get('/api/runway/status/:taskId', async (req, res) => {
-    try {
-      const { taskId } = req.params;
-      const finalApiKey = resolveRunwayApiKey(req);
-      
-      if (!finalApiKey) {
-        return res.status(400).json({ success: false, error: 'Runway API Key is required' });
-      }
-
-      const { RunwayML } = await import('@runwayml/sdk');
-      const runway = new RunwayML({ apiKey: finalApiKey });
-
-      const task = await runway.tasks.retrieve(taskId) as any;
-
-      res.json({
-        success: true,
-        status: task.status,
-        progress: task.progress,
-        output: task.output,
-        failureReason: task.failureReason
-      });
-    } catch (error: any) {
-      console.error('Runway status check error:', error);
-      res.status(500).json({
-        success: false,
-        error: error.message || 'Failed to check Runway task status'
-      });
+      console.warn('Video proxy error:', error.message);
+      res.status(500).send('Error proxying video');
     }
   });
 

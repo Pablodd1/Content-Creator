@@ -92,7 +92,7 @@ export default function HowToUseModal({ isOpen, onClose, language = 'ES' }: HowT
                   <ul className="list-disc pl-5 space-y-1.5 text-xs text-stone-600">
                     <li><strong className="text-[#1a1a1a]">1. Secuenciador de Temas (Theme Sequencer):</strong> Configure la estrategia temática para los 12 meses. Al hacer clic en <em>"Auto-Generate 12 Months"</em>, el sistema crea automáticamente temas bilingües estacionales (Cladding WPC, Papel Tapiz, normativas e importación).</li>
                     <li><strong className="text-[#1a1a1a]">2. Creador Unificado de Posts (Unified Post Creator):</strong> Redacte publicaciones completas para Instagram, LinkedIn, Facebook y YouTube con hashtags optimizados y prompts visuales estandarizados.</li>
-                    <li><strong className="text-[#1a1a1a]">3. Estudio de Video Runway Gen-4.5:</strong> Genere guiones de video profesionales y prompts de animación cinematográfica para showrooms y acabados de lujo.</li>
+                    <li><strong className="text-[#1a1a1a]">3. UNITEC STUDIO:</strong> Genere videos comerciales hiperrealistas y prompts cinematográficos para redes sociales y showrooms con tecnología Google Veo y Gemini AI.</li>
                     <li><strong className="text-[#1a1a1a]">4. Marca & Datos (Training Analytics Hub):</strong> Ajuste las directrices de marca, requisitos normativos (ASTM Clase-B, NSR-10) y métricas de rendimiento.</li>
                   </ul>
                 </div>

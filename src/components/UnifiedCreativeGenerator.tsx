@@ -156,7 +156,7 @@ export default function UnifiedCreativeGenerator({
         throw new Error(data.error || 'Server error');
       }
     } catch (err: any) {
-      console.error(err);
+      console.error(err?.message || 'Error generating creative');
       showToast(isSpanish ? 'Simulando respuesta con Gemini 2.5...' : 'Simulating response with Gemini 2.5...');
       simulateFallbackPost();
     } finally {
@@ -188,7 +188,7 @@ ${complianceFlags.fobShipping ? '✓ Despachos consolidados por contenedor compl
 🎯 [CALL TO ACTION]
 Explore el catálogo digital completo y solicite muestras físicas para sus proyectos en 🔗 unitecusadesign.com o contáctenos para asesoría personalizada.
 
-🎬 [PAIRED AI VISUAL ASSET PROMPT (Runway / Midjourney)]
+🎬 [PAIRED AI VISUAL ASSET PROMPT (Google Veo 3.1 & Google Imagen 3)]
 High-definition 8k hyper-realistic interior photography of a luxury living room wall featuring UNITEC USA Design's ${title || 'metallic PVC wallpaper'}. Warm showroom lighting, macro depth-of-field showcasing intricate 3D embossed textures, gold leaf accents, cinematic architectural detail, 16:9 aspect ratio.
 
 🏷️ [HASHTAGS]
@@ -213,7 +213,7 @@ ${complianceFlags.fobShipping ? '✓ Direct FOB container logistics from Miami a
 🎯 [CALL TO ACTION]
 Browse our exclusive digital catalog and order project sample boards today at 🔗 unitecusadesign.com.
 
-🎬 [PAIRED AI VISUAL ASSET PROMPT (Runway / Midjourney)]
+🎬 [PAIRED AI VISUAL ASSET PROMPT (Google Veo 3.1 & Google Imagen 3)]
 High-definition 8k hyper-realistic interior photography of a modern executive suite wall with UNITEC USA Design's ${title || 'luxury PVC wallpaper'}. Warm architectural spotlighting, close-up macro showing rich tactile embossing, cinematic commercial advertising shot, 16:9 ratio.
 
 🏷️ [HASHTAGS]
@@ -245,7 +245,7 @@ High-definition 8k hyper-realistic interior photography of a modern executive su
     navigator.clipboard.writeText(promptText);
     setIsPromptCopied(true);
     setTimeout(() => setIsPromptCopied(false), 2000);
-    showToast(isSpanish ? 'Prompt visual de IA copiado para Runway/Midjourney' : 'AI Visual Prompt copied for Runway/Midjourney');
+    showToast(isSpanish ? 'Prompt visual de IA copiado para Google Veo/Imagen' : 'AI Visual Prompt copied for Google Veo/Imagen');
   };
 
   return (
@@ -524,7 +524,7 @@ High-definition 8k hyper-realistic interior photography of a modern executive su
                   <button
                     onClick={handleCopyVisualPrompt}
                     className="p-1.5 bg-white border border-stone-200 text-stone-700 hover:text-black rounded transition-colors cursor-pointer flex items-center gap-1 text-[10px] font-sans font-bold"
-                    title={isSpanish ? 'Copiar prompt para Runway/Midjourney' : 'Copy prompt for Runway/Midjourney'}
+                    title={isSpanish ? 'Copiar prompt para Google Veo 3.1 e Imagen' : 'Copy prompt for Google Veo 3.1 & Imagen'}
                   >
                     <Video size={12} className="text-[#c9a961]" />
                     <span>{isPromptCopied ? (isSpanish ? '¡Prompt Copiado!' : 'Prompt Copied!') : (isSpanish ? 'Copiar Prompt Video' : 'Copy Visual Prompt')}</span>

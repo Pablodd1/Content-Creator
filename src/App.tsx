@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import VideoGenerator from './components/VideoGenerator';
+import { GlobalProgressBar } from './components/GlobalProgressBar';
 import {
   FileText,
   Video,
@@ -52,8 +53,8 @@ export default function App() {
     try {
       const saved = localStorage.getItem('unitec_attached_files');
       if (saved) return JSON.parse(saved);
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      console.error(e?.message || 'Error reading saved attachments');
     }
     return [
       {
@@ -147,8 +148,8 @@ export default function App() {
   useEffect(() => {
     try {
       localStorage.setItem('unitec_attached_files', JSON.stringify(attachedFiles));
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      console.error(e?.message || 'Error persisting attachments');
     }
   }, [attachedFiles]);
 
@@ -298,8 +299,8 @@ export default function App() {
       } else {
         alert(data.error || 'Error al generar el contenido.');
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error(err?.message || 'Error generating content');
       alert('Error de conexión al generar el contenido.');
     }
     setIsGenerating(false);
@@ -467,12 +468,18 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
     a.click();
   };
 
+  // Trigger combined generation (Copy/Post + Graphic Image in parallel)
+  const handleGenerateAllCombined = () => {
+    handleGenerateContent();
+    handleGenerateImage();
+  };
+
   const navItems = [
     { id: 'context', icon: MessageSquare, label: 'Contexto' },
     { id: 'copies', icon: FileText, label: 'Copies' },
     { id: 'keywords', icon: Hash, label: 'Palabras clave' },
     { id: 'image', icon: ImageIcon, label: 'Imagen y miniatura' },
-    { id: 'video', icon: Video, label: 'Generar video' },
+    { id: 'video', icon: Video, label: 'UNITEC STUDIO' },
     { id: 'calendar', icon: Calendar, label: 'Calendario' },
     { id: 'export', icon: Download, label: 'Exportar resumen' },
   ];
@@ -805,7 +812,17 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
                     placeholder="Escribe aquí las instrucciones de tu campaña, oferta especial o detalles del producto..."
                   ></textarea>
 
-                  <div className="absolute bottom-3 right-4 flex items-center gap-3">
+                  <div className="absolute bottom-3 right-4 flex items-center gap-2 flex-wrap justify-end">
+                    <button 
+                      disabled={isGenerating || isGeneratingImg || (!contextText.trim() && attachedFiles.length === 0)} 
+                      onClick={handleGenerateAllCombined} 
+                      title="Genera simultáneamente el texto de la publicación y el arte visual 8K con Google Gemini e Imagen"
+                      className="hidden sm:flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 px-3 py-2.5 rounded-lg text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+                    >
+                      <Sparkles size={14} className="text-indigo-600 dark:text-indigo-400" />
+                      <span>Generar Todo (Texto + Imagen 8K)</span>
+                    </button>
+
                     <button 
                       disabled={isGenerating || (!contextText.trim() && attachedFiles.length === 0)} 
                       onClick={handleGenerateContent} 
@@ -917,13 +934,19 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
             {activeTab === "video" && (
               <div className="w-full">
                 <VideoGenerator
+                  contextText={contextText}
+                  generatedText={generatedText}
+                  attachedFiles={attachedFiles}
+                  selectedTone={selectedTone}
+                  selectedPlatform={selectedPlatform}
+                  selectedCampaign={selectedCampaign}
                   selectedDay={{
                     day: 23,
                     date: '2026-05-23',
                     status: 'generated',
                     accuracyWarnings: [],
                     platforms: {
-                      instagram: { text: 'Publicación estratégica de campaña de marketing.', hashtags: '#MarketingDigital #Estrategia', charCount: 150 },
+                      instagram: { text: generatedText || 'Publicación estratégica de campaña de marketing.', hashtags: '#MarketingDigital #Estrategia', charCount: 150 },
                       facebook: { text: '', hashtags: '', charCount: 0 },
                       linkedin: { text: '', hashtags: '', charCount: 0 },
                       youtube: { text: '', hashtags: '', charCount: 0 },
@@ -941,7 +964,7 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
                   language="ES"
                   apiConfigs={{ openai: '', perplexity: '', googleTrends: '' }}
                   onSaveConfigs={() => {}}
-                  showToast={() => {}}
+                  showToast={(msg) => alert(msg)}
                 />
               </div>
             )}
@@ -1214,6 +1237,12 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
           </button>
         </div>
       </footer>
+
+      {/* Global AI Floating Bottom Progress Bar */}
+      <GlobalProgressBar 
+        isGeneratingText={isGenerating} 
+        isGeneratingImage={isGeneratingImg} 
+      />
     </div>
   );
 }

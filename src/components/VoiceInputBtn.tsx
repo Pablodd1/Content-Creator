@@ -27,7 +27,7 @@ export default function VoiceInputBtn({ onResult, lang = 'es-ES', className = ''
         };
 
         recognitionRef.current.onerror = (event: any) => {
-          console.error('Speech recognition error', event.error);
+          console.error('Speech recognition error:', event?.error || 'unknown');
           setIsListening(false);
         };
 
@@ -51,8 +51,8 @@ export default function VoiceInputBtn({ onResult, lang = 'es-ES', className = ''
         recognitionRef.current.lang = lang;
         recognitionRef.current.start();
         setIsListening(true);
-      } catch (err) {
-        console.error(err);
+      } catch (err: any) {
+        console.error(err?.message || 'Error starting speech recognition');
       }
     }
   };

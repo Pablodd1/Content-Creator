@@ -70,7 +70,6 @@ export interface ApiKeysConfig {
   openai: string;
   perplexity: string;
   googleTrends: string;
-  runway?: string;
   gemini?: string;
 }
 
