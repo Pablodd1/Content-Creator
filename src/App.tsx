@@ -102,6 +102,50 @@ export default function App() {
   const [imageError, setImageError] = useState('');
   const [imageSuccessNotice, setImageSuccessNotice] = useState('');
   const [previewFile, setPreviewFile] = useState<AttachedFile | null>(null);
+  const [showNewProjectModal, setShowNewProjectModal] = useState<boolean>(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
+  const toastTimerRef = useRef<any>(null);
+
+  const showToast = (message: string, type: 'success' | 'info' | 'error' = 'info') => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast({ message, type });
+    toastTimerRef.current = setTimeout(() => {
+      setToast(null);
+    }, 3500);
+  };
+
+  const handleStartNewProject = (mode: 'blank' | 'template') => {
+    if (mode === 'blank') {
+      setContextText('');
+      setGeneratedText('');
+      setAttachedFiles([]);
+      setImageTitle('NUEVA CAMPAÑA');
+      setImagePrompt('Fotografía publicitaria hiperrealista 8K, iluminación de estudio softbox, estética limpia y moderna con paleta de colores corporativa y acabado elegante.');
+      setGeneratedImg('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1080');
+      setSelectedCampaign('Campaña Estratégica General');
+      setActiveTab('context');
+      setShowNewProjectModal(false);
+      showToast('¡Nuevo proyecto iniciado! El lienzo está listo para tu campaña.', 'success');
+    } else {
+      setContextText('BRIEFING DE CAMPAÑA:\nLanzamiento exclusivo de nueva línea de productos y soluciones de alta gama.\nObjetivo: Aumentar el reconocimiento de marca, generar leads calificados y fidelizar a clientes existentes.');
+      setGeneratedText('');
+      setAttachedFiles([
+        {
+          id: `file-${Date.now()}-1`,
+          name: 'Ficha_Tecnica_Lanzamiento.pdf',
+          sizeFormatted: '1.2 MB',
+          type: 'document',
+          mimeType: 'application/pdf',
+          textContent: 'FICHA TÉCNICA Y ESPECIFICACIONES:\n- Producto: Revestimiento Arquitectónico Premium 8K\n- Propuesta de valor: 100% Impermeable, acústico y lavable\n- Público objetivo: Arquitectos, diseñadores de interiores y desarrolladores residenciales en Miami y Latinoamérica.'
+        }
+      ]);
+      setSelectedCampaign('Lanzamiento de Producto');
+      setActiveTab('context');
+      setShowNewProjectModal(false);
+      showToast('¡Plantilla de campaña cargada exitosamente!', 'success');
+    }
+  };
+
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('unitec_theme') as 'light' | 'dark') || 'light';
   });
@@ -277,33 +321,41 @@ export default function App() {
       if (data.success) {
         setGeneratedText(data.text);
         
-        // Auto-extract visual prompt if present
-        const visualPromptMatch = data.text.match(/\[PROMPT PARA CREATIVO VISUAL[^\]]*\]\s*([\s\S]*?)(?=\n\n(?:[✨📖🔒🎯🎬🏷️]|$))/i);
-        if (visualPromptMatch && visualPromptMatch[1]) {
-          const extractedPrompt = visualPromptMatch[1].replace(/^\([^)]*\)\s*/gm, '').trim();
-          if (extractedPrompt) {
-            setImagePrompt(extractedPrompt);
-          }
+        // Auto-extract visual prompt for image
+        let extractedPrompt = '';
+        const imagePromptMatch = data.text.match(/\[PROMPT PARA IMAGEN PUBLICITARIA[^\]]*\]\s*([\s\S]*?)(?=\n\n(?:[✨📖🔒🎯🎬🖼️🏷️]|$)|---)/i);
+        const legacyVisualMatch = data.text.match(/\[PROMPT PARA CREATIVO VISUAL[^\]]*\]\s*([\s\S]*?)(?=\n\n(?:[✨📖🔒🎯🎬🖼️🏷️]|$)|---)/i);
+        
+        if (imagePromptMatch && imagePromptMatch[1]) {
+          extractedPrompt = imagePromptMatch[1].replace(/^\([^)]*\)\s*/gm, '').trim();
+        } else if (legacyVisualMatch && legacyVisualMatch[1]) {
+          extractedPrompt = legacyVisualMatch[1].replace(/^\([^)]*\)\s*/gm, '').trim();
+        }
+
+        if (extractedPrompt) {
+          setImagePrompt(extractedPrompt);
         }
 
         // Auto-extract hook / title if present
-        const hookMatch = data.text.match(/\[TITULAR IMPACTANTE[^\]]*\]\s*([\s\S]*?)(?=\n\n(?:[✨📖🔒🎯🎬🏷️]|$))/i);
+        const hookMatch = data.text.match(/\[TITULAR IMPACTANTE[^\]]*\]\s*([\s\S]*?)(?=\n\n(?:[✨📖🔒🎯🎬🖼️🏷️]|$)|---)/i);
         if (hookMatch && hookMatch[1]) {
-          const cleanHook = hookMatch[1].replace(/^\([^)]*\)\s*/gm, '').replace(/["']/g, '').trim();
+          const cleanHook = hookMatch[1].replace(/^\([^)]*\)\s*/gm, '').replace(/["'✨⚡🚀]/g, '').trim();
           if (cleanHook) {
             setImageTitle(cleanHook);
           }
         }
 
         setActiveTab('copies');
+        return { text: data.text, prompt: extractedPrompt };
       } else {
-        alert(data.error || 'Error al generar el contenido.');
+        showToast(data.error || 'Error al generar el contenido.', 'error');
       }
     } catch (err: any) {
       console.error(err?.message || 'Error generating content');
-      alert('Error de conexión al generar el contenido.');
+      showToast('Error de conexión al generar el contenido.', 'error');
+    } finally {
+      setIsGenerating(false);
     }
-    setIsGenerating(false);
   };
 
   // Download individual document representation
@@ -422,8 +474,9 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
     URL.revokeObjectURL(url);
   };
 
-  const handleGenerateImage = async () => {
-    if (!imagePrompt.trim()) {
+  const handleGenerateImage = async (promptOverride?: string) => {
+    const promptToUse = (typeof promptOverride === 'string' && promptOverride.trim()) ? promptOverride : imagePrompt;
+    if (!promptToUse.trim()) {
       setImageError('Por favor ingresa una descripción para la imagen.');
       return;
     }
@@ -436,7 +489,7 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: imagePrompt,
+          prompt: promptToUse,
           aspectRatio: imageRatio
         })
       });
@@ -468,10 +521,14 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
     a.click();
   };
 
-  // Trigger combined generation (Copy/Post + Graphic Image in parallel)
-  const handleGenerateAllCombined = () => {
-    handleGenerateContent();
-    handleGenerateImage();
+  // Trigger combined generation (Copy/Post + Graphic Image in sequence)
+  const handleGenerateAllCombined = async () => {
+    const result = await handleGenerateContent();
+    if (result && result.prompt) {
+      handleGenerateImage(result.prompt);
+    } else {
+      handleGenerateImage();
+    }
   };
 
   const navItems = [
@@ -559,22 +616,17 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
           </button>
 
           <button 
-            onClick={() => { 
-              if (confirm('¿Deseas iniciar un nuevo proyecto? Esto limpiará el contexto actual.')) {
-                setContextText(''); 
-                setGeneratedText(''); 
-                setAttachedFiles([]); 
-                setActiveTab('context'); 
-              }
-            }} 
-            className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg transition-all shadow-sm cursor-pointer"
+            id="new-project-header-btn"
+            onClick={() => setShowNewProjectModal(true)} 
+            title="Crear o iniciar un nuevo proyecto de marketing"
+            className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-xs rounded-lg transition-all shadow-sm cursor-pointer"
           >
             <Plus size={16} />
             <span className="hidden sm:inline">Nuevo proyecto</span>
           </button>
           
           <button 
-            onClick={() => alert('Sin nuevas notificaciones de campaña')} 
+            onClick={() => showToast('No tienes notificaciones pendientes. Todo está al día.', 'info')} 
             className="relative p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors cursor-pointer"
           >
             <Bell size={18} />
@@ -893,7 +945,7 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
                         onClick={() => { 
                           const textToCopy = generatedText || "¡Lleva la imagen de tu marca al siguiente nivel!";
                           navigator.clipboard.writeText(textToCopy); 
-                          alert("¡Copy copiado al portapapeles!"); 
+                          showToast("¡Copy publicitario copiado al portapapeles con éxito!", 'success'); 
                         }} 
                         title="Copiar texto" 
                         className="flex items-center gap-1 px-2.5 py-1.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 text-xs font-bold rounded-lg shadow-xs border border-gray-200 dark:border-slate-700 cursor-pointer"
@@ -901,6 +953,30 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
                         <Copy size={13} /> Copiar
                       </button>
                     </div>
+                  </div>
+
+                  {/* Multi-Format Conversion Hub: Fast transition to Image and Video Studio */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                    <button
+                      onClick={() => {
+                        setActiveTab('image');
+                        handleGenerateImage();
+                      }}
+                      className="flex items-center justify-center gap-2 p-3 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    >
+                      <ImageIcon size={16} className="text-blue-600 dark:text-blue-400" />
+                      <span>Generar Imagen Publicitaria 8K</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setActiveTab('video');
+                      }}
+                      className="flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer"
+                    >
+                      <Video size={16} />
+                      <span>Crear Video en UNITEC STUDIO</span>
+                    </button>
                   </div>
                 </section>
 
@@ -920,7 +996,10 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
 
                   <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-slate-800">
                     <button 
-                      onClick={() => alert('Etiquetas copiadas al portapapeles')}
+                      onClick={() => {
+                        navigator.clipboard.writeText('#estrategia #marketing #redes #growth #innovacion');
+                        showToast('Hashtags y etiquetas copiadas al portapapeles.', 'success');
+                      }}
                       className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition-colors shadow-xs cursor-pointer"
                     >
                       <Copy size={14} /> Copiar hashtags
@@ -964,7 +1043,7 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
                   language="ES"
                   apiConfigs={{ openai: '', perplexity: '', googleTrends: '' }}
                   onSaveConfigs={() => {}}
-                  showToast={(msg) => alert(msg)}
+                  showToast={(msg) => showToast(msg, 'info')}
                 />
               </div>
             )}
@@ -1159,8 +1238,8 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
                     </div>
 
                     <button 
-                      onClick={() => alert('¡Publicaciones programadas exitosamente!')} 
-                      className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-xs font-bold shadow-sm cursor-pointer"
+                      onClick={() => showToast('¡Publicaciones programadas exitosamente en el calendario!', 'success')} 
+                      className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white px-4 py-2.5 rounded-lg text-xs font-bold shadow-sm cursor-pointer"
                     >
                       <Calendar size={15} />
                       Confirmar programación
@@ -1173,6 +1252,104 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
           </div>
         </main>
       </div>
+
+      {/* New Project Confirmation Modal */}
+      {showNewProjectModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-200 dark:border-slate-800 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+                  <Sparkles size={18} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base">
+                    Iniciar Nuevo Proyecto
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Configura tu espacio de trabajo para una nueva campaña
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowNewProjectModal(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              ¿Cómo deseas iniciar tu nuevo proyecto? Puedes comenzar desde un lienzo completamente en blanco o cargar una estructura de briefing recomendada.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <button
+                onClick={() => handleStartNewProject('blank')}
+                className="flex flex-col items-start p-4 rounded-xl border border-gray-200 dark:border-slate-750 bg-slate-50 hover:bg-blue-50/50 hover:border-blue-300 dark:bg-slate-800/40 dark:hover:bg-slate-800 dark:hover:border-blue-700 text-left transition-all group cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center mb-2.5 shadow-xs">
+                  <Plus size={15} />
+                </div>
+                <span className="font-bold text-xs text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                  Lienzo en Blanco
+                </span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
+                  Limpia todo el contexto, copies y archivos para empezar desde cero.
+                </span>
+              </button>
+
+              <button
+                onClick={() => handleStartNewProject('template')}
+                className="flex flex-col items-start p-4 rounded-xl border border-gray-200 dark:border-slate-750 bg-slate-50 hover:bg-indigo-50/50 hover:border-indigo-300 dark:bg-slate-800/40 dark:hover:bg-slate-800 dark:hover:border-indigo-700 text-left transition-all group cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center mb-2.5 shadow-xs">
+                  <Layers size={15} />
+                </div>
+                <span className="font-bold text-xs text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                  Plantilla de Campaña
+                </span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
+                  Carga un briefing estructurado con ficha técnica y guía de lanzamiento.
+                </span>
+              </button>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100 dark:border-slate-800">
+              <button 
+                onClick={() => setShowNewProjectModal(false)} 
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-12 right-6 z-50 max-w-md animate-in slide-in-from-bottom-5 fade-in duration-200">
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border text-xs font-bold ${
+            toast.type === 'success' 
+              ? 'bg-emerald-900 text-white border-emerald-700' 
+              : toast.type === 'error' 
+              ? 'bg-red-900 text-white border-red-700' 
+              : 'bg-slate-900 text-white border-slate-700 dark:bg-slate-800 dark:border-slate-600'
+          }`}>
+            {toast.type === 'success' && <CheckCircle size={17} className="text-emerald-400 flex-shrink-0" />}
+            {toast.type === 'error' && <X size={17} className="text-red-400 flex-shrink-0" />}
+            {toast.type === 'info' && <Sparkles size={17} className="text-blue-400 flex-shrink-0" />}
+            <span className="flex-1">{toast.message}</span>
+            <button 
+              onClick={() => setToast(null)}
+              className="text-white/60 hover:text-white p-0.5 rounded-sm transition-colors cursor-pointer"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* File Preview Modal */}
       {previewFile && (

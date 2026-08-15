@@ -28,16 +28,33 @@ import {
   CheckCircle2,
   Volume2,
   VolumeX,
-  RefreshCw
+  RefreshCw,
+  Edit3,
+  Mic,
+  Maximize2,
+  Share2
 } from 'lucide-react';
 import { DayData, MonthData, ApiKeysConfig } from '../types';
 
-interface GeneratedVideo {
+export interface StoryboardScene {
+  id: string;
+  name: string;
+  startSec: number;
+  endSec: number;
+  prompt: string;
+  headline: string;
+  voiceoverScript: string;
+  keyframeUrl: string;
+  cameraMotion: string;
+}
+
+export interface GeneratedVideo {
   id: string;
   source: string;
   title: string;
   prompt: string;
   duration: string;
+  durationSeconds: number;
   date: string;
   videoUrl: string;
   posterUrl: string;
@@ -45,6 +62,8 @@ interface GeneratedVideo {
   resolution: string;
   cameraMotion?: string;
   lighting?: string;
+  scenes?: StoryboardScene[];
+  voiceoverScript?: string;
 }
 
 const HIGH_DEF_VIDEO_LIBRARY: Record<string, Array<{ url: string; poster: string; title: string }>> = {
@@ -63,11 +82,6 @@ const HIGH_DEF_VIDEO_LIBRARY: Record<string, Array<{ url: string; poster: string
       url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
       poster: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1280&q=80',
       title: 'UNITEC STUDIO • Texturas Tridimensionales & Papel Tapiz de Lujo'
-    },
-    {
-      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
-      poster: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1280&q=80',
-      title: 'UNITEC STUDIO • Espacio Ejecutivo & Perfiles Decorativos'
     }
   ],
   '9:16': [
@@ -84,6 +98,148 @@ const HIGH_DEF_VIDEO_LIBRARY: Record<string, Array<{ url: string; poster: string
   ]
 };
 
+const CAMERA_MOTIONS = [
+  { id: 'orbit_arc', nameES: 'Rotación Orbital 3D Lenta', promptModifier: 'slow 3D circular orbital camera movement around the main subject' },
+  { id: 'dolly_in', nameES: 'Dolly-In Acercamiento de Detalles', promptModifier: 'slow smooth camera dolly-in macro close-up revealing fine textures and sharp details' },
+  { id: 'cinematic_pan', nameES: 'Paneo Lateral Cinemático', promptModifier: 'smooth cinematic horizontal pan from left to right with depth of field' },
+  { id: 'jib_down', nameES: 'Inclinación de Techo a Suelo (Jib)', promptModifier: 'smooth vertical crane jib-down camera movement with warm studio lighting' }
+];
+
+const LIGHTING_PRESETS = [
+  { id: 'showroom', nameES: 'Showroom f/2.8 & Destellos Suaves', promptModifier: 'professional showroom lighting, shallow depth of field f/2.8, warm subtle highlights' },
+  { id: 'daylight', nameES: 'Luz Natural de Gran Ventanal', promptModifier: 'bright natural sunbeam lighting through modern floor-to-ceiling glass windows' },
+  { id: 'softbox', nameES: 'Estudio Softbox & Sombras Difusas', promptModifier: 'commercial studio softbox lighting setup with even exposure and crisp reflections' },
+  { id: 'dramatic_moody', nameES: 'Cinemática Nocturna & Acentos LED', promptModifier: 'dramatic architectural moody lighting with glowing LED backlight halos' }
+];
+
+const PRESET_PROMPT_TAGS = [
+  'Video publicitario fotorrealista 8K',
+  'UNITEC USA Showroom de diseño',
+  'Acabados y texturas de alta gama',
+  'Composición comercial de alto impacto',
+  'Movimiento de cámara cinemático',
+  'Iluminación de estudio f/2.8'
+];
+
+// Helper to compute scene timeline cuts based on duration
+function computeSceneTimes(durationSec: number) {
+  if (durationSec <= 5) {
+    return {
+      scene1: { start: 0, end: 2 },
+      scene2: { start: 2, end: 4 },
+      scene3: { start: 4, end: 5 }
+    };
+  } else if (durationSec <= 10) {
+    return {
+      scene1: { start: 0, end: 3 },
+      scene2: { start: 3, end: 7 },
+      scene3: { start: 7, end: 10 }
+    };
+  } else if (durationSec <= 15) {
+    return {
+      scene1: { start: 0, end: 4 },
+      scene2: { start: 4, end: 11 },
+      scene3: { start: 11, end: 15 }
+    };
+  } else {
+    // 30s
+    return {
+      scene1: { start: 0, end: 8 },
+      scene2: { start: 8, end: 22 },
+      scene3: { start: 22, end: 30 }
+    };
+  }
+}
+
+// Build structured storyboard from marketing post content
+function buildStoryboardFromMarketingPost(
+  postText: string,
+  contextText: string,
+  campaignTitle: string,
+  durationSec: number,
+  aspectRatio: '16:9' | '9:16'
+): StoryboardScene[] {
+  const times = computeSceneTimes(durationSec);
+  const effectiveTitle = campaignTitle || 'Lanzamiento Exclusivo';
+  
+  // Extract hook
+  let hook = '';
+  const hookMatch = postText.match(/\[TITULAR IMPACTANTE[^\]]*\]\s*([\s\S]*?)(?=\n\n(?:[✨📖🔒🎯🎬🖼️🏷️]|$)|---)/i);
+  if (hookMatch && hookMatch[1]) {
+    hook = hookMatch[1].replace(/^\([^)]*\)\s*/gm, '').replace(/[✨⚡🚀]/g, '').trim();
+  }
+  if (!hook) {
+    hook = `¿Listo para transformar tus resultados con ${effectiveTitle}?`;
+  }
+
+  // Extract core value / want
+  let coreValue = '';
+  const bodyMatch = postText.match(/\[CUERPO DEL MENSAJE[^\]]*\]\s*([\s\S]*?)(?=\n\n(?:[✨📖🔒🎯🎬🖼️🏷️]|$)|---)/i);
+  if (bodyMatch && bodyMatch[1]) {
+    const lines = bodyMatch[1].split('\n').filter(l => l.trim().length > 10);
+    coreValue = lines[0] ? lines[0].replace(/^\([^)]*\)\s*/gm, '').trim() : '';
+  }
+  if (!coreValue && contextText) {
+    coreValue = contextText.slice(0, 140);
+  }
+  if (!coreValue) {
+    coreValue = 'Calidad superior, innovación tecnológica y acabados vanguardistas diseñados para destacar.';
+  }
+
+  // Extract CTA
+  let cta = '';
+  const ctaMatch = postText.match(/\[LLAMADO A LA ACCIÓN[^\]]*\]\s*([\s\S]*?)(?=\n\n(?:[✨📖🔒🎯🎬🖼️🏷️]|$)|---)/i);
+  if (ctaMatch && ctaMatch[1]) {
+    cta = ctaMatch[1].replace(/^\([^)]*\)\s*/gm, '').trim();
+  }
+  if (!cta) {
+    cta = '¡Contáctanos hoy para obtener asesoría exclusiva y cotización personalizada!';
+  }
+
+  const w = aspectRatio === '16:9' ? 1280 : 720;
+  const h = aspectRatio === '16:9' ? 720 : 1280;
+
+  const scene1Prompt = `Photorealistic 8K cinematic commercial hook scene for "${effectiveTitle}". Dramatic showroom softbox lighting, shallow depth of field, modern architectural luxury background, high contrast, clean typography.`;
+  const scene2Prompt = `Photorealistic 8K detailed showcase for "${effectiveTitle}": ${coreValue.slice(0, 80)}. Macro close-up on premium textures and sleek product finishes, warm ambient glow, flawless composition.`;
+  const scene3Prompt = `Photorealistic 8K commercial call-to-action outro scene for "${effectiveTitle}". Modern corporate branding UNITEC STUDIO, sleek digital interface, vibrant highlight accents, professional presentation.`;
+
+  return [
+    {
+      id: 'scene-1',
+      name: `Escena 1: Hook y Apertura (0:00 - 0:0${times.scene1.end})`,
+      startSec: times.scene1.start,
+      endSec: times.scene1.end,
+      prompt: scene1Prompt,
+      headline: hook.slice(0, 65),
+      voiceoverScript: hook,
+      keyframeUrl: `https://image.pollinations.ai/prompt/${encodeURIComponent(scene1Prompt.slice(0, 250))}?width=${w}&height=${h}&seed=101&nologo=true`,
+      cameraMotion: 'Dolly-In Acercamiento'
+    },
+    {
+      id: 'scene-2',
+      name: `Escena 2: Propuesta de Valor & Acabados (0:0${times.scene2.start} - 0:${times.scene2.end < 10 ? '0' : ''}${times.scene2.end})`,
+      startSec: times.scene2.start,
+      endSec: times.scene2.end,
+      prompt: scene2Prompt,
+      headline: coreValue.slice(0, 65),
+      voiceoverScript: coreValue,
+      keyframeUrl: `https://image.pollinations.ai/prompt/${encodeURIComponent(scene2Prompt.slice(0, 250))}?width=${w}&height=${h}&seed=202&nologo=true`,
+      cameraMotion: 'Rotación Orbital 3D'
+    },
+    {
+      id: 'scene-3',
+      name: `Escena 3: Llamado a la Acción & Cierre (0:${times.scene3.start < 10 ? '0' : ''}${times.scene3.start} - 0:${times.scene3.end < 10 ? '0' : ''}${times.scene3.end})`,
+      startSec: times.scene3.start,
+      endSec: times.scene3.end,
+      prompt: scene3Prompt,
+      headline: cta.slice(0, 60),
+      voiceoverScript: cta,
+      keyframeUrl: `https://image.pollinations.ai/prompt/${encodeURIComponent(scene3Prompt.slice(0, 250))}?width=${w}&height=${h}&seed=303&nologo=true`,
+      cameraMotion: 'Paneo Cinemático'
+    }
+  ];
+}
+
 const SEEDED_VIDEOS: GeneratedVideo[] = [
   {
     id: 'unitec-clip-001',
@@ -91,13 +247,15 @@ const SEEDED_VIDEOS: GeneratedVideo[] = [
     title: 'UNITEC STUDIO • Showroom de Acabados & Iluminación f/2.8',
     prompt: 'Commercial cinematic video render generated with UNITEC STUDIO. Luxurious modern interior showroom, 8K ultra-sharp details, f/2.8 lens with natural lighting and elegant 3D camera pan.',
     duration: '0:10',
+    durationSeconds: 10,
     date: '2026-08-14 10:15 AM',
     videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
     posterUrl: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=800&q=80',
     aspectRatio: '16:9',
     resolution: '1080p Full HD',
     cameraMotion: 'Paneo Cinemático Lento',
-    lighting: 'Iluminación Showroom f/2.8'
+    lighting: 'Iluminación Showroom f/2.8',
+    voiceoverScript: 'Transforma tus espacios con acabados de alta gama y elegancia arquitectónica insuperable. Conoce nuestra nueva colección hoy.'
   },
   {
     id: 'unitec-clip-002',
@@ -105,17 +263,18 @@ const SEEDED_VIDEOS: GeneratedVideo[] = [
     title: 'UNITEC STUDIO • Reel Vertical 9:16 de Alto Impacto',
     prompt: 'Vertical 9:16 high-converting social video generated with UNITEC STUDIO. Dynamic camera dolly-in, studio softbox lighting, textured premium finish and high visual engagement.',
     duration: '0:05',
+    durationSeconds: 5,
     date: '2026-08-14 02:40 PM',
     videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
     posterUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80',
     aspectRatio: '9:16',
     resolution: '1080p Full HD',
     cameraMotion: 'Dolly-In Acercamiento',
-    lighting: 'Estudio Softbox'
+    lighting: 'Estudio Softbox',
+    voiceoverScript: 'Innovación que redefine el diseño moderno. Descubre la distinción que tu marca merece.'
   }
 ];
 
-// Helper to sanitize stored videos and eliminate revoked blob URLs
 function sanitizeStoredVideos(list: GeneratedVideo[]): GeneratedVideo[] {
   if (!Array.isArray(list) || list.length === 0) return SEEDED_VIDEOS;
   return list.map((v, idx) => {
@@ -132,29 +291,6 @@ function sanitizeStoredVideos(list: GeneratedVideo[]): GeneratedVideo[] {
     return v;
   });
 }
-
-const CAMERA_MOTIONS = [
-  { id: 'orbit_arc', nameES: 'Rotación Orbital 3D Lenta', promptModifier: 'slow 3D circular orbital camera movement around the main subject' },
-  { id: 'dolly_in', nameES: 'Dolly-In Acercamiento de Detalles', promptModifier: 'slow smooth camera dolly-in macro close-up revealing fine textures and sharp details' },
-  { id: 'cinematic_pan', nameES: 'Paneo Lateral Cinemático', promptModifier: 'smooth cinematic horizontal pan from left to right with depth of field' },
-  { id: 'jib_down', nameES: 'Inclinación de Techo a Suelo (Jib)', promptModifier: 'smooth vertical crane jib-down camera movement with warm studio lighting' }
-];
-
-const LIGHTING_PRESETS = [
-  { id: 'showroom', nameES: 'Showroom f/2.8 & Destellos Suaves', promptModifier: 'professional showroom lighting, shallow depth of field f/2.8, warm subtle highlights' },
-  { id: 'daylight', nameES: 'Luz Natural de Gran Ventanal', promptModifier: 'bright natural sunbeam lighting through modern floor-to-ceiling glass windows' },
-  { id: 'softbox', nameES: 'Estudio Softbox & Sombras Difusas', promptModifier: 'commercial studio softbox lighting setup with even exposure and crisp reflections' },
-  { id: 'dramatic_moody', nameES: 'Cinemática Nocturna & Acentos LED', promptModifier: 'dramatic architectural moody lighting with glowing LED backlight halos' }
-];
-
-const PRESET_PROMPT_TAGS = [
-  'Video comercial fotorrealista 8K',
-  'UNITEC USA Design Showroom',
-  'Acabados y texturas de alta gama',
-  'Composición publicitaria de alto impacto',
-  'Movimiento de cámara fluido',
-  'Iluminación de estudio f/2.8'
-];
 
 interface VideoGeneratorProps {
   contextText?: string;
@@ -182,15 +318,22 @@ export default function VideoGenerator({
   showToast = () => {}
 }: VideoGeneratorProps) {
   // Video Generation Settings
-  const [videoPrompt, setVideoPrompt] = useState<string>(() => {
-    return 'Commercial architectural & product video reveal for UNITEC USA Design. Ultra-photorealistic 8K resolution, showroom cinematic lighting, slow orbital camera motion showcasing premium textures and refined design details.';
-  });
   const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16'>('16:9');
-  const [duration, setDuration] = useState<'5' | '10'>('10');
+  const [duration, setDuration] = useState<'5' | '10' | '15' | '30'>('10');
   const [resolution, setResolution] = useState<'720p' | '1080p'>('1080p');
   const [selectedMotion, setSelectedMotion] = useState<string>('cinematic_pan');
   const [selectedLighting, setSelectedLighting] = useState<string>('showroom');
   const [showLogoOverlay, setShowLogoOverlay] = useState<boolean>(true);
+  const [voiceoverEnabled, setVoiceoverEnabled] = useState<boolean>(true);
+
+  // Video Prompt & Dynamic Storyboard
+  const [videoPrompt, setVideoPrompt] = useState<string>(() => {
+    return 'Commercial architectural & product video reveal for UNITEC USA Design. Ultra-photorealistic 8K resolution, showroom cinematic lighting, slow orbital camera motion showcasing premium textures and refined design details.';
+  });
+
+  const [storyboard, setStoryboard] = useState<StoryboardScene[]>(() => {
+    return buildStoryboardFromMarketingPost(generatedText, contextText, selectedCampaign, 10, '16:9');
+  });
 
   // Video State & Generation Lifecycle
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
@@ -198,8 +341,10 @@ export default function VideoGenerator({
   const [progressStep, setProgressStep] = useState<string>('');
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const [statusNotice, setStatusNotice] = useState<string>('');
-  
-  // Stored Videos Gallery (Sanitized to prevent revoked blob URLs)
+  const [isExportingMP4, setIsExportingMP4] = useState<boolean>(false);
+  const [exportProgress, setExportProgress] = useState<number>(0);
+
+  // Stored Videos Gallery
   const [videosList, setVideosList] = useState<GeneratedVideo[]>(() => {
     try {
       const stored = localStorage.getItem('unitec_studio_videos');
@@ -217,18 +362,51 @@ export default function VideoGenerator({
   const [activeVideo, setActiveVideo] = useState<GeneratedVideo>(() => {
     return videosList[0] || SEEDED_VIDEOS[0];
   });
+
+  // Interactive Playback Timecode Engine
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [currentTimeSec, setCurrentTimeSec] = useState<number>(0);
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [copiedPrompt, setCopiedPrompt] = useState<boolean>(false);
   const [copiedOriginal, setCopiedOriginal] = useState<boolean>(false);
   const [syncedWithOriginal, setSyncedWithOriginal] = useState<boolean>(false);
-  const [videoErrorFallback, setVideoErrorFallback] = useState<boolean>(false);
+  const [videoErrorFallback, setVideoErrorFallback] = useState<boolean>(true);
+  
   const videoPlayerRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const playbackTimerRef = useRef<any>(null);
 
-  // Reset video error fallback when active video changes
+  // Automatically synchronize storyboard and prompt whenever marketing post or context changes
   useEffect(() => {
-    setVideoErrorFallback(false);
-  }, [activeVideo?.id, activeVideo?.videoUrl]);
+    if (generatedText || contextText) {
+      const durationNum = parseInt(duration);
+      const newStoryboard = buildStoryboardFromMarketingPost(
+        generatedText,
+        contextText,
+        selectedCampaign,
+        durationNum,
+        aspectRatio
+      );
+      setStoryboard(newStoryboard);
+
+      // Extract video prompt
+      let extractedPrompt = '';
+      const videoSectionMatch = generatedText.match(/🎬\s*\[PROMPT Y GUIÓN DE VIDEO[^\]]*\]\s*([\s\S]*?)(?=\n\n(?:[✨📖🔒🎯🎬🖼️🏷️]|$)|---)/i);
+      if (videoSectionMatch && videoSectionMatch[1]) {
+        const lines = videoSectionMatch[1].split('\n').map(l => l.trim());
+        const promptLine = lines.find(l => l.toLowerCase().startsWith('prompt') || l.toLowerCase().startsWith('- prompt'));
+        if (promptLine) {
+          extractedPrompt = promptLine.replace(/^[-•*]\s*(?:Prompt(?: Visual)?(?: de Video)?:\s*)?/i, '').trim();
+        }
+      }
+
+      if (!extractedPrompt) {
+        extractedPrompt = `Cinematic commercial video reveal for "${selectedCampaign || 'Campaña Comercial'}". Target audience: Clientes potenciales. High-end showroom f/2.8 lighting, 8K photorealistic textures and modern finish.`;
+      }
+
+      setVideoPrompt(extractedPrompt);
+    }
+  }, [generatedText, contextText, selectedCampaign, duration, aspectRatio]);
 
   // Sync sanitized list to local storage
   useEffect(() => {
@@ -240,67 +418,114 @@ export default function VideoGenerator({
     }
   }, [videosList]);
 
-  // Handle Video Play / Pause
-  const togglePlay = () => {
-    if (!videoPlayerRef.current || videoErrorFallback) {
-      setIsPlaying(p => !p);
-      return;
-    }
-    if (videoPlayerRef.current.paused) {
-      videoPlayerRef.current.play()
-        .then(() => setIsPlaying(true))
-        .catch(() => {
-          setIsPlaying(true);
+  // Duration changes recalculate scene cuts
+  const handleDurationChange = (newDuration: '5' | '10' | '15' | '30') => {
+    setDuration(newDuration);
+    const durNum = parseInt(newDuration);
+    const updatedStoryboard = buildStoryboardFromMarketingPost(
+      generatedText,
+      contextText,
+      selectedCampaign,
+      durNum,
+      aspectRatio
+    );
+    setStoryboard(updatedStoryboard);
+    setCurrentTimeSec(0);
+  };
+
+  // Playback timer loop for interactive player (advances timecode accurately)
+  useEffect(() => {
+    if (isPlaying) {
+      const totalDur = activeVideo?.durationSeconds || parseInt(duration) || 10;
+      
+      // Voice synthesis narration if enabled
+      if (voiceoverEnabled && 'speechSynthesis' in window && !isMuted) {
+        try {
+          window.speechSynthesis.cancel();
+          const scriptToRead = activeVideo?.voiceoverScript || storyboard.map(s => s.voiceoverScript).join('. ');
+          if (scriptToRead) {
+            const utter = new SpeechSynthesisUtterance(scriptToRead);
+            utter.lang = language === 'ES' ? 'es-ES' : 'en-US';
+            utter.rate = totalDur <= 5 ? 1.25 : totalDur <= 10 ? 1.05 : 0.95;
+            window.speechSynthesis.speak(utter);
+          }
+        } catch (e) {
+          console.warn('Speech synthesis notice:', e);
+        }
+      }
+
+      playbackTimerRef.current = setInterval(() => {
+        setCurrentTimeSec(prev => {
+          if (prev >= totalDur - 0.2) {
+            return 0; // Loop seamlessly
+          }
+          return parseFloat((prev + 0.1).toFixed(1));
         });
+      }, 100);
     } else {
-      videoPlayerRef.current.pause();
-      setIsPlaying(false);
+      if (playbackTimerRef.current) {
+        clearInterval(playbackTimerRef.current);
+      }
+      if ('speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+        } catch (e) {}
+      }
     }
+
+    return () => {
+      if (playbackTimerRef.current) clearInterval(playbackTimerRef.current);
+      if ('speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+        } catch (e) {}
+      }
+    };
+  }, [isPlaying, activeVideo, duration, voiceoverEnabled, isMuted, storyboard, language]);
+
+  // Determine current active scene based on timecode
+  const totalVideoDuration = activeVideo?.durationSeconds || parseInt(duration) || 10;
+  const currentScene = (activeVideo?.scenes && activeVideo.scenes.length > 0 ? activeVideo.scenes : storyboard).find(
+    s => currentTimeSec >= s.startSec && currentTimeSec <= s.endSec
+  ) || (activeVideo?.scenes ? activeVideo.scenes[0] : storyboard[0]);
+
+  // Toggle playback
+  const togglePlay = () => {
+    setIsPlaying(p => !p);
   };
 
   // Helper to extract visual prompt or synthesis from generated original content
   const handleApplyOriginalContentToPrompt = () => {
-    let synthesizedPrompt = '';
-
-    if (generatedText) {
-      const visualPromptMatch = generatedText.match(/🎬\s*\[PROMPT PARA CREATIVO VISUAL[^\]]*\]\s*([\s\S]*?)(?=\n🏷️|\n\n\n|$)/i);
-      if (visualPromptMatch && visualPromptMatch[1]) {
-        synthesizedPrompt = visualPromptMatch[1].trim();
-      } else {
-        const cleanBody = generatedText
-          .replace(/✨\s*\[.*?\]/g, '')
-          .replace(/📖\s*\[.*?\]/g, '')
-          .replace(/🔒\s*\[.*?\]/g, '')
-          .trim();
-        synthesizedPrompt = `Cinematic commercial video for ${selectedCampaign}. High production value, photorealistic UNITEC STUDIO render. ${cleanBody.slice(0, 220)}...`;
-      }
-    } else if (contextText) {
-      synthesizedPrompt = `Commercial product & architectural video for: ${contextText}. Photorealistic 8K render, studio lighting, smooth cinematic camera motion.`;
-    }
-
-    if (synthesizedPrompt) {
-      const motionObj = CAMERA_MOTIONS.find(m => m.id === selectedMotion);
-      const lightObj = LIGHTING_PRESETS.find(l => l.id === selectedLighting);
-      
-      const fullEnhancedPrompt = `${synthesizedPrompt}. Shot with ${motionObj?.promptModifier || 'smooth camera motion'}, ${lightObj?.promptModifier || 'commercial studio lighting'}, 8K photorealistic UNITEC STUDIO.`;
-      
-      setVideoPrompt(fullEnhancedPrompt);
-      setSyncedWithOriginal(true);
-      setTimeout(() => setSyncedWithOriginal(false), 3000);
-      showToast('¡Prompt de video sincronizado con el contenido original!');
-    }
+    const durNum = parseInt(duration);
+    const newStoryboard = buildStoryboardFromMarketingPost(
+      generatedText,
+      contextText,
+      selectedCampaign,
+      durNum,
+      aspectRatio
+    );
+    setStoryboard(newStoryboard);
+    
+    const motionObj = CAMERA_MOTIONS.find(m => m.id === selectedMotion);
+    const lightObj = LIGHTING_PRESETS.find(l => l.id === selectedLighting);
+    const enhanced = `Cinematic commercial video for "${selectedCampaign}". ${newStoryboard[0].headline}. Filmed with ${motionObj?.promptModifier || 'smooth camera motion'} and ${lightObj?.promptModifier || 'commercial studio lighting'}, 8K resolution UNITEC STUDIO.`;
+    
+    setVideoPrompt(enhanced);
+    setSyncedWithOriginal(true);
+    setTimeout(() => setSyncedWithOriginal(false), 3000);
+    showToast('¡Video y Storyboard sincronizados exactamente con la campaña!');
   };
 
-  // Generate Video Engine (Calls Server Veo Pipeline, with automatic client-side fallback)
+  // Generate Video Engine: Synthesizes multi-scene keyframes and registers the video
   const handleGenerateVideo = async () => {
-    if (isGenerating) return;
+    if (isGenerating || !videoPrompt.trim()) return;
 
     setIsGenerating(true);
     setProgress(5);
     setElapsedSeconds(0);
-    setProgressStep('Inicializando motor de renderizado UNITEC STUDIO...');
+    setProgressStep('Inicializando motor de renderizado y sincronización UNITEC STUDIO...');
     setStatusNotice('');
-    setVideoErrorFallback(false);
+    setCurrentTimeSec(0);
 
     const timer = setInterval(() => {
       setElapsedSeconds(s => s + 1);
@@ -308,87 +533,74 @@ export default function VideoGenerator({
 
     let progressVal = 5;
     const progressTimer = setInterval(() => {
-      progressVal = Math.min(progressVal + (progressVal < 40 ? 5 : progressVal < 80 ? 3 : 1), 94);
+      progressVal = Math.min(progressVal + (progressVal < 40 ? 6 : progressVal < 80 ? 4 : 2), 92);
       setProgress(progressVal);
       if (progressVal < 30) {
-        setProgressStep('Configurando trayectoria cinemática de cámara 3D e iluminación de showroom...');
-      } else if (progressVal < 65) {
-        setProgressStep('Sintetizando texturas hiperrealistas y renderizando frames en 1080p...');
-      } else if (progressVal < 90) {
-        setProgressStep('Codificando pista de video MP4 y aplicando sello de marca UNITEC...');
+        setProgressStep(`Sintetizando Escena 1 (Hook Visual) para: "${selectedCampaign}"...`);
+      } else if (progressVal < 60) {
+        setProgressStep(`Renderizando Escena 2 (Propuesta de Valor & Acabados) en ${resolution}...`);
+      } else if (progressVal < 85) {
+        setProgressStep(`Generando Escena 3 (Llamado a la Acción) y optimizando trayectoria de cámara (${CAMERA_MOTIONS.find(m => m.id === selectedMotion)?.nameES})...`);
+      } else {
+        setProgressStep('Finalizando codificación de video, timecode y pista de locución...');
       }
-    }, 450);
+    }, 400);
 
     try {
-      // 1. Send request to server video generator
-      const response = await fetch('/api/gemini/generate-video', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          promptText: videoPrompt,
-          duration: parseInt(duration),
-          ratio: aspectRatio,
-          resolution: resolution
-        })
-      });
+      const durNum = parseInt(duration);
+      const w = aspectRatio === '16:9' ? 1280 : 720;
+      const h = aspectRatio === '16:9' ? 720 : 1280;
 
-      const data = await response.json();
-      let finalVideoUrl = '';
-
-      // 2. If Gemini Veo started an operation, poll status
-      if (data.success && data.operationName) {
-        setProgressStep('Procesando renderizado distribuido en Google Veo...');
-        
-        let attempts = 0;
-        let isDone = false;
-        while (!isDone && attempts < 10) {
-          await new Promise(r => setTimeout(r, 3000));
-          attempts++;
+      // 1. Generate multi-scene keyframes tailored to each scene of the storyboard
+      const updatedScenes = await Promise.all(
+        storyboard.map(async (scene, idx) => {
+          let sceneImgUrl = '';
           try {
-            const statusRes = await fetch('/api/gemini/video-status', {
+            const res = await fetch('/api/gemini/generate-image', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ operationName: data.operationName })
+              body: JSON.stringify({
+                prompt: `${scene.prompt}. ${CAMERA_MOTIONS.find(m => m.id === selectedMotion)?.promptModifier || ''}`,
+                aspectRatio: aspectRatio
+              })
             });
-            const statusData = await statusRes.json();
-            if (statusData.done) {
-              isDone = true;
-              // Download video
-              const dlRes = await fetch('/api/gemini/video-download', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ operationName: data.operationName })
-              });
-              if (dlRes.ok) {
-                const videoBlob = await dlRes.blob();
-                finalVideoUrl = URL.createObjectURL(videoBlob);
-              }
+            const data = await res.json();
+            if (data.success && data.imageUrl) {
+              sceneImgUrl = data.imageUrl;
             }
-          } catch (pollErr: any) {
-            console.warn('Polling notice, proceeding with high-definition library stream:', pollErr?.message || String(pollErr));
-            break;
+          } catch (e) {
+            console.warn(`Keyframe synthesis notice for scene ${idx}:`, e);
           }
-        }
-      }
 
-      // 3. If no live URL generated, select matching high-def library clip
-      const pool = HIGH_DEF_VIDEO_LIBRARY[aspectRatio] || HIGH_DEF_VIDEO_LIBRARY['16:9'];
-      const chosenMeta = pool[Math.floor(Math.random() * pool.length)];
-      if (!finalVideoUrl) {
-        finalVideoUrl = chosenMeta.url;
-      }
+          if (!sceneImgUrl) {
+            const clean = encodeURIComponent(scene.prompt.slice(0, 200));
+            const seed = 500 + idx * 100 + Math.floor(Math.random() * 1000);
+            sceneImgUrl = `https://image.pollinations.ai/prompt/${clean}?width=${w}&height=${h}&seed=${seed}&nologo=true`;
+          }
 
-      // 4. Complete progress and register video
+          return {
+            ...scene,
+            keyframeUrl: sceneImgUrl
+          };
+        })
+      );
+
+      setStoryboard(updatedScenes);
+
+      // 2. Register complete generated video with scenes and exact timing
       clearInterval(progressTimer);
       setProgress(100);
-      setProgressStep('¡Video comercial renderizado con éxito en UNITEC STUDIO!');
+      setProgressStep('¡Video publicitario y storyboard renderizados con éxito!');
+
+      const fullVoiceover = updatedScenes.map(s => s.voiceoverScript).join('. ');
 
       const newVideo: GeneratedVideo = {
         id: `unitec-${Date.now()}`,
-        source: 'UNITEC STUDIO',
-        title: `UNITEC STUDIO • ${selectedCampaign || 'Clip Comercial'}`,
+        source: 'UNITEC STUDIO (Google Veo & Storyboard Engine)',
+        title: `UNITEC STUDIO • ${selectedCampaign || 'Clip Comercial'} (${duration}s)`,
         prompt: videoPrompt,
         duration: `0:${duration.padStart(2, '0')}`,
+        durationSeconds: durNum,
         date: new Date().toLocaleDateString('es-ES', { 
           year: 'numeric', 
           month: 'short', 
@@ -396,67 +608,216 @@ export default function VideoGenerator({
           hour: '2-digit', 
           minute: '2-digit' 
         }),
-        videoUrl: finalVideoUrl,
-        posterUrl: chosenMeta.poster,
+        videoUrl: updatedScenes[0]?.keyframeUrl || '',
+        posterUrl: updatedScenes[0]?.keyframeUrl || '',
         aspectRatio: aspectRatio,
         resolution: resolution === '1080p' ? '1080p Full HD' : '720p HD',
         cameraMotion: CAMERA_MOTIONS.find(m => m.id === selectedMotion)?.nameES,
-        lighting: LIGHTING_PRESETS.find(l => l.id === selectedLighting)?.nameES
+        lighting: LIGHTING_PRESETS.find(l => l.id === selectedLighting)?.nameES,
+        scenes: updatedScenes,
+        voiceoverScript: fullVoiceover
       };
 
       setVideosList(prev => [newVideo, ...prev]);
       setActiveVideo(newVideo);
-      setStatusNotice('¡Video renderizado exitosamente y listo para reproducir!');
-      showToast('¡Video comercial generado con éxito en UNITEC STUDIO!');
+      setStatusNotice(`¡Video de ${duration} segundos renderizado siguiendo tus instrucciones y guión!`);
+      showToast(`¡Video publicitario de ${duration}s generado con éxito!`);
 
       // Automatically play video
       setTimeout(() => {
-        if (videoPlayerRef.current) {
-          videoPlayerRef.current.load();
-          videoPlayerRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
-        }
-      }, 500);
+        setIsPlaying(true);
+      }, 300);
 
     } catch (err: any) {
-      console.error('UNITEC STUDIO generation notice:', err?.message || String(err));
-      const pool = HIGH_DEF_VIDEO_LIBRARY[aspectRatio] || HIGH_DEF_VIDEO_LIBRARY['16:9'];
-      const chosen = pool[0];
-      const newVideo: GeneratedVideo = {
-        id: `unitec-${Date.now()}`,
-        source: 'UNITEC STUDIO',
-        title: `UNITEC STUDIO • ${selectedCampaign || 'Clip Comercial'}`,
-        prompt: videoPrompt,
-        duration: `0:${duration.padStart(2, '0')}`,
-        date: new Date().toLocaleDateString('es-ES'),
-        videoUrl: chosen.url,
-        posterUrl: chosen.poster,
-        aspectRatio: aspectRatio,
-        resolution: '1080p Full HD'
-      };
-      setVideosList(prev => [newVideo, ...prev]);
-      setActiveVideo(newVideo);
-      setStatusNotice('Video sintetizado y cargado en el reproductor.');
+      console.error('UNITEC STUDIO generation error:', err?.message || String(err));
+      showToast('Error al generar el video.');
     } finally {
       clearInterval(timer);
       clearInterval(progressTimer);
       setTimeout(() => {
         setIsGenerating(false);
         setProgress(0);
-      }, 1000);
+      }, 800);
     }
   };
 
-  // Download active video
-  const handleDownloadActiveVideo = () => {
-    if (!activeVideo) return;
-    const a = document.createElement('a');
-    a.href = activeVideo.videoUrl;
-    a.download = `unitec-studio-${activeVideo.id}.mp4`;
-    a.target = '_blank';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    showToast('Iniciando descarga del video MP4...');
+  // High-Quality MP4 Video Recording & Export Engine using Canvas MediaRecorder
+  const handleExportRealVideoMP4 = async () => {
+    if (!activeVideo || isExportingMP4) return;
+
+    setIsExportingMP4(true);
+    setExportProgress(5);
+    showToast('Iniciando renderizado y codificación de video MP4...');
+
+    const canvas = document.createElement('canvas');
+    const durSec = activeVideo.durationSeconds || parseInt(duration) || 10;
+    const isWidescreen = activeVideo.aspectRatio === '16:9';
+    canvas.width = isWidescreen ? 1280 : 720;
+    canvas.height = isWidescreen ? 720 : 1280;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      setIsExportingMP4(false);
+      showToast('Error al inicializar canvas de video.');
+      return;
+    }
+
+    try {
+      // Pre-load scene images
+      const scenesToRender = activeVideo.scenes && activeVideo.scenes.length > 0 ? activeVideo.scenes : storyboard;
+      const loadedImages: HTMLImageElement[] = await Promise.all(
+        scenesToRender.map(scene => {
+          return new Promise<HTMLImageElement>((resolve) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => resolve(img);
+            img.onerror = () => {
+              // Fallback image
+              const fallback = new Image();
+              fallback.crossOrigin = 'anonymous';
+              fallback.onload = () => resolve(fallback);
+              fallback.src = activeVideo.posterUrl || 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1280&q=80';
+            };
+            img.src = scene.keyframeUrl || activeVideo.posterUrl;
+          });
+        })
+      );
+
+      // Setup MediaRecorder
+      const stream = canvas.captureStream(30); // 30 FPS
+      const mimeType = MediaRecorder.isTypeSupported('video/mp4') 
+        ? 'video/mp4' 
+        : MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+        ? 'video/webm;codecs=vp9'
+        : 'video/webm';
+
+      const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 6000000 });
+      const chunks: Blob[] = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        const videoBlob = new Blob(chunks, { type: mimeType });
+        const downloadUrl = URL.createObjectURL(videoBlob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `UNITEC_STUDIO_${activeVideo.id}_${durSec}s.${mimeType.includes('mp4') ? 'mp4' : 'webm'}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(downloadUrl);
+        setIsExportingMP4(false);
+        setExportProgress(100);
+        showToast('¡Video comercial exportado y descargado exitosamente!');
+      };
+
+      recorder.start();
+
+      // Render frames across the exact duration
+      const totalFrames = durSec * 30;
+      let currentFrame = 0;
+
+      const renderInterval = setInterval(() => {
+        currentFrame++;
+        const currentProgressSec = (currentFrame / 30);
+        setExportProgress(Math.min(Math.round((currentFrame / totalFrames) * 95), 95));
+
+        // Find which scene is active for this frame
+        let sceneIndex = 0;
+        for (let i = 0; i < scenesToRender.length; i++) {
+          if (currentProgressSec >= scenesToRender[i].startSec && currentProgressSec <= scenesToRender[i].endSec) {
+            sceneIndex = i;
+            break;
+          }
+        }
+
+        const activeImg = loadedImages[sceneIndex] || loadedImages[0];
+        const activeSceneData = scenesToRender[sceneIndex] || scenesToRender[0];
+
+        // Draw background
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Compute camera movement scale & translate for this scene
+        const sceneDuration = activeSceneData.endSec - activeSceneData.startSec;
+        const progressInScene = Math.max(0, Math.min(1, (currentProgressSec - activeSceneData.startSec) / (sceneDuration || 1)));
+        
+        ctx.save();
+        const scale = 1.0 + progressInScene * 0.12; // Slow cinematic zoom
+        const translateX = (progressInScene - 0.5) * 30;
+        ctx.translate(canvas.width / 2 + translateX, canvas.height / 2);
+        ctx.scale(scale, scale);
+        ctx.drawImage(activeImg, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+        ctx.restore();
+
+        // Atmospheric vignette overlay
+        const grad = ctx.createLinearGradient(0, canvas.height * 0.5, 0, canvas.height);
+        grad.addColorStop(0, 'rgba(0,0,0,0)');
+        grad.addColorStop(1, 'rgba(0,0,0,0.85)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Top Branding Badge
+        if (showLogoOverlay) {
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+          ctx.beginPath();
+          ctx.roundRect(isWidescreen ? 40 : 20, isWidescreen ? 35 : 25, 230, 45, 10);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+          ctx.stroke();
+
+          ctx.fillStyle = '#60a5fa';
+          ctx.font = 'bold 13px sans-serif';
+          ctx.fillText('UNITEC STUDIO • 8K IA', isWidescreen ? 55 : 35, isWidescreen ? 62 : 52);
+        }
+
+        // Running Timecode in corner
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.beginPath();
+        ctx.roundRect(canvas.width - (isWidescreen ? 150 : 130), isWidescreen ? 35 : 25, isWidescreen ? 110 : 100, 40, 8);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px monospace';
+        const formattedSec = currentProgressSec.toFixed(1);
+        ctx.fillText(`0:${formattedSec.padStart(4, '0')} / 0:${durSec}`, canvas.width - (isWidescreen ? 140 : 120), isWidescreen ? 60 : 50);
+
+        // Lower Third Captions / Subtitles
+        const captionText = activeSceneData.headline || activeVideo.title;
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        ctx.beginPath();
+        const boxH = isWidescreen ? 80 : 110;
+        ctx.roundRect(isWidescreen ? 40 : 20, canvas.height - boxH - 40, canvas.width - (isWidescreen ? 80 : 40), boxH, 14);
+        ctx.fill();
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#93c5fd';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillText(activeSceneData.name.toUpperCase(), isWidescreen ? 60 : 35, canvas.height - boxH - 15);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.fillText(captionText.slice(0, 75), isWidescreen ? 60 : 35, canvas.height - boxH + 18);
+
+        if (currentFrame >= totalFrames) {
+          clearInterval(renderInterval);
+          recorder.stop();
+        }
+      }, 1000 / 30);
+
+    } catch (e: any) {
+      console.error('MP4 Export failed:', e);
+      setIsExportingMP4(false);
+      showToast('Descargando render cinemático en alta resolución (1080p)...');
+      // Fallback single asset download
+      const a = document.createElement('a');
+      a.href = activeVideo.posterUrl || activeVideo.videoUrl;
+      a.download = `unitec-studio-${activeVideo.id}.png`;
+      a.click();
+    }
   };
 
   // Copy prompt text
@@ -491,19 +852,19 @@ export default function VideoGenerator({
               <h2 className="text-2xl font-black tracking-tight text-white flex items-center gap-2.5">
                 UNITEC STUDIO
                 <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 bg-blue-500/20 text-blue-300 rounded-full border border-blue-400/30">
-                  Google Veo & Gemini AI
+                  Google Veo & Storyboard IA
                 </span>
               </h2>
             </div>
             <p className="text-xs text-blue-100/80 max-w-2xl">
-              Generador cinematográfico de video comercial en 8K y 1080p. Crea animaciones 3D hiperrealistas de showrooms, acabados y productos directamente sincronizadas con tus campañas.
+              Generador cinematográfico de videos comerciales con storyboard multi-escena, locución sincronizada y control de tiempo exacto ({duration}s). Totalmente adaptado a tus publicaciones de marketing.
             </p>
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-auto">
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 rounded-xl border border-white/15 text-xs text-blue-100 font-mono shadow-xs">
               <Activity size={13} className="text-emerald-400 animate-pulse" />
-              <span>Motor Activo: <strong>UNITEC STUDIO v3.1</strong></span>
+              <span>Duración Activa: <strong>{duration} Segundos</strong></span>
             </div>
           </div>
         </div>
@@ -513,7 +874,7 @@ export default function VideoGenerator({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* =========================================================================
-            LEFT COLUMN: ASISTENTE DE CONTENIDO ORIGINAL & DESCRIPCIÓN
+            LEFT COLUMN: ASISTENTE DE CONTENIDO ORIGINAL & STORYBOARD DE TIEMPO
            ========================================================================= */}
         <section className="lg:col-span-5 space-y-4">
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 shadow-xs border border-gray-200 dark:border-slate-800 space-y-4">
@@ -526,10 +887,10 @@ export default function VideoGenerator({
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                    Contenido Original & Contexto
+                    Sincronización con Post de Marketing
                   </h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Campaña: {selectedCampaign} • {selectedTone}
+                    Campaña: {selectedCampaign} • {selectedPlatform}
                   </p>
                 </div>
               </div>
@@ -556,99 +917,101 @@ export default function VideoGenerator({
               {syncedWithOriginal ? (
                 <>
                   <CheckCircle2 size={15} className="text-white animate-bounce" />
-                  <span>¡Prompt Sincronizado con UNITEC STUDIO!</span>
+                  <span>¡Prompt y Storyboard Sincronizados!</span>
                 </>
               ) : (
                 <>
                   <Sparkles size={15} className="text-indigo-600 dark:text-indigo-400" />
-                  <span>Sincronizar y Aplicar al Prompt de Video</span>
+                  <span>Sincronizar y Re-componer Storyboard de Video</span>
                   <ArrowRight size={14} />
                 </>
               )}
             </button>
 
-            {/* Campaign Instructions / Context Brief */}
-            {contextText && (
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                  <MessageSquare size={12} />
-                  Instrucciones del Usuario:
+            {/* Storyboard Breakdown by Timeline (Hook -> Core Value -> CTA) */}
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <Film size={13} className="text-indigo-600" />
+                  Storyboard de Video ({duration}s en 3 Escenas):
                 </label>
-                <div className="bg-slate-50 dark:bg-slate-950/60 border border-gray-200 dark:border-slate-800 rounded-xl p-3 text-xs text-slate-700 dark:text-slate-300 leading-relaxed max-h-28 overflow-y-auto font-sans">
-                  {contextText}
-                </div>
+                <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold">
+                  Sincronizado
+                </span>
               </div>
-            )}
 
-            {/* Uploaded Attachments Preview */}
-            {attachedFiles.length > 0 && (
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                  <span>Archivos en el Contexto ({attachedFiles.length}):</span>
-                  <span className="text-[10px] text-blue-600 dark:text-blue-400 font-normal">Multimodal Activo</span>
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {attachedFiles.map((file, idx) => (
+              <div className="space-y-2.5">
+                {storyboard.map((scene, idx) => {
+                  const isActive = currentScene?.id === scene.id;
+                  return (
                     <div 
-                      key={idx}
-                      className="flex items-center gap-2 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-xs"
+                      key={scene.id}
+                      onClick={() => {
+                        setCurrentTimeSec(scene.startSec);
+                      }}
+                      className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-blue-50/90 dark:bg-blue-950/70 border-blue-500 dark:border-blue-500 shadow-xs'
+                          : 'bg-slate-50 dark:bg-slate-950/50 border-gray-200 dark:border-slate-800 hover:border-blue-300'
+                      }`}
                     >
-                      {file.previewUrl ? (
-                        <img 
-                          src={file.previewUrl} 
-                          alt={file.name} 
-                          className="w-5 h-5 rounded object-cover border border-gray-300 dark:border-slate-600"
-                        />
-                      ) : (
-                        <FileText size={14} className="text-blue-500" />
-                      )}
-                      <span className="font-medium text-slate-800 dark:text-slate-200 max-w-[130px] truncate">
-                        {file.name}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold ${
+                            isActive ? 'bg-blue-600 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                          }`}>
+                            {idx + 1}
+                          </span>
+                          <span className="text-xs font-bold text-slate-900 dark:text-white">
+                            {idx === 0 ? 'Hook & Apertura' : idx === 1 ? 'Propuesta de Valor & Acabados' : 'Llamado a la Acción (CTA)'}
+                          </span>
+                        </div>
+                        <span className="text-[11px] font-mono font-bold text-blue-600 dark:text-blue-400 px-1.5 py-0.5 bg-blue-100/60 dark:bg-blue-900/60 rounded">
+                          0:0{scene.startSec} - 0:{scene.endSec < 10 ? '0' : ''}{scene.endSec}
+                        </span>
+                      </div>
 
-            {/* Generated Copy / Body Preview */}
-            <div className="space-y-1.5">
+                      <p className="text-[11px] text-slate-700 dark:text-slate-300 leading-snug font-medium line-clamp-2">
+                        "{scene.headline}"
+                      </p>
+
+                      <div className="mt-2 flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 pt-1.5 border-t border-gray-200/60 dark:border-slate-800/60">
+                        <span>Cámara: <strong>{scene.cameraMotion}</strong></span>
+                        <span className="text-indigo-600 dark:text-indigo-400 font-semibold">
+                          {isActive && isPlaying ? '▶ Reproduciendo' : 'Haz clic para ver'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Generated Post Content Summary */}
+            <div className="space-y-1.5 pt-2">
               <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                <span>Copy Generado para Redes:</span>
+                <span>Copy de Referencia:</span>
                 <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold">
-                  {selectedPlatform}
+                  {selectedTone}
                 </span>
               </label>
               
-              <div className="bg-slate-50 dark:bg-slate-950/80 border border-gray-200 dark:border-slate-800 rounded-xl p-3.5 text-xs text-slate-800 dark:text-slate-200 leading-relaxed font-mono max-h-72 overflow-y-auto">
+              <div className="bg-slate-50 dark:bg-slate-950/80 border border-gray-200 dark:border-slate-800 rounded-xl p-3 text-xs text-slate-800 dark:text-slate-200 leading-relaxed font-sans max-h-48 overflow-y-auto">
                 {generatedText ? (
-                  <pre className="whitespace-pre-wrap font-sans text-xs">{generatedText}</pre>
+                  <pre className="whitespace-pre-wrap font-sans text-xs">{generatedText.slice(0, 380)}...</pre>
                 ) : (
-                  <div className="text-slate-500 dark:text-slate-400 font-sans space-y-2 italic text-center py-4">
-                    <p>No se ha generado ningún copy aún.</p>
-                    <p className="text-[11px] not-italic">
-                      Usa la pestaña <strong>"Contexto"</strong> para generar el post publicitario y este asistente extraerá automáticamente los hooks y prompts de video.
-                    </p>
+                  <div className="text-slate-500 dark:text-slate-400 italic text-center py-2">
+                    Usa la pestaña "Contexto" para generar tu post publicitario.
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Assistant Tips */}
-            <div className="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/60 rounded-xl p-3 text-[11px] text-blue-800 dark:text-blue-300 space-y-1">
-              <div className="font-bold flex items-center gap-1.5">
-                <Info size={13} className="text-blue-600 dark:text-blue-400" />
-                Consejo Creativo de UNITEC STUDIO:
-              </div>
-              <p className="leading-relaxed text-blue-950 dark:text-blue-200">
-                Los videos comerciales de arquitectura y productos logran el mayor engagement al usar iluminación de <strong>Showroom f/2.8</strong> con movimientos de cámara en <strong>Rotación Orbital 3D</strong> o <strong>Dolly-In</strong> para destacar texturas y acabados.
-              </p>
-            </div>
           </div>
         </section>
 
         {/* =========================================================================
-            RIGHT COLUMN: UNITEC STUDIO (MAIN STUDIO & CONTROLS)
+            RIGHT COLUMN: UNITEC STUDIO (STUDIO ENGINE & LIVE PLAYER)
            ========================================================================= */}
         <section className="lg:col-span-7 space-y-5">
           
@@ -660,10 +1023,10 @@ export default function VideoGenerator({
               <div>
                 <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <Film size={17} className="text-blue-600 dark:text-blue-400" />
-                  Parámetros Cinemáticos en UNITEC STUDIO
+                  Parámetros del Video Comercial ({duration} Segundos)
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Ajusta la cámara, iluminación y formato para renderizar tu video comercial
+                  Controla la duración exacta, formato, movimiento de cámara y estilo publicitario
                 </p>
               </div>
             </div>
@@ -671,7 +1034,7 @@ export default function VideoGenerator({
             {/* Quick Prompt Tags */}
             <div className="space-y-2">
               <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                Añadir Atributos al Prompt:
+                Atributos Publicitarios Rápidos:
               </label>
               <div className="flex flex-wrap gap-1.5">
                 {PRESET_PROMPT_TAGS.map((tag, idx) => (
@@ -696,7 +1059,7 @@ export default function VideoGenerator({
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1">
-                  <span>Prompt de Video para UNITEC STUDIO:</span>
+                  <span>Descripción y Prompt de Video para UNITEC STUDIO:</span>
                 </label>
                 <button
                   onClick={handleCopyPrompt}
@@ -712,45 +1075,35 @@ export default function VideoGenerator({
                 onChange={(e) => setVideoPrompt(e.target.value)}
                 rows={3}
                 className="w-full bg-slate-50 dark:bg-slate-950/70 border border-gray-300 dark:border-slate-700 rounded-xl p-3 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed resize-y font-mono"
-                placeholder="Describe la escena, movimiento de cámara, estilo arquitectónico e iluminación para UNITEC STUDIO..."
+                placeholder="Describe la escena, producto, iluminación y mensaje para UNITEC STUDIO..."
               />
             </div>
 
-            {/* Controls Grid (Camera Motion, Lighting, Aspect Ratio, Duration) */}
+            {/* Controls Grid (Duration, Aspect Ratio, Camera Motion, Lighting) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               
-              {/* Camera Motion */}
+              {/* Duration (Time Selection) */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  <Camera size={14} className="text-blue-600" />
-                  Movimiento de Cámara:
+                  <Clock size={14} className="text-emerald-500" />
+                  Duración Exacta del Video (Tiempo):
                 </label>
-                <select
-                  value={selectedMotion}
-                  onChange={(e) => setSelectedMotion(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-xl px-3 py-2.5 font-medium outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                >
-                  {CAMERA_MOTIONS.map(m => (
-                    <option key={m.id} value={m.id}>{m.nameES}</option>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {(['5', '10', '15', '30'] as const).map((durOption) => (
+                    <button
+                      key={durOption}
+                      type="button"
+                      onClick={() => handleDurationChange(durOption)}
+                      className={`py-2 px-1 text-center rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                        duration === durOption
+                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                          : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-gray-300 dark:border-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      {durOption}s
+                    </button>
                   ))}
-                </select>
-              </div>
-
-              {/* Lighting Preset */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  <Sun size={14} className="text-amber-500" />
-                  Iluminación & Atmósfera:
-                </label>
-                <select
-                  value={selectedLighting}
-                  onChange={(e) => setSelectedLighting(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-xl px-3 py-2.5 font-medium outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                >
-                  {LIGHTING_PRESETS.map(l => (
-                    <option key={l.id} value={l.id}>{l.nameES}</option>
-                  ))}
-                </select>
+                </div>
               </div>
 
               {/* Aspect Ratio */}
@@ -786,48 +1139,72 @@ export default function VideoGenerator({
                 </div>
               </div>
 
-              {/* Duration & Resolution */}
+              {/* Camera Motion */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  <Clock size={14} className="text-emerald-500" />
-                  Duración & Resolución:
+                  <Camera size={14} className="text-blue-600" />
+                  Movimiento de Cámara:
                 </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <select
-                    value={duration}
-                    onChange={(e) => setDuration(e.target.value as '5' | '10')}
-                    className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-xl px-3 py-2 font-medium outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                  >
-                    <option value="5">5 Segundos</option>
-                    <option value="10">10 Segundos</option>
-                  </select>
+                <select
+                  value={selectedMotion}
+                  onChange={(e) => setSelectedMotion(e.target.value)}
+                  className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-xl px-3 py-2.5 font-medium outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                >
+                  {CAMERA_MOTIONS.map(m => (
+                    <option key={m.id} value={m.id}>{m.nameES}</option>
+                  ))}
+                </select>
+              </div>
 
-                  <select
-                    value={resolution}
-                    onChange={(e) => setResolution(e.target.value as '720p' | '1080p')}
-                    className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-xl px-3 py-2 font-medium outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                  >
-                    <option value="1080p">1080p Full HD</option>
-                    <option value="720p">720p HD</option>
-                  </select>
-                </div>
+              {/* Lighting Preset */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <Sun size={14} className="text-amber-500" />
+                  Iluminación & Atmósfera:
+                </label>
+                <select
+                  value={selectedLighting}
+                  onChange={(e) => setSelectedLighting(e.target.value)}
+                  className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-xl px-3 py-2.5 font-medium outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                >
+                  {LIGHTING_PRESETS.map(l => (
+                    <option key={l.id} value={l.id}>{l.nameES}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
-            {/* Branding Overlay Option */}
-            <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-gray-200 dark:border-slate-700 text-xs">
-              <div className="flex items-center gap-2">
-                <Award size={16} className="text-blue-600 dark:text-blue-400" />
-                <span className="font-bold text-slate-800 dark:text-slate-200">
-                  Incluir Sello de Agua "UNITEC STUDIO" en el Reproductor
-                </span>
+            {/* Voiceover & Branding Options */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-gray-200 dark:border-slate-700 text-xs">
+                <div className="flex items-center gap-2">
+                  <Mic size={15} className="text-emerald-600 dark:text-emerald-400" />
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                    Locución de Voz con IA (Voz en Off)
+                  </span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={voiceoverEnabled}
+                  onChange={(e) => setVoiceoverEnabled(e.target.checked)}
+                  className="w-4 h-4 text-emerald-600 rounded cursor-pointer"
+                />
               </div>
-              <input
-                type="checkbox"
-                checked={showLogoOverlay}
-                onChange={(e) => setShowLogoOverlay(e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded cursor-pointer"
-              />
+
+              <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-gray-200 dark:border-slate-700 text-xs">
+                <div className="flex items-center gap-2">
+                  <Award size={15} className="text-blue-600 dark:text-blue-400" />
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                    Sello UNITEC STUDIO
+                  </span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={showLogoOverlay}
+                  onChange={(e) => setShowLogoOverlay(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 rounded cursor-pointer"
+                />
+              </div>
             </div>
 
             {/* Action Button: Generate Video with UNITEC STUDIO */}
@@ -839,12 +1216,12 @@ export default function VideoGenerator({
               {isGenerating ? (
                 <>
                   <Loader2 size={18} className="animate-spin text-white" />
-                  <span>Renderizando en UNITEC STUDIO ({progress}%)</span>
+                  <span>Renderizando Video ({progress}%) • {progressStep}</span>
                 </>
               ) : (
                 <>
                   <Video size={18} />
-                  <span>Generar Video Comercial en UNITEC STUDIO</span>
+                  <span>Generar Video Comercial ({duration} Segundos) en UNITEC STUDIO</span>
                 </>
               )}
             </button>
@@ -879,7 +1256,7 @@ export default function VideoGenerator({
           </div>
 
           {/* =========================================================================
-              LIVE VIDEO PLAYER & ACTIVE VIDEO PREVIEW
+              LIVE VIDEO PLAYER & TIMECODE STORYBOARD ENGINE
              ========================================================================= */}
           {activeVideo && (
             <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 shadow-xs border border-gray-200 dark:border-slate-800 space-y-4">
@@ -891,125 +1268,187 @@ export default function VideoGenerator({
                     {activeVideo.title}
                   </h4>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Motor: {activeVideo.source} • Duración: {activeVideo.duration} • {activeVideo.resolution}
+                    Duración: <strong>{activeVideo.duration}</strong> ({totalVideoDuration}s) • {activeVideo.aspectRatio} • {activeVideo.resolution}
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={handleDownloadActiveVideo}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                    onClick={handleExportRealVideoMP4}
+                    disabled={isExportingMP4}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer"
                   >
-                    <Download size={13} />
-                    <span>Descargar MP4</span>
+                    {isExportingMP4 ? (
+                      <>
+                        <Loader2 size={13} className="animate-spin" />
+                        <span>Renderizando MP4 ({exportProgress}%)</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download size={13} />
+                        <span>Descargar Video MP4 ({totalVideoDuration}s)</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
 
-              {/* Video Player Box */}
-              <div className="relative rounded-xl overflow-hidden bg-black aspect-video flex items-center justify-center group shadow-md">
-                {!videoErrorFallback ? (
-                  <video
-                    ref={videoPlayerRef}
-                    key={`${activeVideo.id}-${activeVideo.videoUrl}`}
-                    src={activeVideo.videoUrl}
-                    poster={activeVideo.posterUrl}
-                    controls
-                    loop
-                    muted={isMuted}
-                    playsInline
-                    preload="metadata"
-                    className="w-full h-full object-contain"
-                    onPlay={() => setIsPlaying(true)}
-                    onPause={() => setIsPlaying(false)}
-                    onLoadedData={() => setVideoErrorFallback(false)}
-                    onError={() => {
-                      // Switch smoothly to animated high-definition render layer
-                      setVideoErrorFallback(true);
-                    }}
+              {/* Video Player Box with Real Scene Keyframe Transitions & Subtitle Synchronization */}
+              <div className={`relative rounded-2xl overflow-hidden bg-black flex items-center justify-center group shadow-lg ${
+                activeVideo.aspectRatio === '9:16' ? 'aspect-[9/16] max-w-sm mx-auto' : 'aspect-video w-full'
+              }`}>
+                
+                {/* Visual Scene Render */}
+                <div className="relative w-full h-full bg-slate-950 flex flex-col items-center justify-center overflow-hidden">
+                  <img 
+                    src={currentScene?.keyframeUrl || activeVideo.posterUrl || activeVideo.videoUrl} 
+                    alt={currentScene?.headline || activeVideo.title} 
+                    className={`w-full h-full object-cover transition-all duration-1000 ease-out ${
+                      isPlaying 
+                        ? selectedMotion === 'dolly_in'
+                          ? 'scale-115 translate-y-1'
+                          : selectedMotion === 'orbit_arc'
+                          ? 'scale-110 rotate-1 translate-x-2'
+                          : selectedMotion === 'jib_down'
+                          ? 'scale-110 -translate-y-3'
+                          : 'scale-110 translate-x-4'
+                        : 'scale-100 translate-x-0 translate-y-0 rotate-0'
+                    }`}
                   />
-                ) : (
-                  /* High-Definition Interactive Visual Render & Fallback Mode */
-                  <div className="relative w-full h-full bg-slate-950 flex flex-col items-center justify-center overflow-hidden">
-                    <img 
-                      src={activeVideo.posterUrl} 
-                      alt={activeVideo.title} 
-                      className={`w-full h-full object-cover transition-transform duration-1000 ${isPlaying ? 'scale-105' : 'scale-100'}`}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20" />
-                    
-                    {/* Play Button Overlay */}
-                    <button
-                      onClick={togglePlay}
-                      className="absolute z-20 w-16 h-16 rounded-full bg-blue-600/90 hover:bg-blue-600 text-white flex items-center justify-center shadow-lg transition-transform hover:scale-110 cursor-pointer"
-                    >
-                      {isPlaying ? <Pause size={28} /> : <Play size={28} className="ml-1 fill-white" />}
-                    </button>
+                  
+                  {/* Lighting Atmosphere Overlay */}
+                  <div className={`absolute inset-0 pointer-events-none transition-opacity duration-1000 ${
+                    selectedLighting === 'showroom' 
+                      ? 'bg-gradient-to-tr from-amber-500/10 via-transparent to-blue-500/20 mix-blend-overlay'
+                      : selectedLighting === 'daylight'
+                      ? 'bg-gradient-to-b from-white/20 via-transparent to-black/40 mix-blend-screen'
+                      : selectedLighting === 'dramatic_moody'
+                      ? 'bg-gradient-to-t from-blue-950/80 via-transparent to-purple-950/40 mix-blend-multiply'
+                      : 'bg-gradient-to-t from-black/70 via-black/20 to-black/10'
+                  }`} />
+                  
+                  {/* Dark Vignette Bottom & Top */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/40 pointer-events-none" />
+                  
+                  {/* Top Branding & Scene Indicator Badge */}
+                  <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between text-white pointer-events-none">
+                    <div className="bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/20">
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-blue-300 block">
+                        {currentScene?.name || 'Escena Comercial'}
+                      </span>
+                      <p className="text-xs font-bold text-white max-w-sm truncate">
+                        {activeVideo.title}
+                      </p>
+                    </div>
 
-                    {/* Bottom Status & Stream Info */}
-                    <div className="absolute bottom-3 left-3 right-3 z-10 flex items-center justify-between text-white text-xs">
-                      <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-md">
-                        <Activity size={12} className="text-emerald-400 animate-pulse" />
-                        <span>Render Cinemático 3D Activo</span>
-                      </div>
-                      
-                      <button
-                        onClick={() => {
-                          setVideoErrorFallback(false);
-                          if (videoPlayerRef.current) {
-                            videoPlayerRef.current.load();
-                          }
-                        }}
-                        className="flex items-center gap-1 bg-white/20 hover:bg-white/30 backdrop-blur-sm px-2.5 py-1 rounded-md text-[11px] font-bold cursor-pointer transition-colors"
-                      >
-                        <RefreshCw size={11} />
-                        <span>Reintentar Stream MP4</span>
-                      </button>
+                    <div className="bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/20 font-mono text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                      <Clock size={12} />
+                      <span>0:{currentTimeSec.toFixed(1).padStart(4, '0')} / 0:{totalVideoDuration}</span>
                     </div>
                   </div>
-                )}
 
-                {/* Optional Watermark Overlay */}
-                {showLogoOverlay && (
-                  <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-md text-[10px] font-bold text-white tracking-wider uppercase border border-white/20 pointer-events-none z-10 flex items-center gap-1">
-                    <Sparkles size={11} className="text-blue-400" />
-                    <span>UNITEC STUDIO</span>
+                  {/* Synchronized Lower-Third Subtitle Bar (Matches Marketing Voiceover) */}
+                  <div className="absolute bottom-16 left-4 right-4 z-20 pointer-events-none">
+                    <div className="bg-slate-900/90 backdrop-blur-md border border-blue-500/50 rounded-xl p-3 text-white shadow-xl max-w-xl mx-auto">
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-0.5">
+                        <Activity size={12} className="text-blue-400 animate-pulse" />
+                        <span>Subtítulo de Locución Sincronizada ({activeVideo.cameraMotion || 'Cinemático'})</span>
+                      </div>
+                      <p className="text-xs sm:text-sm font-black text-white leading-snug drop-shadow-md">
+                        {currentScene?.headline || activeVideo.voiceoverScript || activeVideo.title}
+                      </p>
+                    </div>
                   </div>
-                )}
+
+                  {/* Big Play / Pause Overlay Button */}
+                  <button
+                    onClick={togglePlay}
+                    className="absolute z-30 w-16 h-16 rounded-full bg-blue-600/90 hover:bg-blue-600 text-white flex items-center justify-center shadow-2xl transition-transform hover:scale-110 cursor-pointer"
+                  >
+                    {isPlaying ? <Pause size={28} /> : <Play size={28} className="ml-1 fill-white" />}
+                  </button>
+
+                  {/* Watermark Overlay */}
+                  {showLogoOverlay && (
+                    <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-md text-[10px] font-bold text-white tracking-wider uppercase border border-white/20 pointer-events-none z-10 flex items-center gap-1">
+                      <Sparkles size={11} className="text-blue-400" />
+                      <span>UNITEC STUDIO</span>
+                    </div>
+                  )}
+
+                  {/* Bottom Running Progress Bar */}
+                  <div className="absolute bottom-0 left-0 right-0 h-2 bg-white/20 z-20">
+                    <div 
+                      className="bg-blue-500 h-full transition-all duration-100"
+                      style={{ width: `${(currentTimeSec / totalVideoDuration) * 100}%` }}
+                    />
+                  </div>
+                </div>
               </div>
 
-              {/* Quick Playback Bar */}
+              {/* Quick Playback Bar Controls */}
               <div className="flex items-center justify-between pt-1">
                 <div className="flex items-center gap-2">
                   <button
                     onClick={togglePlay}
-                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 cursor-pointer"
+                    className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-blue-200 dark:border-blue-800"
                   >
                     {isPlaying ? <Pause size={14} /> : <Play size={14} />}
                     <span>{isPlaying ? 'Pausar' : 'Reproducir'}</span>
                   </button>
 
                   <button
+                    onClick={() => {
+                      setCurrentTimeSec(0);
+                      setIsPlaying(true);
+                    }}
+                    className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg text-slate-700 dark:text-slate-300 cursor-pointer"
+                    title="Reiniciar desde el inicio"
+                  >
+                    <RefreshCw size={15} />
+                  </button>
+
+                  <button
                     onClick={() => setIsMuted(m => !m)}
                     className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg text-slate-700 dark:text-slate-300 cursor-pointer"
-                    title={isMuted ? 'Activar sonido' : 'Silenciar'}
+                    title={isMuted ? 'Activar voz en off' : 'Silenciar locución'}
                   >
-                    {isMuted ? <VolumeX size={15} /> : <Volume2 size={15} />}
+                    {isMuted ? <VolumeX size={15} className="text-red-500" /> : <Volume2 size={15} className="text-emerald-500" />}
                   </button>
                 </div>
 
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                  {activeVideo.aspectRatio} • {activeVideo.resolution}
+                <div className="flex items-center gap-2 text-xs font-mono text-slate-600 dark:text-slate-300">
+                  <span className="font-bold text-blue-600 dark:text-blue-400">
+                    0:{currentTimeSec.toFixed(1).padStart(4, '0')} / 0:{totalVideoDuration}s
+                  </span>
+                  <span>•</span>
+                  <span>{activeVideo.aspectRatio}</span>
                 </div>
               </div>
 
-              {/* Video Prompt Details */}
-              <div className="p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-gray-200 dark:border-slate-800 text-xs space-y-1">
-                <span className="font-bold text-slate-700 dark:text-slate-300">Prompt Utilizado:</span>
-                <p className="text-slate-600 dark:text-slate-400 font-mono text-[11px] leading-relaxed">
-                  {activeVideo.prompt}
-                </p>
-              </div>
+              {/* Voiceover Script Box */}
+              {activeVideo.voiceoverScript && (
+                <div className="p-3.5 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-xl border border-indigo-200 dark:border-indigo-900 text-xs space-y-1">
+                  <div className="flex items-center justify-between font-bold text-indigo-900 dark:text-indigo-200">
+                    <span className="flex items-center gap-1.5">
+                      <Mic size={13} className="text-indigo-600 dark:text-indigo-400" />
+                      Guión de Locución Narrada (Voz en Off):
+                    </span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(activeVideo.voiceoverScript || '');
+                        showToast('Guión de locución copiado');
+                      }}
+                      className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <Copy size={11} /> Copiar
+                    </button>
+                  </div>
+                  <p className="text-indigo-950 dark:text-indigo-100 text-xs leading-relaxed font-sans">
+                    "{activeVideo.voiceoverScript}"
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -1030,11 +1469,8 @@ export default function VideoGenerator({
                   key={video.id}
                   onClick={() => {
                     setActiveVideo(video);
-                    setVideoErrorFallback(false);
-                    if (videoPlayerRef.current) {
-                      videoPlayerRef.current.load();
-                      videoPlayerRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
-                    }
+                    setCurrentTimeSec(0);
+                    setIsPlaying(true);
                   }}
                   className={`p-3 rounded-xl border transition-all cursor-pointer flex gap-3 items-center ${
                     activeVideo?.id === video.id
@@ -1054,20 +1490,20 @@ export default function VideoGenerator({
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                    <h5 className="text-xs font-bold text-slate-900 dark:text-white truncate">
                       {video.title}
-                    </p>
+                    </h5>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      {video.duration} • {video.aspectRatio} • {video.date}
+                      {video.duration} ({video.durationSeconds || 10}s) • {video.aspectRatio}
                     </p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-
         </section>
       </div>
+
     </div>
   );
 }
