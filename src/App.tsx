@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import VideoGenerator from './components/VideoGenerator';
+import MultiPlatformRepurposer from './components/MultiPlatformRepurposer';
 import { GlobalProgressBar } from './components/GlobalProgressBar';
 import {
   FileText,
@@ -22,7 +23,8 @@ import {
   Layers,
   Loader2,
   Sun,
-  Moon
+  Moon,
+  Share2
 } from 'lucide-react';
 
 export interface AttachedFile {
@@ -534,6 +536,7 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
   const navItems = [
     { id: 'context', icon: MessageSquare, label: 'Contexto' },
     { id: 'copies', icon: FileText, label: 'Copies' },
+    { id: 'repurpose', icon: Share2, label: 'Multicanal & CRM' },
     { id: 'keywords', icon: Hash, label: 'Palabras clave' },
     { id: 'image', icon: ImageIcon, label: 'Imagen y miniatura' },
     { id: 'video', icon: Video, label: 'UNITEC STUDIO' },
@@ -1006,6 +1009,19 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
                     </button>
                   </div>
                 </section>
+              </div>
+            )}
+
+            {/* Multichannel & CRM Tab */}
+            {activeTab === "repurpose" && (
+              <div className="w-full">
+                <MultiPlatformRepurposer
+                  campaignTitle={selectedCampaign}
+                  contextText={contextText}
+                  generatedPost={generatedText}
+                  selectedTone={selectedTone}
+                  showToast={showToast}
+                />
               </div>
             )}
 

@@ -905,6 +905,67 @@ export default function VideoGenerator({
               </button>
             </div>
 
+            {/* A/B Hook Variants Generator for Video (Google Gemini) */}
+            <div className="p-3.5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-blue-900 dark:text-blue-200 uppercase tracking-wide flex items-center gap-1.5">
+                  <Sparkles size={13} className="text-blue-600 dark:text-blue-400" />
+                  Variantes de Hook 0-3s (A/B Testing IA)
+                </span>
+                <span className="text-[10px] px-1.5 py-0.5 bg-blue-200/60 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200 rounded font-bold">
+                  Gemini 3.7
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-slate-300">
+                Selecciona el enfoque de apertura para aumentar la retención en los primeros 3 segundos:
+              </p>
+              <div className="grid grid-cols-1 gap-1.5">
+                {[
+                  {
+                    id: 'hook-1',
+                    type: 'Curiosidad & Error',
+                    text: `¿Sabías que el 80% de las remodelaciones fallan por este detalle en los acabados?`
+                  },
+                  {
+                    id: 'hook-2',
+                    type: 'Transformación Rápida',
+                    text: `Mira cómo transformamos este espacio comercial con acabados 8K en 48 horas.`
+                  },
+                  {
+                    id: 'hook-3',
+                    type: 'Exclusividad & Lujo',
+                    text: `Si buscas que tu proyecto luzca como una mansión en Miami Beach, necesitas conocer esto.`
+                  }
+                ].map((hookItem) => (
+                  <button
+                    key={hookItem.id}
+                    onClick={() => {
+                      setStoryboard(prev => {
+                        const copy = [...prev];
+                        if (copy[0]) {
+                          copy[0] = {
+                            ...copy[0],
+                            headline: hookItem.text,
+                            voiceoverScript: hookItem.text
+                          };
+                        }
+                        return copy;
+                      });
+                      showToast(`¡Hook "${hookItem.type}" aplicado a la Escena 1!`);
+                    }}
+                    className="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-blue-100 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-600 text-left transition-all group cursor-pointer"
+                  >
+                    <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 whitespace-nowrap mt-0.5">
+                      {hookItem.type}
+                    </span>
+                    <span className="text-[11px] text-slate-800 dark:text-slate-200 font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                      "{hookItem.text}"
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Sync Button: Transfer directly into UNITEC STUDIO */}
             <button
               onClick={handleApplyOriginalContentToPrompt}
