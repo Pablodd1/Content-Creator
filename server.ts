@@ -29,7 +29,7 @@ function getGeminiClient(): GoogleGenAI {
 
 async function startServer() {
   const app = express();
-  const PORT = Number(process.env.PORT) || 3000;
+  const PORT = 3000;
 
   // JSON request parsing support
   app.use(express.json());
@@ -619,57 +619,27 @@ Return JSON with format: { "hooks": [ { "id": "A", "type": "Curiosity / Shock", 
     }
   });
 
-  const distPath = path.join(process.cwd(), 'dist');
-  const hasBuild = fs.existsSync(path.join(distPath, 'index.html'));
-  const isProduction = process.env.NODE_ENV === 'production';
-
-  // Serve static assets or mount Vite middleware
-  if (isProduction) {
-    console.log(`Production mode active. Serving static files from: ${distPath}`);
+  // Vite middleware setup
+  if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa',
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
-      if (fs.existsSync(path.join(distPath, 'index.html'))) {
-        res.sendFile(path.join(distPath, 'index.html'));
-      } else {
-        res.status(503).send('Application is currently starting or building. Please reload in a few seconds.');
-      }
+      res.sendFile(path.join(distPath, 'index.html'));
     });
-  } else {
-    console.log('Development mode active. Attempting to mount Vite middleware...');
-    try {
-      const { createServer: createViteServer } = await import('vite');
-      const vite = await createViteServer({
-        server: { middlewareMode: true },
-        appType: 'spa',
-      });
-      app.use(vite.middlewares);
-      console.log('Vite middleware mounted successfully for development.');
-    } catch (err) {
-      console.error('Failed to mount Vite middleware, checking for static build fallback:', err);
-      if (hasBuild) {
-        console.log('Static build files found. Falling back to static file serving.');
-        app.use(express.static(distPath));
-        app.get('*', (req, res) => {
-          if (fs.existsSync(path.join(distPath, 'index.html'))) {
-            res.sendFile(path.join(distPath, 'index.html'));
-          } else {
-            res.status(503).send('Application is currently starting or building. Please reload in a few seconds.');
-          }
-        });
-      } else {
-        app.get('*', (req, res) => {
-          res.status(503).send('Application is currently starting or building. Please reload in a few seconds.');
-        });
-      }
-    }
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on http://localhost:${PORT}`);
   });
 }
 
 startServer().catch((err) => {
-  console.error('Failed to start server:', err);
-  process.exit(1);
+  console.error('Fatal server startup error:', err);
 });
