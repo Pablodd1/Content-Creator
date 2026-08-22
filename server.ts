@@ -102,6 +102,7 @@ async function startServer() {
         want,
         tone = 'Sales-driven',
         platform = 'All Platforms',
+        framework = 'PAS',
         complianceFlags = [],
         language = 'ES',
         documentTexts = [],
@@ -121,19 +122,32 @@ async function startServer() {
         ? `Mandatory Compliance & Product Features to Include: ${complianceFlags.join(', ')}.`
         : '';
 
-      const systemInstruction = `You are a world-class creative director and senior social media strategist.
-Your task is to write high-converting, highly engaging, professional social media copy tailored to ${tone} tone and targeted for ${platform}.
-Maintain a sleek, modern, sophisticated voice. Integrate all background details, extracted document text, and visual context from attached images.`;
+      const frameworkDescriptions: Record<string, string> = {
+        'PAS': 'Problem -> Agitate -> Solution (Identifica el dolor o frustración del cliente, intensifica el costo de no resolverlo y presenta la solución ideal).',
+        'AIDA': 'Attention -> Interest -> Desire -> Action (Gancho magnético, genera curiosidad con hechos, despierta deseo con beneficios y cierra con acción clara).',
+        'BAB': 'Before -> After -> Bridge (Muestra la situación actual con fricciones, visualiza el futuro transformado y explica cómo este producto es el puente).',
+        '4Ps': 'Picture -> Promise -> Prove -> Push (Pinta la escena aspiracional, haz una promesa audaz, demuestra con especificaciones y empuja a la acción).',
+        'Storytelling': 'Gancho -> Conflicto -> Transformación -> Lección/Oferta (Narrativa humana y envolvente con retención en los primeros segundos).',
+        'Direct-Response': 'Oferta directa, valor comercial cuantificable, eliminación de objeciones y llamado a la acción inmediato.'
+      };
+
+      const selectedFrameworkDesc = frameworkDescriptions[framework] || frameworkDescriptions['PAS'];
+
+      const systemInstruction = `You are a world-class creative director, copywriter and social media strategist.
+Your task is to write high-converting, viral-ready, professional social media copy using the ${framework} copywriting framework (${selectedFrameworkDesc}).
+Maintain a sleek, modern, sophisticated voice tailored to ${tone} tone and targeted for ${platform}.
+Integrate all background details, extracted document text, and visual context from attached images.`;
 
       let combinedTextPrompt = `Please generate an individual, highly optimized social media campaign post based on the following creative parameters:
 
 📌 CREATIVE BRIEF:
-- Title / Hook Line: "${title || 'Lanzamiento de Campaña'}"
+- Title / Main Topic: "${title || 'Lanzamiento de Campaña'}"
 - Target Audience / Segment: "${target || 'Audiencia General y Clientes Potenciales'}"
 - Strategic Objective: "${objective || 'Aumentar engagement, visibilidad y conversiones'}"
-- Specific Want / Creative Angle: "${want || 'Destacar beneficios clave y propuesta de valor'}"
+- Specific Creative Angle: "${want || 'Destacar beneficios clave y propuesta de valor'}"
 - Desired Tone of Voice: ${tone}
 - Target Platform Focus: ${platform}
+- Copywriting Framework: ${framework} (${selectedFrameworkDesc})
 ${complianceText ? `- Compliance Mandates: ${complianceText}` : ''}`;
 
       if (Array.isArray(documentTexts) && documentTexts.length > 0) {
@@ -142,28 +156,57 @@ ${complianceText ? `- Compliance Mandates: ${complianceText}` : ''}`;
 
       combinedTextPrompt += `\n\nREQUIRED OUTPUT FORMAT (Return clean text with these exact formatted sections):
 
-✨ [TITULAR IMPACTANTE / HOOK]
-(Crea una línea de apertura de alto impacto que capte la atención de inmediato)
+✨ [TITULAR PRINCIPAL & 3 GANCHOS A/B DE ALTA RETENCIÓN]
+• Gancho A (Curiosidad / Pregunta Provocadora): ...
+• Gancho B (Dato Estadístico / Alto Impacto): ...
+• Gancho C (Beneficio Directo / Desafío a Mitos): ...
 
-📖 [CUERPO DEL MENSAJE / POST]
-(Escribe 2-3 párrafos atractivos y bien estructurados con viñetas destacando la propuesta de valor y los beneficios principales)
+---
+
+📖 [CUERPO DEL MENSAJE / POST - FÓRMULA ${framework}]
+(Aplica estrictamente ${framework}: 2-3 párrafos persuasivos con viñetas magnéticas que eleven la percepción de valor)
+
+---
 
 🔒 [PUNTOS CLAVE Y ESPECIFICACIONES]
-(Incluye los aspectos técnicos, diferenciadores o características clave relevantes extraídos de los documentos y contexto)
+(Aspectos técnicos, ventajas competitivas o certificaciones clave)
 
-🎯 [LLAMADO A LA ACCIÓN / CALL TO ACTION]
-(Guía clara hacia el siguiente paso: visitar el sitio web, contactar por WhatsApp o solicitar más información)
+---
+
+📊 [ESTRUCTURA DE CARRUSEL / SLIDE-BY-SLIDE (LinkedIn & Instagram)]
+• Slide 1 (Portada & Gancho): ...
+• Slide 2 (El Problema / Desafío Común): ...
+• Slide 3 (La Solución / Innovación): ...
+• Slide 4 (Beneficios & Prueba): ...
+• Slide 5 (Cierre & Llamado a la Acción): ...
+
+---
+
+🎯 [LLAMADOS A LA ACCIÓN DINÁMICOS (CTAs)]
+• Opción 1 (Direct Message / Lead): ...
+• Opción 2 (Guardar / Compartir): ...
+• Opción 3 (Debate / Comentario): ...
+
+---
 
 🖼️ [PROMPT PARA IMAGEN PUBLICITARIA (Google Imagen 3)]
-(Prompt visual detallado en 8K: composición, iluminación de estudio, texturas y enfoque comercial)
+(Prompt visual fotorrealista 8K: iluminación de estudio, composición y texturas)
 
 ---
 
 🎬 [PROMPT Y GUIÓN DE VIDEO (UNITEC STUDIO & Google Veo)]
-(Prompt cinemático de video, desglose de escenas 1 a 3 con segundos exactos, movimiento de cámara sugerido y texto para voz en off)
+• Prompt de Video: ...
+• Gancho en Pantalla (0-3s): ...
+• Retención y Demostración (3-12s): ...
+• Cierre y CTA (12-20s): ...
+• Voz en Off: ...
 
-🏷️ [HASHTAGS RECOMENDADOS]
-(Proporciona 10-12 hashtags estratégicos para maximizar el alcance en Instagram, Facebook, TikTok y LinkedIn)
+---
+
+🏷️ [CLUSTER ESTRATÉGICO DE HASHTAGS]
+• Nicho (Alta Conversión): #...
+• Industria / B2B: #...
+• Tendencia & Alcance: #...
 
 Language: Output strictly in Spanish.`;
 
@@ -201,24 +244,27 @@ Language: Output strictly in Spanish.`;
         console.warn('Gemini API Notice (using smart content synthesis engine):', geminiError?.message || geminiError);
 
         // Smart Content Generation Fallback so the user never gets a 500 failure
-        const effectiveTitle = title || 'Lanzamiento Exclusivo 2026';
-        const effectiveTarget = target || 'Profesionales, clientes y líderes de la industria';
-        const effectiveObjective = objective || 'Aumentar engagement y conversiones';
-        const effectiveWant = want || 'Innovación, calidad de vanguardia y excelencia comprobada';
-        
-        generatedText = `✨ [TITULAR IMPACTANTE / HOOK]
-${effectiveTitle} ⚡🚀 Transforma tu visión con innovación y excelencia sin límites.
+        const effectiveTitle = title || 'Revestimientos Arquitectónicos 3D & PVC';
+        const effectiveTarget = target || 'Arquitectos, diseñadores de interiores y desarrolladores';
+        const effectiveObjective = objective || 'Aumentar engagement, visibilidad y solicitudes de cotización';
+        const effectiveWant = want || 'Acabados de lujo, impermeabilidad y durabilidad de alto impacto';
+        const cleanTag = effectiveTitle.replace(/[^a-zA-Z0-9]/g, '');
+
+        generatedText = `✨ [TITULAR PRINCIPAL & 3 GANCHOS A/B DE ALTA RETENCIÓN]
+• Gancho A (Curiosidad): ¿Por qué los mejores proyectos en 2026 están usando ${effectiveTitle} para transformar espacios?
+• Gancho B (Estadística de Impacto): Más del 80% de los clientes deciden en los primeros 3 segundos. Así es como ${effectiveTitle} marca la diferencia.
+• Gancho C (Beneficio Directo): Consigue la sofisticación europea con máxima durabilidad y sin sobrecostos en obra.
 
 ---
 
-📖 [CUERPO DEL MENSAJE / POST]
-En un entorno competitivo y en constante evolución, dar el siguiente paso exige soluciones estratégicas diseñadas para marcar la diferencia. Nuestra propuesta para **${effectiveTitle}** combina tecnología de punta, visión vanguardista y un estándar de calidad insuperable.
+📖 [CUERPO DEL MENSAJE / POST - FÓRMULA ${framework}]
+¿Buscando una solución que combine estética de vanguardia y rendimiento comprobado para tus proyectos?
 
-Ya sea que busques optimizar tus proyectos, expandir tus horizontes o liderar con distinción, hemos desarrollado una experiencia pensada especialmente para **${effectiveTarget}**. Cada detalle ha sido concebido para cumplir tu objetivo principal: **${effectiveObjective}**.
+Con la propuesta de **${effectiveTitle}**, diseñada especialmente para **${effectiveTarget}**, elevamos el estándar de cada metro cuadrado. Cada detalle ha sido concebido para cumplir tu objetivo principal: **${effectiveObjective}**.
 
-• **Innovación Continua:** Metodologías y acabados de última generación.
-• **Garantía y Confianza:** Respaldado por los más altos estándares y certificaciones internacionales.
-• **Enfoque en Resultados:** Diseñado específicamente para ${effectiveWant}.
+• **Excelencia y Distinción:** Desarrollado para ${effectiveWant}.
+• **Tecnología y Durabilidad:** Resistencia superior y bajo mantenimiento a largo plazo.
+• **Eficiencia en Implementación:** Instalación ágil y asesoría técnica de principio a fin.
 
 ---
 
@@ -227,32 +273,44 @@ Ya sea que busques optimizar tus proyectos, expandir tus horizontes o liderar co
 - Tono de Comunicación: ${tone}
 - Enfoque de Plataforma: ${platform}
 - Propuesta de Valor: ${effectiveWant}
-${complianceText ? `- Cumplimiento Mandatorio: ${complianceText}` : ''}
+${complianceText ? `- Cumplimiento Mandatorio: ${complianceText}\n` : ''}- Catálogo digital y soporte técnico disponible en unitecusadesign.com
 
 ---
 
-🎯 [LLAMADO A LA ACCIÓN / CALL TO ACTION]
-¿Listo para dar el salto hacia el siguiente nivel? Contáctanos hoy mismo por mensaje directo o visita el enlace en nuestro perfil para obtener asesoría personalizada y acceso exclusivo.
+📊 [ESTRUCTURA DE CARRUSEL / SLIDE-BY-SLIDE (LinkedIn & Instagram)]
+• Slide 1 (Portada & Gancho): "${effectiveTitle}: El nuevo estándar de diseño y distinción."
+• Slide 2 (El Problema / Reto): "La dificultad de encontrar acabados que unan estética y resistencia real."
+• Slide 3 (La Solución): "Nuestra tecnología en ${effectiveTitle} con acabados tridimensionales y alta resistencia."
+• Slide 4 (Beneficios & Prueba): "Instalación rápida, durabilidad certificada y atención personalizada."
+• Slide 5 (Cierre & CTA): "Desliza para conocer el catálogo o solicita tus muestras hoy mismo."
+
+---
+
+🎯 [LLAMADOS A LA ACCIÓN DINÁMICOS (CTAs)]
+• Opción 1 (Direct Message / Lead): "Envía un DM con la palabra 'CATÁLOGO' para recibir la lista de precios mayorista."
+• Opción 2 (Guardar / Compartir): "Guarda este post en tu tablero de inspiración para tu próxima remodelación u obra."
+• Opción 3 (Debate / Comentario): "¿Qué tipo de textura prefieres en tus espacios? Comenta abajo."
 
 ---
 
 🖼️ [PROMPT PARA IMAGEN PUBLICITARIA (Google Imagen 3)]
-Photorealistic 8K commercial product visual for "${effectiveTitle}". Target audience: ${effectiveTarget}. Modern architectural environment, studio softbox lighting f/2.8, ultra-sharp textures, luxury materials and sleek corporate branding.
+Photorealistic 8K commercial product visual for "${effectiveTitle}". Target audience: ${effectiveTarget}. Modern architectural showroom, studio softbox lighting f/2.8, ultra-sharp textures, luxury materials and sleek corporate branding.
 
 ---
 
 🎬 [PROMPT Y GUIÓN DE VIDEO (UNITEC STUDIO & Google Veo)]
-- Prompt de Video: Cinematic 8K commercial video reveal for "${effectiveTitle}". Showroom lighting f/2.8, smooth 3D camera pan, photorealistic textures and modern finish.
-- Duración Sugerida: 10 Segundos
-- Escena 1 (0:00-0:03) Hook: Primer plano con iluminación sutil y titular: "${effectiveTitle}".
-- Escena 2 (0:03-0:07) Revelación de Valor: Movimiento de cámara fluido destacando: "${effectiveWant}".
-- Escena 3 (0:07-0:10) Llamado a la Acción: Cierre con logo UNITEC STUDIO y botón interactivo.
-- Guión de Voz en Off: "¿Buscas transformar tus proyectos con excelencia? Conoce ${effectiveTitle}. Innovación y distinción garantizadas. Contáctanos hoy."
+• Prompt de Video: Cinematic 8K commercial video reveal for "${effectiveTitle}". Showroom lighting f/2.8, smooth 3D camera pan, photorealistic textures and modern finish.
+• Gancho en Pantalla (0-3s): "El secreto de los arquitectos para acabados impecables 🤫"
+• Retención y Demostración (3-12s): Paneo mostrando el detalle del material, reflejos y resistencia: "${effectiveWant}".
+• Cierre y CTA (12-20s): "Pide tu catálogo mayorista en el link de nuestro perfil."
+• Voz en Off: "¿Buscas transformar tus proyectos con distinción? Conoce ${effectiveTitle}. Calidad certificada y entrega confiable. Contáctanos hoy."
 
 ---
 
-🏷️ [HASHTAGS RECOMENDADOS]
-#${effectiveTitle.replace(/[^a-zA-Z0-9]/g, '')} #Innovacion2026 #LiderazgoEmpresarial #Tendencias2026 #CalidadPremium #TransformacionDigital #EstrategiaComercial #MarketingDigital #ExitoGarantizado #NegociosDelFuturo`;
+🏷️ [CLUSTER ESTRATÉGICO DE HASHTAGS]
+• Nicho (Alta Conversión): #${cleanTag} #DisenoInterior #ArquitecturaComercial #AcabadosDeLujo
+• Industria / B2B: #MaterialesDeConstruccion #Interiorismo2026 #Contratistas #Showroom
+• Tendencia & Alcance: #UnitecUSA #DecoracionPremium #Tendencias2026 #InnovacionDiseño`;
       }
 
       return res.json({ 
@@ -629,9 +687,15 @@ Return JSON with format: { "hooks": [ { "id": "A", "type": "Curiosity / Shock", 
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
+    const indexPath = path.join(distPath, 'index.html');
+    
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(200).send('<!DOCTYPE html><html><head><title>UNITEC Content Engine</title></head><body><div id="root"></div><p>Loading application...</p></body></html>');
+      }
     });
   }
 

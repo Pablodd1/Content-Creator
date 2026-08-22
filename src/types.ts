@@ -4,7 +4,46 @@
  */
 
 export type ContentStatus = 'empty' | 'generated' | 'reviewed' | 'warning';
-export type ToneOfVoice = 'Sales-driven' | 'Informational' | 'Community-centric';
+export type ToneOfVoice = 'Sales-driven' | 'Informational' | 'Community-centric' | 'Luxury/Aspirational';
+export type CopywritingFramework = 'PAS' | 'AIDA' | 'BAB' | '4Ps' | 'Storytelling' | 'Direct-Response';
+
+export interface HookVariation {
+  id: string;
+  type: string;
+  hookText: string;
+  angle: string;
+}
+
+export interface CarouselSlide {
+  slideNumber: number;
+  title: string;
+  body: string;
+  visualCue: string;
+}
+
+export interface AdvancedSocialContent {
+  frameworkUsed: CopywritingFramework;
+  primaryPost: string;
+  hooksAB: HookVariation[];
+  carouselSlides: CarouselSlide[];
+  videoScript: {
+    hook0to3s: string;
+    body3to15s: string;
+    cta15to20s: string;
+    onScreenText: string;
+  };
+  hashtagClusters: {
+    niche: string[];
+    industry: string[];
+    trending: string[];
+  };
+  ctaVariations: {
+    directMessage: string;
+    saveBookmark: string;
+    commentDebate: string;
+    linkInBio: string;
+  };
+}
 
 export interface PlatformPostData {
   text: string;

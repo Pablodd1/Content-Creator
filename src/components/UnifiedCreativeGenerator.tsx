@@ -18,9 +18,13 @@ import {
   ShieldAlert,
   Wand2,
   Sliders,
-  Video
+  Video,
+  Layers,
+  Zap,
+  Hash,
+  MessageSquare
 } from 'lucide-react';
-import { ToneOfVoice } from '../types';
+import { ToneOfVoice, CopywritingFramework } from '../types';
 
 interface UnifiedCreativeGeneratorProps {
   language: 'EN' | 'ES';
@@ -37,6 +41,7 @@ export default function UnifiedCreativeGenerator({
   const [want, setWant] = useState('');
   const [tone, setTone] = useState<ToneOfVoice>('Sales-driven');
   const [platform, setPlatform] = useState<string>('All Platforms');
+  const [framework, setFramework] = useState<CopywritingFramework>('PAS');
   
   // Compliance and technical features toggles
   const [complianceFlags, setComplianceFlags] = useState<{
@@ -53,6 +58,7 @@ export default function UnifiedCreativeGenerator({
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPost, setGeneratedPost] = useState('');
+  const [activeOutputTab, setActiveOutputTab] = useState<'full' | 'hooks' | 'carousel' | 'video' | 'hashtags'>('full');
   const [isCopied, setIsCopied] = useState(false);
   const [isPromptCopied, setIsPromptCopied] = useState(false);
 
@@ -66,6 +72,7 @@ export default function UnifiedCreativeGenerator({
       setObjective(isSpanish ? 'Captar leads comerciales y pedidos por volumen' : 'Capture high-ticket commercial leads and volume orders');
       setWant(isSpanish ? 'Enfocar en destellos dorados reflectivos y resistencia al desgaste' : 'Focus on reflective gold vein accents and high wear resistance');
       setTone('Luxury/Aspirational' as ToneOfVoice);
+      setFramework('AIDA');
       setComplianceFlags({ nsr10: true, waterproof: true, fobShipping: false, catalogLink: true });
     } else if (presetType === 'marble') {
       setTitle(isSpanish ? 'Mármol Imperial 3D 100% Impermeable' : '100% Waterproof 3D Imperial Marble');
@@ -73,6 +80,7 @@ export default function UnifiedCreativeGenerator({
       setObjective(isSpanish ? 'Promocionar despachos a Medellín, Bogotá, Cali y Barranquilla' : 'Promote direct port shipping to Bogota, Medellin & Cali');
       setWant(isSpanish ? 'Destacar el acabado hiperrealista de mármol Carrara sin mantenimiento' : 'Highlight maintenance-free hyper-realistic Carrara marble gloss');
       setTone('Sales-driven');
+      setFramework('PAS');
       setComplianceFlags({ nsr10: true, waterproof: true, fobShipping: true, catalogLink: true });
     } else if (presetType === 'damask') {
       setTitle(isSpanish ? 'Sofisticación Europea Damasco Clásico' : 'Classic European Damask Sophistication');
@@ -80,6 +88,7 @@ export default function UnifiedCreativeGenerator({
       setObjective(isSpanish ? 'Impulsar visitas al showroom digital unitecusadesign.com' : 'Drive showroom visits to unitecusadesign.com');
       setWant(isSpanish ? 'Enfatizar textura táctil de hilo y elegancia atemporal' : 'Emphasize tactile thread relief and timeless elegance');
       setTone('Luxury/Aspirational' as ToneOfVoice);
+      setFramework('Storytelling');
       setComplianceFlags({ nsr10: false, waterproof: true, fobShipping: false, catalogLink: true });
     } else if (presetType === 'wood') {
       setTitle(isSpanish ? 'Paneles Acanalados de Madera PVC Lavables' : 'Washable Fluted Wood PVC Wall Panels');
@@ -87,6 +96,7 @@ export default function UnifiedCreativeGenerator({
       setObjective(isSpanish ? 'Aumentar solicitudes de carpetas de muestras físicas' : 'Increase requests for physical sample binders');
       setWant(isSpanish ? 'Subrayar durabilidad de alto tráfico e instalación rápida' : 'Highlight high-traffic durability and fast installation');
       setTone('Informational');
+      setFramework('BAB');
       setComplianceFlags({ nsr10: true, waterproof: true, fobShipping: true, catalogLink: true });
     } else if (presetType === 'wholesale') {
       setTitle(isSpanish ? 'Distribución Mayorista Directa por Contenedor FOB' : 'Direct Wholesale Container FOB Distribution');
@@ -94,6 +104,7 @@ export default function UnifiedCreativeGenerator({
       setObjective(isSpanish ? 'Cerrar acuerdos de representación regional' : 'Close regional dealership & distribution agreements');
       setWant(isSpanish ? 'Mencionar despachos consolidados desde Miami / Cartagena' : 'Mention consolidated shipments from Miami / Cartagena ports');
       setTone('Sales-driven');
+      setFramework('Direct-Response');
       setComplianceFlags({ nsr10: true, waterproof: true, fobShipping: true, catalogLink: true });
     } else {
       setTitle(isSpanish ? 'Cumplimiento Normativo Fuego NSR-10 y Ficha Técnica' : 'NSR-10 Fire Code Safety Compliance & Data Sheet');
@@ -101,6 +112,7 @@ export default function UnifiedCreativeGenerator({
       setObjective(isSpanish ? 'Aprobar especificaciones técnicas en pliegos de licitación' : 'Get technical specifications approved for project bidding');
       setWant(isSpanish ? 'Adjuntar certificación de retardación de llama para fachadas internas' : 'Attach flame retardation certification for internal commercial walls');
       setTone('Informational');
+      setFramework('4Ps');
       setComplianceFlags({ nsr10: true, waterproof: true, fobShipping: false, catalogLink: true });
     }
     showToast(isSpanish ? 'Preset aplicado exitosamente' : 'Preset brief loaded successfully');
@@ -143,6 +155,7 @@ export default function UnifiedCreativeGenerator({
           want,
           tone,
           platform,
+          framework,
           complianceFlags: activeComplianceList,
           language
         }),
@@ -151,13 +164,13 @@ export default function UnifiedCreativeGenerator({
       const data = await response.json();
       if (data.success) {
         setGeneratedPost(data.text);
-        showToast(isSpanish ? '¡Publicación profesional optimizada generada!' : 'Optimized professional post generated successfully!');
+        showToast(isSpanish ? `¡Contenido generado con fórmula ${framework}!` : `Optimized content generated with ${framework} formula!`);
       } else {
         throw new Error(data.error || 'Server error');
       }
     } catch (err: any) {
       console.error(err?.message || 'Error generating creative');
-      showToast(isSpanish ? 'Simulando respuesta con Gemini 2.5...' : 'Simulating response with Gemini 2.5...');
+      showToast(isSpanish ? 'Generando contenido optimizado...' : 'Generating fallback content...');
       simulateFallbackPost();
     } finally {
       setIsGenerating(false);
@@ -165,59 +178,127 @@ export default function UnifiedCreativeGenerator({
   };
 
   const simulateFallbackPost = () => {
-    const header = title ? `✨ ${title.toUpperCase()} ✨` : (isSpanish ? '✨ DISEÑO PREMIUM PVC WALLPAPER • UNITEC USA ✨' : '✨ PREMIUM PVC WALLPAPER DESIGN • UNITEC USA ✨');
+    const effectiveTitle = title || (isSpanish ? 'Revestimientos PVC de Alta Gama 3D' : 'Luxury 3D PVC Wall Cladding');
     
     const fallbackText = isSpanish 
-      ? `✨ [CAPTURE HOOK / HEADLINE]
-${header}
+      ? `✨ [TITULAR PRINCIPAL & 3 GANCHOS A/B DE ALTA RETENCIÓN]
+• Gancho A (Curiosidad): ¿Por qué los arquitectos de lujo están reemplazando la madera y el mármol tradicional por PVC 3D en 2026?
+• Gancho B (Estadística de Impacto): El 84% de las fallas en muros interiores se deben a humedad y mantenimiento costoso. Así es como se elimina el problema.
+• Gancho C (Beneficio Directo): Consigue la estética impecable de un showroom europeo con 100% de impermeabilidad y norma de fuego NSR-10.
 
-📖 [MAIN POST BODY]
-¿Buscas transformar espacios comerciales y residenciales con sofisticación europea atemporal? 🚀
+---
 
-Presentamos la colección de Revestimientos 3D y Papel Tapiz PVC de Alta Gama de UNITEC USA Design. Diseñados con relieves táctiles de textura impecable, acabados reflectivos de lujo y durabilidad garantizada para proyectos de alto tráfico.
+📖 [CUERPO DEL MENSAJE / POST - FÓRMULA ${framework}]
+¿Cansado de elegir entre estética de lujo y durabilidad real para tus proyectos de alto tráfico?
 
-• Muros 100% impermeables, lavables y resistentes al moho o la humedad.
-• Diseños exclusivos importados ideales para salas de estar, suites de hotel, oficinas ejecutivas y locales comerciales.
-• Soluciones de fácil instalación autoadhesiva y alto impacto visual.
+Con la colección exclusiva de **${effectiveTitle}** de UNITEC USA Design, ya no tienes que comprometer nada. Desarrollado para ${target || 'arquitectos, diseñadores de interiores y desarrolladores exigentes'}, cada panel combina relieves táctiles profundos con resistencia industrial.
 
-🔒 [TECHNICAL & COMPLIANCE SPECIFICATIONS]
-✓ Cumplimiento de la norma técnica de retardación al fuego NSR-10 para fachadas internas.
-✓ Materiales certificados de polímero de PVC de alta densidad y durabilidad industrial.
-${complianceFlags.fobShipping ? '✓ Despachos consolidados por contenedor completo (FOB Miami / Cartagena / Buenaventura).' : ''}
+• **100% Impermeable y Lavable:** Cero filtraciones o acumulación de moho en zonas húmedas o comerciales.
+• **Acabados Hiperrealistas:** Texturas de hilo damasco, mármol Carrara y destellos metálicos reflectivos.
+• **Instalación Eficiente:** Reduce hasta un 40% los tiempos de obra frente a materiales tradicionales.
 
-🎯 [CALL TO ACTION]
-Explore el catálogo digital completo y solicite muestras físicas para sus proyectos en 🔗 unitecusadesign.com o contáctenos para asesoría personalizada.
+---
 
-🎬 [PAIRED AI VISUAL ASSET PROMPT (Google Veo 3.1 & Google Imagen 3)]
-High-definition 8k hyper-realistic interior photography of a luxury living room wall featuring UNITEC USA Design's ${title || 'metallic PVC wallpaper'}. Warm showroom lighting, macro depth-of-field showcasing intricate 3D embossed textures, gold leaf accents, cinematic architectural detail, 16:9 aspect ratio.
+🔒 [PUNTOS CLAVE Y ESPECIFICACIONES]
+✓ Certificación y cumplimiento de la norma NSR-10 contra retardación de fuego en fachadas interiores.
+✓ Polímeros de alta densidad resistentes al impacto y desgaste continuo.
+${complianceFlags.fobShipping ? '✓ Logística mayorista por contenedor completo (FOB Miami / Cartagena / Buenaventura).\n' : ''}✓ Catálogo y fichas técnicas disponibles en unitecusadesign.com
 
-🏷️ [HASHTAGS]
-#UnitecUSA #PVCWallpaper #DisenoInterior #ArquitecturaColombia #PapelTapizDeLujo #InteriorismoMedellin #DecoracionBogota #ConstruccionSostenible #NSR10 #WallCladding #ShowroomMiami`
-      : `✨ [CAPTURE HOOK / HEADLINE]
-${header}
+---
 
-📖 [MAIN POST BODY]
-Ready to elevate your architectural interiors with high-end European elegance? 🚀
+📊 [ESTRUCTURA DE CARRUSEL / SLIDE-BY-SLIDE (LinkedIn & Instagram)]
+• Slide 1 (Portada & Gancho): "${effectiveTitle}: El nuevo estándar en acabados arquitectónicos."
+• Slide 2 (El Problema): "El alto costo de mantenimiento y el deterioro por humedad en revestimientos convencionales."
+• Slide 3 (La Solución): "Tecnología de polímero PVC con texturas 3D realistas y cero absorción de agua."
+• Slide 4 (Beneficios & Prueba): "Instalación en tiempo récord, certificación NSR-10 y variedad de patrones de diseño."
+• Slide 5 (Cierre & CTA): "Desliza para cotizar tu proyecto o visita unitecusadesign.com para pedir tu muestrario."
 
-Introducing UNITEC USA Design's luxury PVC wallpaper and 3D wall cladding collections. Engineered with tactile embossed textures, premium metallic accents, and commercial-grade durability for high-impact spaces.
+---
 
-• 100% waterproof, washable, and zero moisture retention.
-• Ideal for luxury residential walls, executive suites, and commercial hospitality.
-• Swift installation with zero compromise on visual luxury.
+🎯 [LLAMADOS A LA ACCIÓN DINÁMICOS (CTAs)]
+• Opción 1 (Direct Message / Lead): "Envía un DM con la palabra 'MUESTRAS' para recibir la carpeta física en tu estudio."
+• Opción 2 (Guardar / Compartir): "Guarda este post en tu carpeta de especificaciones para tu próxima cotización de obra."
+• Opción 3 (Debate / Comentario): "¿Prefieres acabados mate arquitectónicos o brillos metálicos reflectivos? Comenta abajo."
 
-🔒 [TECHNICAL & COMPLIANCE SPECIFICATIONS]
-✓ Certified fire retardation standards for internal commercial walls.
-✓ High-density PVC polymer composite material.
-${complianceFlags.fobShipping ? '✓ Direct FOB container logistics from Miami and main ports.' : ''}
+---
 
-🎯 [CALL TO ACTION]
-Browse our exclusive digital catalog and order project sample boards today at 🔗 unitecusadesign.com.
+🖼️ [PROMPT PARA IMAGEN PUBLICITARIA (Google Imagen 3)]
+Photorealistic 8K commercial product visual of ${effectiveTitle}. Luxury modern living room wall with warm showroom track lighting f/2.8, shallow depth of field highlighting tactile 3D geometric embossing, premium gold and marble accents, architectural magazine cover aesthetic.
 
-🎬 [PAIRED AI VISUAL ASSET PROMPT (Google Veo 3.1 & Google Imagen 3)]
-High-definition 8k hyper-realistic interior photography of a modern executive suite wall with UNITEC USA Design's ${title || 'luxury PVC wallpaper'}. Warm architectural spotlighting, close-up macro showing rich tactile embossing, cinematic commercial advertising shot, 16:9 ratio.
+---
 
-🏷️ [HASHTAGS]
-#UnitecUSA #LuxuryWallpaper #InteriorDesign #ArchitectureColombia #CommercialInteriors #WallCladding #PremiumPVC #ShowroomMiami #WholesaleWallpapers`;
+🎬 [PROMPT Y GUIÓN DE VIDEO (UNITEC STUDIO & Google Veo)]
+• Prompt de Video: Cinematic 8K commercial video pan of a luxury showroom wall with ${effectiveTitle}, smooth slider motion, dramatic side lighting showing 3D depth.
+• Gancho en Pantalla (0-3s): "El error que cometen en acabados de muros ❌ (Y cómo solucionarlo)"
+• Retención y Demostración (3-12s): Paneo mostrando resistencia al agua y textura de alto relieve sin marcas de dedos.
+• Cierre y CTA (12-20s): "Pide tu catálogo mayorista con precios de fábrica en el link de la bio."
+• Voz en Off: "¿Buscas distinción sin sobrecostos? Conoce los revestimientos PVC de UNITEC USA Design. Calidad certificada y stock inmediato."
+
+---
+
+🏷️ [CLUSTER ESTRATÉGICO DE HASHTAGS]
+• Nicho (Alta Conversión): #PVCWallpaper #Revestimientos3D #PapelTapizDeLujo #InteriorismoColombia #NSR10
+• Industria / B2B: #ArquitecturaComercial #MaterialesDeConstruccion #ContratistasFlorida #DisenoInteriores
+• Tendencia & Alcance: #UnitecUSA #ShowroomMiami #DecoracionDeLujo #TendenciasDiseno2026`
+      : `✨ [MAIN HEADLINE & 3 HIGH-RETENTION A/B HOOKS]
+• Hook A (Curiosity): Why are top commercial architects switching from heavy stone to 3D PVC panels in 2026?
+• Hook B (High-Impact Data): 84% of interior wall maintenance costs come from moisture damage. Here is the permanent fix.
+• Hook C (Direct Benefit): Achieve European luxury showroom aesthetics with 100% waterproof durability and fire safety compliance.
+
+---
+
+📖 [MAIN POST BODY - ${framework} FORMULA]
+Tired of compromising between timeless luxury and commercial-grade durability?
+
+With UNITEC USA Design's **${effectiveTitle}** collection, you get the best of both worlds. Engineered for ${target || 'architects, interior designers, and hospitality developers'}, each cladding panel delivers deep tactile reliefs with zero maintenance.
+
+• **100% Waterproof & Washable:** Zero moisture retention and anti-mold protection for high-traffic environments.
+• **Hyper-Realistic Finishes:** Damask silk embossing, Carrara marble gloss, and reflective metallic veins.
+• **Fast Turnaround:** Cut installation time by up to 40% compared to traditional wall materials.
+
+---
+
+🔒 [KEY SPECIFICATIONS & COMPLIANCE]
+✓ Certified fire retardation compliance for interior commercial spaces.
+✓ High-density PVC polymer composite built for lasting wear resistance.
+${complianceFlags.fobShipping ? '✓ Direct container logistics available from Miami & LATAM ports.\n' : ''}✓ Specification sheets available at unitecusadesign.com
+
+---
+
+📊 [CAROUSEL STRUCTURE / SLIDE-BY-SLIDE (LinkedIn & Instagram)]
+• Slide 1 (Cover): "${effectiveTitle}: Elevate your commercial and residential projects."
+• Slide 2 (The Challenge): "Why conventional wallpapers fail in humid and high-traffic spaces."
+• Slide 3 (The Solution): "High-density polymer composite with tactile 3D depth and zero water absorption."
+• Slide 4 (Features): "NSR-10 fire code compliance, fast installation, and luxury aesthetics."
+• Slide 5 (Call to Action): "Swipe to order project sample binders or visit unitecusadesign.com."
+
+---
+
+🎯 [DYNAMIC CALLS TO ACTION (CTAs)]
+• Option 1 (Direct Message): "Send a DM with 'SAMPLES' to receive our curated architectural binder."
+• Option 2 (Save / Bookmark): "Save this post to your project design board for your next commercial bid."
+• Option 3 (Engagement / Comment): "Which finish matches your aesthetic: Matte Architectural or Reflective Gold?"
+
+---
+
+🖼️ [AI VISUAL PROMPT (Google Imagen 3)]
+Photorealistic 8K commercial photo of ${effectiveTitle}. Modern penthouse living space with warm architectural spotlighting f/2.8, close-up macro showing intricate 3D embossed relief, luxury aesthetics.
+
+---
+
+🎬 [VIDEO SCRIPT & PROMPT (UNITEC STUDIO & Google Veo)]
+• Video Prompt: Cinematic 8K camera slider reveal of modern executive wall with ${effectiveTitle}, warm commercial lighting.
+• On-Screen Hook (0-3s): "Stop using outdated wall materials in 2026 🛑"
+• Retention (3-12s): Close-up texture wipe proving scratch resistance and waterproof finish.
+• Outro CTA (12-20s): "Order contractor sample binders directly at unitecusadesign.com"
+• Voiceover: "Transform your interiors with UNITEC USA Design. European elegance engineered for high performance."
+
+---
+
+🏷️ [STRATEGIC HASHTAG CLUSTER]
+• Niche (High-Conversion): #PVCWallpaper #3DWallCladding #LuxuryWallpaper #CommercialInteriors #NSR10
+• Industry / B2B: #InteriorDesigners #HospitalityDesign #ArchitectureMiami #WallPanels
+• Trending & Reach: #UnitecUSA #LuxuryLiving #DesignTrends2026 #HomeRenovation`;
 
     setGeneratedPost(fallbackText);
   };
@@ -230,10 +311,41 @@ High-definition 8k hyper-realistic interior photography of a modern executive su
     showToast(isSpanish ? 'Publicación copiada al portapapeles' : 'Post copied to clipboard');
   };
 
+  // Section extractor helpers
+  const extractSection = (regex: RegExp, fallback: string): string => {
+    if (!generatedPost) return fallback;
+    const match = generatedPost.match(regex);
+    return match && match[1] ? match[1].trim() : fallback;
+  };
+
+  const getFilteredContent = () => {
+    if (!generatedPost) return '';
+    if (activeOutputTab === 'full') return generatedPost;
+    
+    if (activeOutputTab === 'hooks') {
+      return extractSection(/✨ \[TITULAR[^\]]*\]\n([\s\S]*?)(?=\n\n---|\n\n📖|$)/, '✨ Ganchos A/B no encontrados en el texto.');
+    }
+    if (activeOutputTab === 'carousel') {
+      return extractSection(/📊 \[ESTRUCTURA DE CARRUSEL[^\]]*\]\n([\s\S]*?)(?=\n\n---|\n\n🎯|$)/, '📊 Estructura de carrusel no encontrada.');
+    }
+    if (activeOutputTab === 'video') {
+      return extractSection(/🎬 \[PROMPT Y GUIÓN DE VIDEO[^\]]*\]\n([\s\S]*?)(?=\n\n---|\n\n🏷️|$)/, '🎬 Guión de video no encontrado.');
+    }
+    if (activeOutputTab === 'hashtags') {
+      return extractSection(/🏷️ \[CLUSTER ESTRATÉGICO DE HASHTAGS[^\]]*\]\n([\s\S]*?)$/, '🏷️ Hashtags no encontrados.');
+    }
+    return generatedPost;
+  };
+
+  const handleCopySection = (textToCopy: string, label: string) => {
+    navigator.clipboard.writeText(textToCopy);
+    showToast(isSpanish ? `¡${label} copiado!` : `Copied ${label}!`);
+  };
+
   // Extract visual prompt section specifically
   const extractVisualPrompt = (): string => {
     if (!generatedPost) return '';
-    const match = generatedPost.match(/🎬 \[PAIRED AI VISUAL ASSET PROMPT[^\]]*\]\n([\s\S]*?)(?=\n\n🏷️|\n\n🎯|$)/);
+    const match = generatedPost.match(/🖼️ \[PROMPT PARA IMAGEN[^\]]*\]\n([\s\S]*?)(?=\n\n---|\n\n🎬|$)/);
     if (match && match[1]) {
       return match[1].trim();
     }
@@ -255,23 +367,23 @@ High-definition 8k hyper-realistic interior photography of a modern executive su
         <div className="space-y-1 text-left">
           <div className="inline-flex items-center gap-1.5 bg-[#c9a961] text-stone-950 font-mono text-[9px] font-black uppercase px-2 py-0.5 rounded">
             <Sparkles size={9} className="animate-spin" />
-            {isSpanish ? 'GEMINI 2.5 • GENERADOR INDIVIDUAL SOBRE DEMANDA' : 'GEMINI 2.5 • ON-DEMAND CREATIVE GENERATOR'}
+            {isSpanish ? 'GEMINI 3.7 • COPYWRITING DE ALTA CONVERSIÓN' : 'GEMINI 3.7 • HIGH-CONVERTING SOCIAL ENGINE'}
           </div>
           <h3 className="text-sm font-sans font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
             <FileText size={18} className="text-[#c9a961]" />
-            {isSpanish ? 'Estudio de Prompting & Creación de Campaña' : 'Prompting Studio & Single Campaign Creator'}
+            {isSpanish ? 'Generador Creativo Multiformato & Fórmulas de Copy' : 'Multi-Format Creative Generator & Copy Frameworks'}
           </h3>
           <p className="text-[10px] text-stone-200 font-sans">
             {isSpanish 
-              ? 'Genere publicaciones únicas altamente personalizadas con tono estratégico, parámetros técnicos y prompts de IA pareados' 
-              : 'Generate custom campaign posts with strategic tone, technical compliance, and paired AI prompts'}
+              ? 'Fórmulas probadas (PAS, AIDA, BAB), ganchos A/B, estructuras de carrusel, guiones de video y clusters de hashtags' 
+              : 'Proven formulas (PAS, AIDA, BAB), A/B hooks, carousel slides, video scripts, and hashtag clusters'}
           </p>
         </div>
 
         {/* Industry Presets Quick-Deck */}
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-[9px] font-mono uppercase font-extrabold text-[#c9a961] mr-1">
-            {isSpanish ? 'PRESETS DE INDUSTRIA:' : 'INDUSTRY PRESETS:'}
+            {isSpanish ? 'PRESETS:' : 'PRESETS:'}
           </span>
           <button 
             onClick={() => applyPreset('metallic')}
@@ -318,10 +430,57 @@ High-definition 8k hyper-realistic interior photography of a modern executive su
         {/* Left Column: Brief Input Controls Deck (6 cols on desktop) */}
         <div className="lg:col-span-6 space-y-4 text-left">
           
+          {/* Section 1: Copywriting Framework Selector */}
+          <div className="bg-stone-50 border border-stone-200 rounded-lg p-3 space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-[10.5px] font-mono uppercase font-black text-stone-800 flex items-center gap-1.5">
+                <Zap size={13} className="text-[#c9a961]" />
+                {isSpanish ? '1. Fórmula de Copywriting Estratégica:' : '1. Copywriting Framework Formula:'}
+              </span>
+              <span className="text-[9px] font-mono text-stone-500 font-bold">
+                {framework}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+              {[
+                { id: 'PAS', label: 'PAS', desc: 'Problem-Agitate-Solution' },
+                { id: 'AIDA', label: 'AIDA', desc: 'Attention-Interest-Desire-Action' },
+                { id: 'BAB', label: 'BAB', desc: 'Before-After-Bridge' },
+                { id: '4Ps', label: '4Ps', desc: 'Picture-Promise-Prove-Push' },
+                { id: 'Storytelling', label: 'Story', desc: 'Hook-Conflict-Offer' },
+                { id: 'Direct-Response', label: 'Direct', desc: 'Direct Conversion Offer' },
+              ].map((fw) => (
+                <button
+                  key={fw.id}
+                  type="button"
+                  onClick={() => setFramework(fw.id as CopywritingFramework)}
+                  title={fw.desc}
+                  className={`py-1.5 px-2 rounded text-[10px] font-mono font-bold text-center transition-all cursor-pointer border ${
+                    framework === fw.id
+                      ? 'bg-[#2d5a4a] text-white border-[#2d5a4a] shadow-xs'
+                      : 'bg-white text-stone-700 border-stone-200 hover:border-stone-400 hover:bg-stone-100'
+                  }`}
+                >
+                  {fw.label}
+                </button>
+              ))}
+            </div>
+
+            <p className="text-[9.5px] text-stone-500 font-sans italic">
+              {framework === 'PAS' && (isSpanish ? '🎯 PAS: Expone el dolor del cliente, agita el problema y presenta tu producto como la solución definitiva.' : '🎯 PAS: Identifies pain points, agitates cost of inaction, and delivers the ultimate solution.')}
+              {framework === 'AIDA' && (isSpanish ? '🧲 AIDA: Capta atención inmediata, genera interés con datos, despierta deseo y empuja a la acción.' : '🧲 AIDA: Magnetic hook, builds interest with facts, stirs desire, and drives direct action.')}
+              {framework === 'BAB' && (isSpanish ? '🌉 BAB: Muestra el antes (frustración), visualiza el después (transformación) y posiciona tu marca como el puente.' : '🌉 BAB: Paints before-state, visualizes transformed after-state, and builds the bridge.')}
+              {framework === '4Ps' && (isSpanish ? '🖼️ 4Ps: Pinta el escenario soñado, haz una promesa audaz, demuestra con datos técnicos y empuja al cierre.' : '🖼️ 4Ps: Picture the dream, make bold promise, prove with technical data, push to close.')}
+              {framework === 'Storytelling' && (isSpanish ? '📖 Storytelling: Narrativa humana de transformación para máxima retención en los primeros segundos de video.' : '📖 Storytelling: Engaging human narrative with high retention for reels and video shorts.')}
+              {framework === 'Direct-Response' && (isSpanish ? '⚡ Direct-Response: Oferta comercial directa, eliminación de objeciones y llamado a cotizar o comprar ya.' : '⚡ Direct-Response: Clear commercial offer, objection elimination, and instant call-to-action.')}
+            </p>
+          </div>
+
           <div className="flex justify-between items-center border-b pb-2">
             <span className="text-[11px] font-mono uppercase font-black text-stone-800 flex items-center gap-1.5">
               <Sliders size={13} className="text-[#c9a961]" />
-              {isSpanish ? '1. Breviario Creativo & Variables' : '1. Creative Brief Variables'}
+              {isSpanish ? '2. Breviario Creativo & Variables' : '2. Creative Brief Variables'}
             </span>
             <button
               onClick={handlePolishBrief}
@@ -338,7 +497,7 @@ High-definition 8k hyper-realistic interior photography of a modern executive su
             <div className="space-y-1">
               <label htmlFor="post-title-input" className="flex items-center gap-1.5 text-[10px] uppercase font-mono tracking-wider text-stone-600 font-extrabold">
                 <Lightbulb size={11} className="text-[#c9a961]" />
-                {isSpanish ? 'Título / Gancho Principal:' : 'Title / Main Hook Line:'}
+                {isSpanish ? 'Título / Tema Principal:' : 'Title / Main Topic:'}
               </label>
               <input 
                 id="post-title-input"
@@ -441,7 +600,7 @@ High-definition 8k hyper-realistic interior photography of a modern executive su
           <div className="bg-stone-50 border border-stone-200 rounded-lg p-3 space-y-2">
             <span className="block text-[10px] uppercase font-mono tracking-wider text-stone-700 font-extrabold flex items-center gap-1.5">
               <ShieldAlert size={12} className="text-[#2d5a4a]" />
-              {isSpanish ? '2. Inclusión de Normativa & Ficha Técnica:' : '2. Technical & Compliance Requirements:'}
+              {isSpanish ? '3. Inclusión de Normativa & Ficha Técnica:' : '3. Technical & Compliance Requirements:'}
             </span>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10.5px] font-sans">
@@ -497,12 +656,12 @@ High-definition 8k hyper-realistic interior photography of a modern executive su
               {isGenerating ? (
                 <>
                   <RefreshCw size={14} className="animate-spin" />
-                  <span>{isSpanish ? 'COMPILANDO CON GEMINI 2.5...' : 'COMPILING WITH GEMINI 2.5...'}</span>
+                  <span>{isSpanish ? `GENERANDO CON ${framework} & GEMINI 3.7...` : `GENERATING WITH ${framework} & GEMINI 3.7...`}</span>
                 </>
               ) : (
                 <>
                   <Send size={14} />
-                  <span>{isSpanish ? 'Generar Campaña Creativa Optimizada' : 'Generate Optimized Campaign Post'}</span>
+                  <span>{isSpanish ? `Generar Campaña con Fórmula ${framework}` : `Generate Campaign with ${framework} Formula`}</span>
                 </>
               )}
             </button>
@@ -511,43 +670,118 @@ High-definition 8k hyper-realistic interior photography of a modern executive su
         </div>
 
         {/* Right Column: Generated Output Deck (6 cols on desktop) */}
-        <div className="lg:col-span-6 bg-stone-50 border border-stone-200 rounded-xl p-4 flex flex-col justify-between min-h-[420px]">
+        <div className="lg:col-span-6 bg-stone-50 border border-stone-200 rounded-xl p-4 flex flex-col justify-between min-h-[480px]">
           {generatedPost ? (
             <div className="space-y-3.5 flex flex-col justify-between h-full text-left">
-              <div className="flex items-center justify-between border-b pb-2">
-                <span className="text-[10px] font-mono uppercase font-black text-[#2d5a4a] bg-[#2d5a4a]/10 border border-[#2d5a4a]/25 px-2.5 py-1 rounded flex items-center gap-1.5">
-                  <Sparkles size={11} className="text-[#c9a961]" />
-                  {isSpanish ? 'Campana Única Generada (Gemini 2.5)' : 'Unified Campaign Draft (Gemini 2.5)'}
-                </span>
-                
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleCopyVisualPrompt}
-                    className="p-1.5 bg-white border border-stone-200 text-stone-700 hover:text-black rounded transition-colors cursor-pointer flex items-center gap-1 text-[10px] font-sans font-bold"
-                    title={isSpanish ? 'Copiar prompt para Google Veo 3.1 e Imagen' : 'Copy prompt for Google Veo 3.1 & Imagen'}
-                  >
-                    <Video size={12} className="text-[#c9a961]" />
-                    <span>{isPromptCopied ? (isSpanish ? '¡Prompt Copiado!' : 'Prompt Copied!') : (isSpanish ? 'Copiar Prompt Video' : 'Copy Visual Prompt')}</span>
-                  </button>
+              
+              {/* Header Bar with Filter Tabs */}
+              <div className="space-y-2 border-b pb-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase font-black text-[#2d5a4a] bg-[#2d5a4a]/10 border border-[#2d5a4a]/25 px-2.5 py-1 rounded flex items-center gap-1.5">
+                    <Sparkles size={11} className="text-[#c9a961]" />
+                    {isSpanish ? `Campaña Optimizada (${framework})` : `Optimized Campaign (${framework})`}
+                  </span>
+                  
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={handleCopyVisualPrompt}
+                      className="p-1.5 bg-white border border-stone-200 text-stone-700 hover:text-black rounded transition-colors cursor-pointer flex items-center gap-1 text-[10px] font-sans font-bold"
+                      title={isSpanish ? 'Copiar prompt para Google Veo 3.1 e Imagen' : 'Copy prompt for Google Veo 3.1 & Imagen'}
+                    >
+                      <Video size={12} className="text-[#c9a961]" />
+                      <span>{isPromptCopied ? (isSpanish ? '¡Copiado!' : 'Copied!') : (isSpanish ? 'Prompt Video' : 'Visual Prompt')}</span>
+                    </button>
 
+                    <button
+                      onClick={handleCopy}
+                      className="p-1.5 bg-stone-900 text-white hover:bg-stone-800 rounded transition-colors cursor-pointer flex items-center gap-1 text-[10px] font-sans font-bold"
+                      title={isSpanish ? 'Copiar publicación completa' : 'Copy complete post'}
+                    >
+                      {isCopied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                      <span>{isCopied ? (isSpanish ? '¡Copiado!' : 'Copied!') : (isSpanish ? 'Copiar Todo' : 'Copy All')}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Section Quick-Filter Tabs */}
+                <div className="flex flex-wrap items-center gap-1 pt-1">
                   <button
-                    onClick={handleCopy}
-                    className="p-1.5 bg-stone-900 text-white hover:bg-stone-800 rounded transition-colors cursor-pointer flex items-center gap-1 text-[10px] font-sans font-bold"
-                    title={isSpanish ? 'Copiar publicación completa' : 'Copy complete post'}
+                    onClick={() => setActiveOutputTab('full')}
+                    className={`px-2 py-1 rounded text-[9.5px] font-mono font-bold transition-all cursor-pointer ${
+                      activeOutputTab === 'full' 
+                        ? 'bg-[#2d5a4a] text-white' 
+                        : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-100'
+                    }`}
                   >
-                    {isCopied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
-                    <span>{isCopied ? (isSpanish ? '¡Copiado!' : 'Copied!') : (isSpanish ? 'Copiar Todo' : 'Copy All')}</span>
+                    {isSpanish ? 'Todo' : 'Full Post'}
+                  </button>
+                  <button
+                    onClick={() => setActiveOutputTab('hooks')}
+                    className={`px-2 py-1 rounded text-[9.5px] font-mono font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                      activeOutputTab === 'hooks' 
+                        ? 'bg-[#2d5a4a] text-white' 
+                        : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-100'
+                    }`}
+                  >
+                    <Zap size={10} />
+                    <span>{isSpanish ? 'Ganchos A/B' : 'A/B Hooks'}</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveOutputTab('carousel')}
+                    className={`px-2 py-1 rounded text-[9.5px] font-mono font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                      activeOutputTab === 'carousel' 
+                        ? 'bg-[#2d5a4a] text-white' 
+                        : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-100'
+                    }`}
+                  >
+                    <Layers size={10} />
+                    <span>{isSpanish ? 'Carrusel (5 Slides)' : 'Carousel Slides'}</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveOutputTab('video')}
+                    className={`px-2 py-1 rounded text-[9.5px] font-mono font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                      activeOutputTab === 'video' 
+                        ? 'bg-[#2d5a4a] text-white' 
+                        : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-100'
+                    }`}
+                  >
+                    <Video size={10} />
+                    <span>{isSpanish ? 'Guión Video' : 'Video Script'}</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveOutputTab('hashtags')}
+                    className={`px-2 py-1 rounded text-[9.5px] font-mono font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                      activeOutputTab === 'hashtags' 
+                        ? 'bg-[#2d5a4a] text-white' 
+                        : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-100'
+                    }`}
+                  >
+                    <Hash size={10} />
+                    <span>{isSpanish ? 'Hashtag Clusters' : 'Hashtags'}</span>
                   </button>
                 </div>
               </div>
 
-              {/* Formatted Output Box */}
-              <div className="bg-white p-4 rounded-lg border border-stone-200 text-xs text-stone-800 font-sans leading-relaxed whitespace-pre-wrap max-h-[360px] overflow-y-auto select-all shadow-xs">
-                {generatedPost}
+              {/* Formatted Output Box with Tab Filtering */}
+              <div className="bg-white p-4 rounded-lg border border-stone-200 text-xs text-stone-800 font-sans leading-relaxed whitespace-pre-wrap max-h-[380px] overflow-y-auto select-all shadow-xs relative">
+                {getFilteredContent()}
               </div>
 
+              {/* Quick Copy Section Shortcut */}
+              {activeOutputTab !== 'full' && (
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => handleCopySection(getFilteredContent(), activeOutputTab.toUpperCase())}
+                    className="px-2.5 py-1 bg-stone-150 hover:bg-stone-200 text-stone-800 text-[10px] font-mono font-bold rounded flex items-center gap-1 cursor-pointer transition-colors border border-stone-300"
+                  >
+                    <Copy size={11} />
+                    <span>{isSpanish ? `Copiar sólo ${activeOutputTab}` : `Copy ${activeOutputTab} only`}</span>
+                  </button>
+                </div>
+              )}
+
               <div className="text-[9px] font-mono text-stone-500 text-center pt-2 border-t leading-tight flex justify-between items-center">
-                <span>{isSpanish ? '※ Estructurado con secciones de Gancho, Texto, Ficha Técnica y Hashtags.' : '※ Formatted with Hook, Body, Specs, and Hashtag blocks.'}</span>
+                <span>{isSpanish ? `※ Generado con fórmula ${framework} y optimización para redes.` : `※ Optimized with ${framework} formula for social conversion.`}</span>
                 <span className="text-[#2d5a4a] font-bold">unitecusadesign.com</span>
               </div>
             </div>
@@ -561,8 +795,8 @@ High-definition 8k hyper-realistic interior photography of a modern executive su
               </h4>
               <p className="text-[11px] text-stone-500 max-w-xs leading-relaxed">
                 {isSpanish 
-                  ? 'Seleccione un preset de la industria o configure los parámetros del breviario para compilar una campaña sobre demanda con Gemini 2.5' 
-                  : 'Select an industry preset or set brief parameters to compile an on-demand campaign with Gemini 2.5'}
+                  ? 'Elige una fórmula (PAS, AIDA, BAB, Storytelling) y genera copys, ganchos A/B, carruseles y guiones de video al instante' 
+                  : 'Choose a formula (PAS, AIDA, BAB, Storytelling) and generate copies, A/B hooks, carousel slides, and video scripts'}
               </p>
             </div>
           )}
@@ -572,4 +806,5 @@ High-definition 8k hyper-realistic interior photography of a modern executive su
     </div>
   );
 }
+
 
