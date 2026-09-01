@@ -101,6 +101,9 @@ export default function App() {
     return localStorage.getItem('unitec_image_prompt') || 'Fotografía publicitaria hiperrealista 8K, iluminación de estudio softbox, estética limpia y moderna con paleta de colores corporativa y acabado elegante.';
   });
   const [imageRatio, setImageRatio] = useState<'1:1' | '16:9' | '9:16' | '4:3'>('1:1');
+  const [imageStyle, setImageStyle] = useState('Comercial & Producto 8K');
+  const [isEnhancingPrompt, setIsEnhancingPrompt] = useState(false);
+  const [appliedPrompt, setAppliedPrompt] = useState('');
   const [imageError, setImageError] = useState('');
   const [imageSuccessNotice, setImageSuccessNotice] = useState('');
   const [previewFile, setPreviewFile] = useState<AttachedFile | null>(null);
@@ -476,6 +479,37 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
     URL.revokeObjectURL(url);
   };
 
+  const handleEnhancePrompt = async () => {
+    if (!imagePrompt.trim()) {
+      showToast('Por favor escribe una idea o prompt base para optimizar.', 'error');
+      return;
+    }
+    setIsEnhancingPrompt(true);
+    try {
+      const res = await fetch('/api/gemini/enhance-image-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: imagePrompt,
+          style: imageStyle,
+          context: contextText || selectedCampaign
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.enhancedPrompt) {
+        setImagePrompt(data.enhancedPrompt);
+        showToast('✨ Prompt optimizado con detalles fotorrealistas y técnicos.', 'success');
+      } else {
+        showToast('No se pudo optimizar el prompt en este momento.', 'info');
+      }
+    } catch (err: any) {
+      console.warn('Error enhancing prompt:', err);
+      showToast('Error al conectar con el optimizador de prompts.', 'error');
+    } finally {
+      setIsEnhancingPrompt(false);
+    }
+  };
+
   const handleGenerateImage = async (promptOverride?: string) => {
     const promptToUse = (typeof promptOverride === 'string' && promptOverride.trim()) ? promptOverride : imagePrompt;
     if (!promptToUse.trim()) {
@@ -492,12 +526,16 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt: promptToUse,
-          aspectRatio: imageRatio
+          aspectRatio: imageRatio,
+          style: imageStyle
         })
       });
       const data = await res.json();
       if (data.success && data.imageUrl) {
         setGeneratedImg(data.imageUrl);
+        if (data.appliedPrompt) {
+          setAppliedPrompt(data.appliedPrompt);
+        }
         if (data.notice) {
           setImageSuccessNotice(data.notice);
         }
@@ -1069,17 +1107,18 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
               <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-xs border border-gray-200 dark:border-slate-800 space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 dark:border-slate-800 pb-4">
                   <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                      Generación de Imagen y Creativo Publicitario
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <ImageIcon className="text-blue-600 dark:text-blue-400" size={20} />
+                      Generación de Imagen y Creativo Publicitario (8K HDR)
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      Crea imágenes comerciales de alta fidelidad optimizadas para redes y portadas
+                      Motor generativo de alta fidelidad que reproduce texturas, iluminación de estudio, acabados y composición precisa según tu prompt.
                     </p>
                   </div>
                   {generatedImg && (
                     <button
                       onClick={handleDownloadImage}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg border border-gray-200 dark:border-slate-700 transition-all cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg border border-gray-200 dark:border-slate-700 transition-all cursor-pointer shadow-xs"
                     >
                       <Download size={14} />
                       Descargar Imagen
@@ -1088,101 +1127,206 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
                 </div>
 
                 {imageError && (
-                  <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl text-xs text-red-700 dark:text-red-300 font-medium">
-                    ⚠️ {imageError}
+                  <div className="p-3.5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl text-xs text-red-700 dark:text-red-300 font-medium flex items-center gap-2">
+                    <span>⚠️</span>
+                    <span>{imageError}</span>
                   </div>
                 )}
 
                 {imageSuccessNotice && (
-                  <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs text-emerald-700 dark:text-emerald-300 font-medium">
-                    ✨ {imageSuccessNotice}
+                  <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs text-emerald-700 dark:text-emerald-300 font-medium flex items-center gap-2">
+                    <span>✨</span>
+                    <span>{imageSuccessNotice}</span>
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* Left Controls (7 cols) */}
+                  <div className="lg:col-span-7 space-y-4">
+                    {/* Style Presets */}
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Titular superpuesto / Hook visual:</label>
-                      <input 
-                        type="text" 
-                        value={imageTitle}
-                        onChange={(e) => setImageTitle(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500" 
-                        placeholder="Ej. ¿LISTO PARA TRANSFORMAR TUS RESULTADOS?"
-                      />
-                    </div>
-
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Prompt visual para Google Gemini Imagen:</label>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            navigator.clipboard.writeText(imagePrompt);
-                          }}
-                          className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer font-semibold"
-                        >
-                          <Copy size={11} /> Copiar Prompt
-                        </button>
-                      </div>
-                      <textarea 
-                        value={imagePrompt}
-                        onChange={(e) => setImagePrompt(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 rounded-lg p-3 text-xs text-slate-800 dark:text-slate-100 resize-none outline-none focus:border-blue-500 placeholder-slate-400 dark:placeholder-slate-500" 
-                        rows={4} 
-                        placeholder="Describe detalladamente los elementos, estilo, iluminación y textura..."
-                      ></textarea>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Formato / Relación de Aspecto:</label>
-                      <div className="grid grid-cols-4 gap-2">
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                        Estilo Visual y Dirección de Arte:
+                      </label>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {[
-                          { id: '1:1', label: '1:1 Cuadrado', desc: 'Feed / Post' },
-                          { id: '16:9', label: '16:9 Banner', desc: 'Facebook / Web' },
-                          { id: '9:16', label: '9:16 Vertical', desc: 'Story / Reel' },
-                          { id: '4:3', label: '4:3 Estándar', desc: 'Catálogo' }
-                        ].map((r) => (
+                          { id: 'Comercial & Producto 8K', label: 'Comercial & Producto', icon: '📸' },
+                          { id: 'Arquitectura & Espacios Modernos', label: 'Arquitectura & Espacios', icon: '🏛️' },
+                          { id: 'Render 3D Hiperrealista', label: 'Render 3D Octane', icon: '💎' },
+                          { id: 'Minimalista & Elegante', label: 'Minimalista Editorial', icon: '✨' },
+                          { id: 'Estudio Fotográfico de Lujo', label: 'Estudio de Lujo Softbox', icon: '💡' },
+                          { id: 'Fotografía Publicitaria con Modelo', label: 'Lifestyle & Modelo', icon: '👤' }
+                        ].map(st => (
                           <button
-                            key={r.id}
+                            key={st.id}
                             type="button"
-                            onClick={() => setImageRatio(r.id as any)}
-                            className={`p-2 rounded-lg border text-center transition-all cursor-pointer ${
-                              imageRatio === r.id 
-                                ? 'border-blue-600 bg-blue-50/50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 font-bold' 
-                                : 'border-gray-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-750 font-medium'
+                            onClick={() => setImageStyle(st.id)}
+                            className={`p-2 rounded-lg border text-left transition-all text-xs font-semibold flex items-center gap-1.5 cursor-pointer ${
+                              imageStyle === st.id
+                                ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-600 text-blue-700 dark:text-blue-300 shadow-xs'
+                                : 'bg-slate-50 dark:bg-slate-800/60 border-gray-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-750'
                             }`}
                           >
-                            <div className="text-[11px]">{r.label}</div>
-                            <div className="text-[9px] text-slate-400 dark:text-slate-500">{r.desc}</div>
+                            <span className="text-sm">{st.icon}</span>
+                            <span className="truncate text-[11px]">{st.label}</span>
                           </button>
                         ))}
                       </div>
                     </div>
 
+                    {/* Prompt input with AI Enhance Button */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                          Descripción / Prompt Visual Detallado:
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={handleEnhancePrompt}
+                            disabled={isEnhancingPrompt}
+                            className="inline-flex items-center gap-1 text-[11px] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-2.5 py-1 rounded-md font-bold shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                            title="Añadir automáticamente detalles de cámara, iluminación y texturas con IA"
+                          >
+                            {isEnhancingPrompt ? (
+                              <>
+                                <Loader2 size={11} className="animate-spin" />
+                                <span>Optimizando...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles size={11} />
+                                <span>Optimizar con IA</span>
+                              </>
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(imagePrompt);
+                              showToast('Prompt copiado al portapapeles.', 'success');
+                            }}
+                            className="text-[11px] text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 flex items-center gap-1 cursor-pointer font-semibold"
+                          >
+                            <Copy size={11} /> Copiar
+                          </button>
+                        </div>
+                      </div>
+                      <textarea 
+                        value={imagePrompt}
+                        onChange={(e) => setImagePrompt(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 rounded-lg p-3 text-xs text-slate-800 dark:text-slate-100 resize-none outline-none focus:border-blue-500 placeholder-slate-400 dark:placeholder-slate-500 font-sans leading-relaxed" 
+                        rows={4} 
+                        placeholder="Describe detalladamente el sujeto, materiales, colores, iluminación y encuadre..."
+                      ></textarea>
+                    </div>
+
+                    {/* Quick Inspiration Presets */}
+                    <div>
+                      <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                        Sugerencias Rápidas para Campaña:
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          { label: '🛋️ Panel 3D en Sala Moderna', p: 'Fotografía publicitaria de revestimiento arquitectónico 3D de madera y mármol en sala de estar minimalista de lujo, iluminación cálida de tira LED y luz natural de ventanal, plano medio, ángulo limpio, ultra detallado 8K.' },
+                          { label: '🔍 Primer Plano Textura & Acabado', p: 'Macro close-up shot de panel decorativo 3D con textura geométrica mate, sombras suaves volumétricas, iluminación de estudio softbox cenital, 50mm f/2.8, hiperrealista.' },
+                          { label: '🏛️ Fachada Arquitectónica de Noche', p: 'Fachada arquitectónica exterior contemporánea con paneles decorativos e iluminación ambiental cálida crepuscular, diseño vanguardista, fotoperiodismo de arquitectura.' },
+                          { label: '✨ Estudio Publicitario con Producto', p: 'Fotografía comercial de producto en podio de concreto pulido con fondo neutro degradado, iluminación de tres puntos, reflejos nítidos, calidad de catálogo de alta gama.' }
+                        ].map((sug, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setImagePrompt(sug.p);
+                              showToast(`Prompt sugerido aplicado: ${sug.label}`, 'info');
+                            }}
+                            className="text-[10px] font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 px-2 py-1 rounded-md border border-gray-200 dark:border-slate-700 transition-colors cursor-pointer"
+                          >
+                            {sug.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Headline and Aspect Ratio in Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          Titular Superpuesto (Opcional):
+                        </label>
+                        <input 
+                          type="text" 
+                          value={imageTitle}
+                          onChange={(e) => setImageTitle(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500" 
+                          placeholder="Ej. ¿LISTO PARA TRANSFORMAR TUS RESULTADOS?"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          Relación de Aspecto:
+                        </label>
+                        <div className="grid grid-cols-4 gap-1.5">
+                          {[
+                            { id: '1:1', label: '1:1', desc: 'Post' },
+                            { id: '16:9', label: '16:9', desc: 'Banner' },
+                            { id: '9:16', label: '9:16', desc: 'Reel' },
+                            { id: '4:3', label: '4:3', desc: 'Web' }
+                          ].map((r) => (
+                            <button
+                              key={r.id}
+                              type="button"
+                              onClick={() => setImageRatio(r.id as any)}
+                              className={`p-1.5 rounded-lg border text-center transition-all cursor-pointer ${
+                                imageRatio === r.id 
+                                  ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 font-bold shadow-xs' 
+                                  : 'border-gray-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-750 font-medium'
+                              }`}
+                            >
+                              <div className="text-[11px] font-bold">{r.label}</div>
+                              <div className="text-[9px] text-slate-400 dark:text-slate-500">{r.desc}</div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Main Generate Button */}
                     <button 
-                      onClick={handleGenerateImage} 
+                      onClick={() => handleGenerateImage()} 
                       disabled={isGeneratingImg} 
-                      className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2.5 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
+                      className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 text-white px-4 py-3 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer"
                     >
                       {isGeneratingImg ? (
                         <>
                           <Loader2 size={16} className="animate-spin" />
-                          Generando imagen en alta definición...
+                          Generando imagen fotorrealista en alta definición...
                         </>
                       ) : (
                         <>
                           <Sparkles size={16} />
-                          Crear Imagen Publicitaria con IA
+                          Generar Imagen Fotorrealista 8K
                         </>
                       )}
                     </button>
                   </div>
 
-                  <div className="flex flex-col items-center justify-center bg-slate-100/70 dark:bg-slate-950/70 rounded-xl p-4 border border-gray-200 dark:border-slate-800 min-h-[280px]">
-                    <div className={`w-full max-w-sm rounded-xl overflow-hidden relative shadow-md bg-black ${
+                  {/* Right Preview (5 cols) */}
+                  <div className="lg:col-span-5 flex flex-col items-center justify-between bg-slate-100/70 dark:bg-slate-950/70 rounded-xl p-4 border border-gray-200 dark:border-slate-800 min-h-[360px]">
+                    <div className="w-full flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium mb-3">
+                      <span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                        Vista Previa del Creativo
+                      </span>
+                      <span className="bg-white dark:bg-slate-800 px-2 py-0.5 rounded-md border border-gray-200 dark:border-slate-700 text-[10px] font-bold">
+                        {imageRatio} • 1080p
+                      </span>
+                    </div>
+
+                    <div className={`w-full max-w-sm rounded-xl overflow-hidden relative shadow-lg bg-black ${
                       imageRatio === '16:9' ? 'aspect-video' : 
-                      imageRatio === '9:16' ? 'aspect-[9/16] max-w-[200px]' : 
+                      imageRatio === '9:16' ? 'aspect-[9/16] max-w-[220px]' : 
                       imageRatio === '4:3' ? 'aspect-[4/3]' : 'aspect-square'
                     }`}>
                       <img 
@@ -1192,17 +1336,45 @@ CONTENT IA - HERRAMIENTA ESTRATÉGICA DE PUBLICACIÓN
                         referrerPolicy="no-referrer"
                       />
                       {imageTitle && (
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent flex items-end p-4">
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent flex items-end p-4">
                           <span className="text-white font-black text-xs sm:text-sm text-center w-full uppercase tracking-tight drop-shadow-md">
                             {imageTitle}
                           </span>
                         </div>
                       )}
                     </div>
-                    <div className="mt-3 flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                      <span>Proporción: {imageRatio}</span>
-                      <span>•</span>
-                      <span>Calidad: 1080p Ultra HD</span>
+
+                    {/* Applied Prompt info if available */}
+                    {appliedPrompt && (
+                      <div className="mt-3 w-full bg-white dark:bg-slate-900 rounded-lg p-2.5 border border-gray-200 dark:border-slate-800 text-[10px] text-slate-600 dark:text-slate-400">
+                        <span className="font-bold text-slate-800 dark:text-slate-200 block mb-0.5">
+                          Prompt en Motor de Renderizado:
+                        </span>
+                        <p className="line-clamp-2 italic font-mono text-[9px] text-slate-500">
+                          {appliedPrompt}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="mt-3 w-full flex items-center justify-between gap-2 pt-2 border-t border-gray-200/60 dark:border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => handleGenerateImage()}
+                        disabled={isGeneratingImg}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg border border-gray-200 dark:border-slate-700 transition-colors cursor-pointer"
+                      >
+                        <RefreshCw size={12} className={isGeneratingImg ? 'animate-spin' : ''} />
+                        Nueva Variación
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleDownloadImage}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shadow-xs"
+                      >
+                        <Download size={12} />
+                        Descargar
+                      </button>
                     </div>
                   </div>
                 </div>

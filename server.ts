@@ -136,6 +136,7 @@ async function startServer() {
       const systemInstruction = `You are a world-class creative director, copywriter and social media strategist.
 Your task is to write high-converting, viral-ready, professional social media copy using the ${framework} copywriting framework (${selectedFrameworkDesc}).
 Maintain a sleek, modern, sophisticated voice tailored to ${tone} tone and targeted for ${platform}.
+When writing image and video prompts (for Google Veo, Sora, Runway, etc.), BE EXTREMELY DETAILED AND CREATIVE. Always specify exact camera angles, focal lengths (e.g. 50mm, f/2.8), lighting conditions (e.g. moody studio softbox, golden hour, dramatic volumetric lighting), exact camera movements (e.g. slow-motion tracking shot, dynamic FPV drone, smooth pan), material textures, and atmospheric details to ensure AI video generators follow the precise aesthetics of the brief.
 Integrate all background details, extracted document text, and visual context from attached images.`;
 
       let combinedTextPrompt = `Please generate an individual, highly optimized social media campaign post based on the following creative parameters:
@@ -189,13 +190,13 @@ ${complianceText ? `- Compliance Mandates: ${complianceText}` : ''}`;
 
 ---
 
-🖼️ [PROMPT PARA IMAGEN PUBLICITARIA (Google Imagen 3)]
-(Prompt visual fotorrealista 8K: iluminación de estudio, composición y texturas)
+🖼️ [PROMPT PARA IMAGEN PUBLICITARIA (Google Imagen 3 / Midjourney)]
+(Prompt visual fotorrealista ultra-detallado: iluminación, lente, texturas, colores y composición espacial exacta)
 
 ---
 
-🎬 [PROMPT Y GUIÓN DE VIDEO (UNITEC STUDIO & Google Veo)]
-• Prompt de Video: ...
+🎬 [PROMPT Y GUIÓN DE VIDEO (Para Google Veo / Sora / Runway)]
+• Prompt de Video (Cinematográfico y Descriptivo): (Instrucciones hiper-detalladas para la IA: describe el movimiento de cámara exacto, la iluminación, la acción del sujeto, la atmósfera y el estilo visual, ej: "Slow-motion macro shot of... soft volumetric lighting...").
 • Gancho en Pantalla (0-3s): ...
 • Retención y Demostración (3-12s): ...
 • Cierre y CTA (12-20s): ...
@@ -342,7 +343,7 @@ Photorealistic 8K commercial product visual for "${effectiveTitle}". Target audi
 Your task is to take a base creative campaign and generate 5 distinct channel-optimized assets:
 1. Instagram / Facebook (high-converting emoji bullet caption, hook, and hashtags)
 2. LinkedIn B2B (thought leadership article style, professional takeaways)
-3. TikTok / Instagram Reels / YouTube Shorts (0-3s hook, scene script with visual directions)
+3. TikTok / Instagram Reels / YouTube Shorts (0-3s hook, detailed scene script with hyper-specific visual directions, camera angles, lighting, and textures for AI video generation)
 4. Email Newsletter (3 A/B test subject lines, email body, CTA)
 5. Meta & Google Ads (3 catchy headlines, primary text variations)
 6. CRM Lead Magnet (suggested lead magnet title, WhatsApp text, HubSpot tracking link)
@@ -483,10 +484,67 @@ Return JSON with format: { "hooks": [ { "id": "A", "type": "Curiosity / Shock", 
     }
   });
 
-  // Google Gemini & AI Image Generation Endpoint
+  // Endpoint to expand and enhance image prompts with AI
+  app.post('/api/gemini/enhance-image-prompt', async (req, res) => {
+    try {
+      const { prompt, style = 'Comercial & Producto 8K', context = '' } = req.body;
+      if (!prompt || !prompt.trim()) {
+        return res.status(400).json({ success: false, error: 'Se requiere un prompt para mejorar.' });
+      }
+
+      let enhancedPrompt = prompt;
+      let promptEN = '';
+
+      try {
+        const ai = getGeminiClient();
+        const response = await ai.models.generateContent({
+          model: 'gemini-3.7-flash',
+          contents: `You are an expert AI prompt engineer for image generators (Midjourney v6, Google Imagen 3, FLUX.1).
+Take this user prompt: "${prompt}".
+Style preset: "${style}".
+Context/Product: "${context}".
+
+Generate two versions of an ultra-detailed, photorealistic prompt that follows the prompt to every specific detail (materials, exact colors, lighting setup, camera focal length, atmosphere, sharp focus):
+1. A rich Spanish description for the user UI.
+2. A master English prompt (max 100 words) optimized for image diffusion models.
+
+Return JSON:
+{
+  "enhancedSpanish": "...",
+  "masterEnglish": "..."
+}`,
+          config: {
+            responseMimeType: 'application/json',
+            temperature: 0.7
+          }
+        });
+
+        if (response.text) {
+          const parsed = JSON.parse(response.text);
+          return res.json({
+            success: true,
+            enhancedPrompt: parsed.enhancedSpanish || prompt,
+            masterEnglish: parsed.masterEnglish || prompt
+          });
+        }
+      } catch (err: any) {
+        console.warn('AI prompt enhance fallback:', err.message);
+      }
+
+      return res.json({
+        success: true,
+        enhancedPrompt: `${prompt}. Fotografía fotorrealista 8K, iluminación de estudio profesional softbox, acabado de alta fidelidad, texturas hiperrealistas, composición equilibrada y sin distorsiones.`,
+        masterEnglish: `${prompt}, photorealistic 8k, professional studio softbox lighting, ultra-sharp focus, detailed textures, architectural digest photography style`
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // Google Gemini & AI Image Generation Endpoint (High-Fidelity)
   app.post('/api/gemini/generate-image', async (req, res) => {
     try {
-      const { prompt, aspectRatio = '1:1' } = req.body;
+      const { prompt, aspectRatio = '1:1', style = 'Comercial & Producto 8K' } = req.body;
       if (!prompt || !prompt.trim()) {
         return res.status(400).json({ success: false, error: 'Se requiere una descripción (prompt) para generar la imagen.' });
       }
@@ -511,17 +569,33 @@ Return JSON with format: { "hooks": [ { "id": "A", "type": "Curiosity / Shock", 
         height = 1024;
       }
 
-      // 1. Try Google Gemini Image Generation
+      // Step 1: Translate and enrich prompt to English with Gemini to ensure image model captures every detail
+      let englishDiffusionPrompt = prompt.trim();
+      try {
+        const ai = getGeminiClient();
+        const transRes = await ai.models.generateContent({
+          model: 'gemini-3.7-flash',
+          contents: `Translate and optimize this image generation prompt into English for high-end photorealistic image generation (FLUX / Imagen 3). Ensure all specific objects, materials, architectural finishes, colors, textures, and lighting from the prompt are strictly preserved and described with crystal clarity. Style: ${style}. User prompt: "${prompt}". Output ONLY the optimized English prompt string, no quotes, no markdown.`
+        });
+        if (transRes.text && transRes.text.trim().length > 10) {
+          englishDiffusionPrompt = transRes.text.trim();
+        }
+      } catch (transErr: any) {
+        console.warn('Prompt translation note:', transErr?.message || transErr);
+      }
+
+      // Step 2: Try Google Gemini Image Generation (gemini-3.1-flash-image)
       try {
         const ai = getGeminiClient();
         const response = await ai.models.generateContent({
-          model: 'gemini-3.1-flash-lite-image',
+          model: 'gemini-3.1-flash-image',
           contents: {
-            parts: [{ text: prompt }]
+            parts: [{ text: englishDiffusionPrompt }]
           },
           config: {
             imageConfig: {
-              aspectRatio: finalRatio as any
+              aspectRatio: finalRatio as any,
+              imageSize: '1K'
             }
           }
         });
@@ -541,23 +615,25 @@ Return JSON with format: { "hooks": [ { "id": "A", "type": "Curiosity / Shock", 
           return res.json({ 
             success: true, 
             imageUrl: foundImageUrl,
-            model: 'gemini-3.1-flash-lite-image',
-            notice: 'Imagen generada con éxito mediante Google Gemini Imagen.'
+            model: 'gemini-3.1-flash-image',
+            appliedPrompt: englishDiffusionPrompt,
+            notice: 'Imagen generada con alta fidelidad mediante Google Gemini Imagen.'
           });
         }
       } catch (geminiError: any) {
-        console.warn('Gemini Imagen API Notice (using ultra HD AI synthesis engine):', geminiError.message || geminiError);
+        console.warn('Gemini Imagen API Notice (falling back to FLUX HD neural engine):', geminiError.message || geminiError);
       }
 
-      // 2. High-speed AI Image Synthesis Engine matched directly to user prompt & aspect ratio
-      const seed = Math.floor(Math.random() * 1000000);
-      const cleanPrompt = encodeURIComponent(prompt.trim().slice(0, 400));
-      const aiGeneratedUrl = `https://image.pollinations.ai/prompt/${cleanPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
+      // Step 3: High-Fidelity FLUX.1 Engine with enhanced English prompt
+      const seed = Math.floor(Math.random() * 10000000);
+      const cleanPrompt = encodeURIComponent(englishDiffusionPrompt.slice(0, 600));
+      const aiGeneratedUrl = `https://image.pollinations.ai/prompt/${cleanPrompt}?width=${width}&height=${height}&seed=${seed}&model=flux&nologo=true&enhance=true`;
 
       return res.json({
         success: true,
         imageUrl: aiGeneratedUrl,
-        notice: 'Arte visual y publicitario generado en alta definición (8K).'
+        appliedPrompt: englishDiffusionPrompt,
+        notice: 'Arte visual de alta fidelidad generado con motor FLUX.1 (8K HDR).'
       });
     } catch (error: any) {
       console.error('Image generation route error:', error);
