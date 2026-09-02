@@ -107,17 +107,30 @@ async function startServer() {
       } = req.body;
 
       const systemInstruction = `You are a chief growth marketing officer and omnichannel campaign strategist for high-end B2B & B2C brands.
-Your task is to take a product briefing and generate a complete MASTER CAMPAIGN JSON bundle.
-1. Master Brief & Strategy (Keywords, Target avatar insights)
-2. Instagram / Facebook (high-converting emoji bullet caption, hook, and hashtags)
-3. LinkedIn B2B (thought leadership article style, professional takeaways)
-4. TikTok / Instagram Reels / YouTube Shorts (0-3s hook, detailed scene script with hyper-specific visual directions, camera angles, lighting, and textures for AI video generation)
-5. Email Newsletter (3 A/B test subject lines, email body, CTA)
-6. Meta & Google Ads (3 catchy headlines, primary text variations)
-7. CRM Lead Magnet (suggested lead magnet title, WhatsApp text, HubSpot tracking link)
-8. Content Calendar (suggested 7-day rollout plan)
+Your task is to take a product briefing and generate a complete MASTER CAMPAIGN JSON bundle in a cascade flow.
 
-Language: Output strictly in Spanish. Return valid JSON only adhering strictly to the JSON schema.`;
+You MUST return a JSON object exactly matching this schema:
+{
+  "masterStrategy": { "keywords": ["..."], "targetInsight": "..." },
+  "facebook": { "post": "...", "hashtags": "...", "smartPostingTime": "...", "imageIdea": "..." },
+  "instagram": { "caption": "...", "hashtags": "...", "smartPostingTime": "...", "imageIdea": "..." },
+  "youtube": { "title": "...", "description": "...", "tags": "...", "smartPostingTime": "...", "videoIdea": "..." },
+  "linkedin": { "headline": "...", "articlePost": "...", "smartPostingTime": "..." },
+  "tiktok": { "hook0to3s": "...", "sceneScript": "Elaborated video instruction...", "smartPostingTime": "..." },
+  "email": { "subject": "...", "body": "..." },
+  "analytics": { 
+     "expectedReach": 15000, 
+     "targetEngagementRate": 4.5, 
+     "crmExpectedLeads": 120 
+  },
+  "calendar": [ { "day": 1, "platform": "...", "content": "..." } ]
+}
+
+Important Rules:
+- "imageIdea" should be a detailed, hyper-specific prompt instruction for generating an image.
+- "sceneScript" (for TikTok) and "videoIdea" (for YouTube) should be elaborated video instructions.
+- Provide a smartPostingTime (e.g., "Martes 10:00 AM EST") for every platform.
+Language: Output strictly in Spanish.`;
 
       const prompt = `Adapt the following briefing into all formats:
 - Product/Service: "${product}"
