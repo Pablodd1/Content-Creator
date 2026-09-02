@@ -92,269 +92,40 @@ async function startServer() {
     }
   });
 
-  // Universal Social Media Post Generator endpoint (Multimodal support for text & images)
-  app.post('/api/generate-universal-post', async (req, res) => {
-    try {
-      const {
-        title,
-        target,
-        objective,
-        want,
-        tone = 'Sales-driven',
-        platform = 'All Platforms',
-        framework = 'PAS',
-        complianceFlags = [],
-        language = 'ES',
-        documentTexts = [],
-        images = []
-      } = req.body;
-      
-      if (!title && !target && !objective && !want && (!documentTexts || documentTexts.length === 0) && (!images || images.length === 0)) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'Por favor ingresa instrucciones o adjunta archivos para generar contenido.' 
-        });
-      }
-
-      const ai = getGeminiClient();
-      
-      const complianceText = complianceFlags && complianceFlags.length > 0 
-        ? `Mandatory Compliance & Product Features to Include: ${complianceFlags.join(', ')}.`
-        : '';
-
-      const frameworkDescriptions: Record<string, string> = {
-        'PAS': 'Problem -> Agitate -> Solution (Identifica el dolor o frustración del cliente, intensifica el costo de no resolverlo y presenta la solución ideal).',
-        'AIDA': 'Attention -> Interest -> Desire -> Action (Gancho magnético, genera curiosidad con hechos, despierta deseo con beneficios y cierra con acción clara).',
-        'BAB': 'Before -> After -> Bridge (Muestra la situación actual con fricciones, visualiza el futuro transformado y explica cómo este producto es el puente).',
-        '4Ps': 'Picture -> Promise -> Prove -> Push (Pinta la escena aspiracional, haz una promesa audaz, demuestra con especificaciones y empuja a la acción).',
-        'Storytelling': 'Gancho -> Conflicto -> Transformación -> Lección/Oferta (Narrativa humana y envolvente con retención en los primeros segundos).',
-        'Direct-Response': 'Oferta directa, valor comercial cuantificable, eliminación de objeciones y llamado a la acción inmediato.'
-      };
-
-      const selectedFrameworkDesc = frameworkDescriptions[framework] || frameworkDescriptions['PAS'];
-
-      const systemInstruction = `You are a world-class creative director, copywriter and social media strategist.
-Your task is to write high-converting, viral-ready, professional social media copy using the ${framework} copywriting framework (${selectedFrameworkDesc}).
-Maintain a sleek, modern, sophisticated voice tailored to ${tone} tone and targeted for ${platform}.
-When writing image and video prompts (for Google Veo, Sora, Runway, etc.), BE EXTREMELY DETAILED AND CREATIVE. Always specify exact camera angles, focal lengths (e.g. 50mm, f/2.8), lighting conditions (e.g. moody studio softbox, golden hour, dramatic volumetric lighting), exact camera movements (e.g. slow-motion tracking shot, dynamic FPV drone, smooth pan), material textures, and atmospheric details to ensure AI video generators follow the precise aesthetics of the brief.
-Integrate all background details, extracted document text, and visual context from attached images.`;
-
-      let combinedTextPrompt = `Please generate an individual, highly optimized social media campaign post based on the following creative parameters:
-
-📌 CREATIVE BRIEF:
-- Title / Main Topic: "${title || 'Lanzamiento de Campaña'}"
-- Target Audience / Segment: "${target || 'Audiencia General y Clientes Potenciales'}"
-- Strategic Objective: "${objective || 'Aumentar engagement, visibilidad y conversiones'}"
-- Specific Creative Angle: "${want || 'Destacar beneficios clave y propuesta de valor'}"
-- Desired Tone of Voice: ${tone}
-- Target Platform Focus: ${platform}
-- Copywriting Framework: ${framework} (${selectedFrameworkDesc})
-${complianceText ? `- Compliance Mandates: ${complianceText}` : ''}`;
-
-      if (Array.isArray(documentTexts) && documentTexts.length > 0) {
-        combinedTextPrompt += `\n\n📄 DOCUMENTOS Y TEXTO DE REFERENCIA EXTRAÍDOS DE ARCHIVOS:\n` + documentTexts.join('\n\n---\n\n');
-      }
-
-      combinedTextPrompt += `\n\nREQUIRED OUTPUT FORMAT (Return clean text with these exact formatted sections):
-
-✨ [TITULAR PRINCIPAL & 3 GANCHOS A/B DE ALTA RETENCIÓN]
-• Gancho A (Curiosidad / Pregunta Provocadora): ...
-• Gancho B (Dato Estadístico / Alto Impacto): ...
-• Gancho C (Beneficio Directo / Desafío a Mitos): ...
-
----
-
-📖 [CUERPO DEL MENSAJE / POST - FÓRMULA ${framework}]
-(Aplica estrictamente ${framework}: 2-3 párrafos persuasivos con viñetas magnéticas que eleven la percepción de valor)
-
----
-
-🔒 [PUNTOS CLAVE Y ESPECIFICACIONES]
-(Aspectos técnicos, ventajas competitivas o certificaciones clave)
-
----
-
-📊 [ESTRUCTURA DE CARRUSEL / SLIDE-BY-SLIDE (LinkedIn & Instagram)]
-• Slide 1 (Portada & Gancho): ...
-• Slide 2 (El Problema / Desafío Común): ...
-• Slide 3 (La Solución / Innovación): ...
-• Slide 4 (Beneficios & Prueba): ...
-• Slide 5 (Cierre & Llamado a la Acción): ...
-
----
-
-🎯 [LLAMADOS A LA ACCIÓN DINÁMICOS (CTAs)]
-• Opción 1 (Direct Message / Lead): ...
-• Opción 2 (Guardar / Compartir): ...
-• Opción 3 (Debate / Comentario): ...
-
----
-
-🖼️ [PROMPT PARA IMAGEN PUBLICITARIA (Google Imagen 3 / Midjourney)]
-(Prompt visual fotorrealista ultra-detallado: iluminación, lente, texturas, colores y composición espacial exacta)
-
----
-
-🎬 [PROMPT Y GUIÓN DE VIDEO (Para Google Veo / Sora / Runway)]
-• Prompt de Video (Cinematográfico y Descriptivo): (Instrucciones hiper-detalladas para la IA: describe el movimiento de cámara exacto, la iluminación, la acción del sujeto, la atmósfera y el estilo visual, ej: "Slow-motion macro shot of... soft volumetric lighting...").
-• Gancho en Pantalla (0-3s): ...
-• Retención y Demostración (3-12s): ...
-• Cierre y CTA (12-20s): ...
-• Voz en Off: ...
-
----
-
-🏷️ [CLUSTER ESTRATÉGICO DE HASHTAGS]
-• Nicho (Alta Conversión): #...
-• Industria / B2B: #...
-• Tendencia & Alcance: #...
-
-Language: Output strictly in Spanish.`;
-
-      const parts: any[] = [{ text: combinedTextPrompt }];
-
-      // Process uploaded images for multimodal input
-      if (Array.isArray(images) && images.length > 0) {
-        for (const imgStr of images) {
-          if (typeof imgStr === 'string' && imgStr.includes('base64,')) {
-            const mimeMatch = imgStr.match(/^data:(image\/[a-zA-Z+]+);base64,/);
-            const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
-            const base64Data = imgStr.replace(/^data:image\/[a-zA-Z+]+;base64,/, '');
-            parts.push({
-              inlineData: {
-                mimeType,
-                data: base64Data
-              }
-            });
-          }
-        }
-      }
-
-      let generatedText = '';
-      try {
-        const response = await ai.models.generateContent({
-          model: 'gemini-3.7-flash',
-          contents: parts.length === 1 ? parts[0].text : { parts },
-          config: {
-            systemInstruction,
-            temperature: 0.75,
-          }
-        });
-        generatedText = response.text || '';
-      } catch (geminiError: any) {
-        console.warn('Gemini API Notice (using smart content synthesis engine):', geminiError?.message || geminiError);
-
-        // Smart Content Generation Fallback so the user never gets a 500 failure
-        const effectiveTitle = title || 'Revestimientos Arquitectónicos 3D & PVC';
-        const effectiveTarget = target || 'Arquitectos, diseñadores de interiores y desarrolladores';
-        const effectiveObjective = objective || 'Aumentar engagement, visibilidad y solicitudes de cotización';
-        const effectiveWant = want || 'Acabados de lujo, impermeabilidad y durabilidad de alto impacto';
-        const cleanTag = effectiveTitle.replace(/[^a-zA-Z0-9]/g, '');
-
-        generatedText = `✨ [TITULAR PRINCIPAL & 3 GANCHOS A/B DE ALTA RETENCIÓN]
-• Gancho A (Curiosidad): ¿Por qué los mejores proyectos en 2026 están usando ${effectiveTitle} para transformar espacios?
-• Gancho B (Estadística de Impacto): Más del 80% de los clientes deciden en los primeros 3 segundos. Así es como ${effectiveTitle} marca la diferencia.
-• Gancho C (Beneficio Directo): Consigue la sofisticación europea con máxima durabilidad y sin sobrecostos en obra.
-
----
-
-📖 [CUERPO DEL MENSAJE / POST - FÓRMULA ${framework}]
-¿Buscando una solución que combine estética de vanguardia y rendimiento comprobado para tus proyectos?
-
-Con la propuesta de **${effectiveTitle}**, diseñada especialmente para **${effectiveTarget}**, elevamos el estándar de cada metro cuadrado. Cada detalle ha sido concebido para cumplir tu objetivo principal: **${effectiveObjective}**.
-
-• **Excelencia y Distinción:** Desarrollado para ${effectiveWant}.
-• **Tecnología y Durabilidad:** Resistencia superior y bajo mantenimiento a largo plazo.
-• **Eficiencia en Implementación:** Instalación ágil y asesoría técnica de principio a fin.
-
----
-
-🔒 [PUNTOS CLAVE Y ESPECIFICACIONES]
-- Segmento Objetivo: ${effectiveTarget}
-- Tono de Comunicación: ${tone}
-- Enfoque de Plataforma: ${platform}
-- Propuesta de Valor: ${effectiveWant}
-${complianceText ? `- Cumplimiento Mandatorio: ${complianceText}\n` : ''}- Catálogo digital y soporte técnico disponible en unitecusadesign.com
-
----
-
-📊 [ESTRUCTURA DE CARRUSEL / SLIDE-BY-SLIDE (LinkedIn & Instagram)]
-• Slide 1 (Portada & Gancho): "${effectiveTitle}: El nuevo estándar de diseño y distinción."
-• Slide 2 (El Problema / Reto): "La dificultad de encontrar acabados que unan estética y resistencia real."
-• Slide 3 (La Solución): "Nuestra tecnología en ${effectiveTitle} con acabados tridimensionales y alta resistencia."
-• Slide 4 (Beneficios & Prueba): "Instalación rápida, durabilidad certificada y atención personalizada."
-• Slide 5 (Cierre & CTA): "Desliza para conocer el catálogo o solicita tus muestras hoy mismo."
-
----
-
-🎯 [LLAMADOS A LA ACCIÓN DINÁMICOS (CTAs)]
-• Opción 1 (Direct Message / Lead): "Envía un DM con la palabra 'CATÁLOGO' para recibir la lista de precios mayorista."
-• Opción 2 (Guardar / Compartir): "Guarda este post en tu tablero de inspiración para tu próxima remodelación u obra."
-• Opción 3 (Debate / Comentario): "¿Qué tipo de textura prefieres en tus espacios? Comenta abajo."
-
----
-
-🖼️ [PROMPT PARA IMAGEN PUBLICITARIA (Google Imagen 3)]
-Photorealistic 8K commercial product visual for "${effectiveTitle}". Target audience: ${effectiveTarget}. Modern architectural showroom, studio softbox lighting f/2.8, ultra-sharp textures, luxury materials and sleek corporate branding.
-
----
-
-🎬 [PROMPT Y GUIÓN DE VIDEO (UNITEC STUDIO & Google Veo)]
-• Prompt de Video: Cinematic 8K commercial video reveal for "${effectiveTitle}". Showroom lighting f/2.8, smooth 3D camera pan, photorealistic textures and modern finish.
-• Gancho en Pantalla (0-3s): "El secreto de los arquitectos para acabados impecables 🤫"
-• Retención y Demostración (3-12s): Paneo mostrando el detalle del material, reflejos y resistencia: "${effectiveWant}".
-• Cierre y CTA (12-20s): "Pide tu catálogo mayorista en el link de nuestro perfil."
-• Voz en Off: "¿Buscas transformar tus proyectos con distinción? Conoce ${effectiveTitle}. Calidad certificada y entrega confiable. Contáctanos hoy."
-
----
-
-🏷️ [CLUSTER ESTRATÉGICO DE HASHTAGS]
-• Nicho (Alta Conversión): #${cleanTag} #DisenoInterior #ArquitecturaComercial #AcabadosDeLujo
-• Industria / B2B: #MaterialesDeConstruccion #Interiorismo2026 #Contratistas #Showroom
-• Tendencia & Alcance: #UnitecUSA #DecoracionPremium #Tendencias2026 #InnovacionDiseño`;
-      }
-
-      return res.json({ 
-        success: true, 
-        text: generatedText 
-      });
-    } catch (error: any) {
-      console.error('Gemini post generation error:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: error.message || 'Error processing request' 
-      });
-    }
-  });
-
   // Multichannel & CRM AI Repurposer Bundle (Strictly Google Gemini 3.7)
   app.post('/api/gemini/generate-multiplatform-bundle', async (req, res) => {
     try {
       const {
-        campaignTitle = 'Campaña UNITEC',
+        product = 'Campaña UNITEC',
+        audience = '',
+        objective = '',
+        offer = '',
         contextText = '',
-        basePost = '',
         tone = 'Sales-driven',
         whatsappNumber = '13055550199',
         utmCampaign = 'campana_unitec'
       } = req.body;
 
       const systemInstruction = `You are a chief growth marketing officer and omnichannel campaign strategist for high-end B2B & B2C brands.
-Your task is to take a base creative campaign and generate 5 distinct channel-optimized assets:
-1. Instagram / Facebook (high-converting emoji bullet caption, hook, and hashtags)
-2. LinkedIn B2B (thought leadership article style, professional takeaways)
-3. TikTok / Instagram Reels / YouTube Shorts (0-3s hook, detailed scene script with hyper-specific visual directions, camera angles, lighting, and textures for AI video generation)
-4. Email Newsletter (3 A/B test subject lines, email body, CTA)
-5. Meta & Google Ads (3 catchy headlines, primary text variations)
-6. CRM Lead Magnet (suggested lead magnet title, WhatsApp text, HubSpot tracking link)
+Your task is to take a product briefing and generate a complete MASTER CAMPAIGN JSON bundle.
+1. Master Brief & Strategy (Keywords, Target avatar insights)
+2. Instagram / Facebook (high-converting emoji bullet caption, hook, and hashtags)
+3. LinkedIn B2B (thought leadership article style, professional takeaways)
+4. TikTok / Instagram Reels / YouTube Shorts (0-3s hook, detailed scene script with hyper-specific visual directions, camera angles, lighting, and textures for AI video generation)
+5. Email Newsletter (3 A/B test subject lines, email body, CTA)
+6. Meta & Google Ads (3 catchy headlines, primary text variations)
+7. CRM Lead Magnet (suggested lead magnet title, WhatsApp text, HubSpot tracking link)
+8. Content Calendar (suggested 7-day rollout plan)
 
 Language: Output strictly in Spanish. Return valid JSON only adhering strictly to the JSON schema.`;
 
-      const prompt = `Adapt the following campaign into all 6 formats:
-- Campaign Title: "${campaignTitle}"
+      const prompt = `Adapt the following briefing into all formats:
+- Product/Service: "${product}"
+- Target Audience: "${audience}"
+- Main Objective: "${objective}"
+- Special Offer/Hook: "${offer}"
+- Additional Context: "${contextText}"
 - Tone of Voice: "${tone}"
-- Briefing & Context: "${contextText}"
-- Base Generated Post: "${basePost}"
 - WhatsApp Contact: "${whatsappNumber}"
 - UTM Campaign Identifier: "${utmCampaign}"`;
 
@@ -380,55 +151,49 @@ Language: Output strictly in Spanish. Return valid JSON only adhering strictly t
 
       if (!variantsData) {
         variantsData = {
+          masterStrategy: {
+            keywords: ['#innovacion', '#diseño', '#arquitectura'],
+            targetInsight: 'Arquitectos y constructores buscan reducción de costos sin perder calidad estética.'
+          },
           instagram: {
-            hook: `🔥 ${campaignTitle}: Elegancia y diseño arquitectónico sin límites.`,
-            caption: `¿Buscando acabados que eleven tus proyectos al siguiente nivel? ✨\n\nNuestra nueva colección para ${campaignTitle} combina tecnología de vanguardia y estética premium.\n\n✔️ 100% Resistente y duradero\n✔️ Texturas tridimensionales y acabados de lujo\n✔️ Entrega inmediata en Miami y envíos a toda la región\n\n💬 Escríbenos por DM o haz clic en el enlace de la bio para recibir el catálogo exclusivo.`,
-            hashtags: '#UnitecDesign #ArquitecturaDeLujo #InteriorismoMiami #MaterialesDeVanguardia #LuxuryLiving',
-            visualDirection: 'Carrusel de 4 láminas mostrando texturas y acabados en primer plano'
+            hook: `🔥 ${product}: Elegancia y diseño sin límites.`,
+            caption: `¿Buscando acabados que eleven tus proyectos? ✨\n\n✔️ 100% Resistente\n✔️ Acabados de lujo\n\n💬 Escríbenos por DM.`,
+            hashtags: '#UnitecDesign #Arquitectura',
+            visualDirection: 'Carrusel de texturas en primer plano'
           },
           linkedin: {
-            headline: `Cómo la innovación en materiales arquitectónicos está redefiniendo el ROI en desarrollos comerciales y residenciales.`,
-            articlePost: `En la industria del diseño y la construcción, la diferenciación competitiva ya no es opcional; es el pilar de la rentabilidad.\n\nCon la iniciativa "${campaignTitle}", exploramos cómo la integración de acabados arquitectónicos de alta especificación optimiza tanto los tiempos de obra como la percepción de valor final del cliente.\n\nTres aprendizajes clave para contratistas y arquitectos:\n1. Durabilidad comprobada con bajo mantenimiento a largo plazo.\n2. Sostenibilidad y certificaciones que facilitan la aprobación técnica.\n3. Acabados estéticos de impacto directo en la valorización del metro cuadrado.`,
-            takeaways: [
-              'Optimización de costos de instalación en un 35%',
-              'Resistencia climática certificada en Florida',
-              'Soporte técnico y especificaciones BIM disponibles'
-            ],
-            callToAction: 'Conecta con nuestro equipo de especificaciones para recibir muestras físicas.'
+            headline: `Innovación en materiales arquitectónicos para ROI en desarrollos.`,
+            articlePost: `En la industria del diseño, la diferenciación es clave.\n\nTres aprendizajes clave:\n1. Durabilidad.\n2. Sostenibilidad.\n3. Acabados estéticos.`,
+            takeaways: ['Optimización de costos', 'Resistencia', 'Soporte técnico'],
+            callToAction: 'Conecta con nuestro equipo para muestras físicas.'
           },
           tiktokReels: {
-            hook0to3s: `"Si estás diseñando o remodelando en 2026, cometerás un error si no usas esto..."`,
-            sceneScript: `[Corte 1 - 0:00 a 0:03] Cámara en mano tocando la textura del material.\nVoz: "¿Sabías que este acabado resiste agua, golpes y se instala en la mitad del tiempo?"\n\n[Corte 2 - 0:03 a 0:10] Paneo rápido por el showroom iluminado.\nVoz: "Es la nueva colección de UNITEC USA Design. Mira los reflejos y el nivel de detalle..."\n\n[Corte 3 - 0:10 a 0:15] Pantalla con CTA y enlace en biografía.\nVoz: "Comenta 'CATÁLOGO' y te enviamos el PDF con precios para contratistas hoy mismo."`,
-            onScreenText: `👀 EL SECRETO DE LOS ARQUITECTOS EN MIAMI 🤫`,
-            audioTrendSuggestion: 'Audio rítmico corporativo moderno o beats Lo-Fi sutiles'
+            hook0to3s: `"Si estás remodelando, cometerás un error si no usas esto..."`,
+            sceneScript: `[0:00 - 0:03] Cámara tocando la textura.\n[0:03 - 0:10] Paneo rápido.\n[0:10 - 0:15] CTA.`,
+            onScreenText: `👀 EL SECRETO REVELADO`,
+            audioTrendSuggestion: 'Audio rítmico corporativo'
           },
           emailNewsletter: {
-            subjectLines: [
-              `⚡ [Exclusivo] Nueva colección ${campaignTitle}: Acceso anticipado`,
-              `¿Tus proyectos necesitan este acabado? Mira la diferencia ✨`,
-              `Ficha técnica y catálogo exclusivo para tu próximo diseño`
-            ],
-            previewSnippet: `Descubre los nuevos acabados de alta gama con disponibilidad inmediata en Miami.`,
-            emailBody: `Hola [Nombre],\n\nNos complace presentarte nuestro más reciente lanzamiento enfocado en arquitectos y diseñadores que buscan la máxima excelencia estética y funcional: **${campaignTitle}**.\n\nDiseñado para resistir las exigencias del clima y el uso diario sin perder un milímetro de sofisticación.\n\n¿Deseas programar una muestra física en tu estudio o recibir el catálogo con precios mayoristas?\n\nHaz clic en el botón a continuación para hablar directamente con nuestro asesor técnico.`,
-            buttonCta: 'Descargar Catálogo y Precios'
+            subjectLines: [`⚡ [Exclusivo] ${product}`, `Mira la diferencia ✨`, `Catálogo exclusivo`],
+            previewSnippet: `Descubre los acabados de alta gama en Miami.`,
+            emailBody: `Hola [Nombre],\n\nPresentamos: **${product}**.\n\nHaz clic para hablar con un asesor.`,
+            buttonCta: 'Descargar Catálogo'
           },
           metaAds: {
-            primaryTextVariations: [
-              `¿Buscas proveedores de confianza para acabados arquitectónicos en Florida? En UNITEC USA Design ofrecemos materiales de vanguardia con entrega rápida y asesoría experta. Solicita tu muestra hoy.`,
-              `Transforma tus desarrollos con acabados de lujo sin pagar sobreprecios de intermediarios. Conoce nuestra línea directa de fábrica para arquitectos y contratistas.`
-            ],
-            headlineVariations: [
-              'Acabados de Lujo en Miami • Stock Inmediato',
-              'Eleva el Valor de tus Proyectos Hoy',
-              'Catálogo Exclusivo para Contratistas'
-            ],
-            leadFormCta: 'Solicitar Muestra Gratuita'
+            primaryTextVariations: [`¿Buscas proveedores en Florida? Ofrecemos materiales de vanguardia.`, `Transforma tus desarrollos con acabados de lujo.`],
+            headlineVariations: ['Acabados de Lujo', 'Eleva el Valor', 'Catálogo Exclusivo'],
+            leadFormCta: 'Solicitar Muestra'
           },
           crmLeadMagnet: {
-            suggestedLeadMagnet: `Guía de Tendencias Arquitectónicas & Ficha Técnica 2026: ${campaignTitle}`,
-            whatsappDirectUrl: `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Hola UNITEC, me interesa recibir más información sobre ${campaignTitle}`)}`,
-            hubspotUtmLink: `https://unitecdesign.com/catalogo?utm_source=social_ai&utm_medium=gemini_engine&utm_campaign=${utmCampaign}`
-          }
+            suggestedLeadMagnet: `Guía de Tendencias 2026: ${product}`,
+            whatsappDirectUrl: `https://wa.me/${whatsappNumber}?text=Info`,
+            hubspotUtmLink: `https://unitecdesign.com/catalogo?utm_source=social&utm_medium=gemini`
+          },
+          calendar: [
+            { day: 1, platform: 'Email', content: 'Lanzamiento de teaser' },
+            { day: 2, platform: 'Instagram', content: 'Carrusel visual de texturas' },
+            { day: 3, platform: 'LinkedIn', content: 'Artículo sobre ROI' }
+          ]
         };
       }
 
@@ -439,48 +204,6 @@ Language: Output strictly in Spanish. Return valid JSON only adhering strictly t
     } catch (err: any) {
       console.error('Error generating multiplatform variants:', err);
       return res.status(500).json({ success: false, error: err.message || 'Error processing multiplatform request' });
-    }
-  });
-
-  // A/B Video Hook Variants Generator (Powered by Gemini)
-  app.post('/api/gemini/generate-hook-variants', async (req, res) => {
-    try {
-      const { campaignTitle = 'Lanzamiento', tone = 'Sales-driven', productDetails = '' } = req.body;
-      const ai = getGeminiClient();
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.7-flash',
-        contents: `Generate 3 distinct high-converting 3-second video hooks (A/B testing) for Meta Ads and TikTok for campaign "${campaignTitle}". Tone: ${tone}. Details: ${productDetails}.
-Return JSON with format: { "hooks": [ { "id": "A", "type": "Curiosity / Shock", "spokenScript": "...", "onScreenText": "...", "visualDirection": "..." } ] }`,
-        config: {
-          responseMimeType: 'application/json',
-          temperature: 0.8
-        }
-      });
-
-      let hooksData = null;
-      if (response.text) {
-        hooksData = JSON.parse(response.text);
-      }
-
-      return res.json({
-        success: true,
-        hooks: hooksData?.hooks || [
-          { id: 'A', type: 'Curiosidad Directa', spokenScript: `¿Sabías que el 80% de las remodelaciones fallan por este detalle en los acabados?`, onScreenText: '⚠️ NO COMETAS ESTE ERROR', visualDirection: 'Primer plano dinámico al material' },
-          { id: 'B', type: 'Transformación Rápida', spokenScript: `Mira cómo transformamos este espacio comercial en menos de 48 horas.`, onScreenText: '✨ ANTES VS DESPUÉS', visualDirection: 'Transición rápida de antes y después' },
-          { id: 'C', type: 'Exclusividad & Lujo', spokenScript: `Si buscas que tu proyecto luzca como una mansión en Miami Beach, necesitas esto.`, onScreenText: '💎 LUJO ARQUITECTÓNICO', visualDirection: 'Paneo lento con iluminación cálida' }
-        ]
-      });
-    } catch (err: any) {
-      console.warn('Hook variants fallback:', err.message);
-      return res.json({
-        success: true,
-        hooks: [
-          { id: 'A', type: 'Curiosidad Directa', spokenScript: `¿Sabías que el 80% de las remodelaciones fallan por este detalle en los acabados?`, onScreenText: '⚠️ NO COMETAS ESTE ERROR', visualDirection: 'Primer plano dinámico al material' },
-          { id: 'B', type: 'Transformación Rápida', spokenScript: `Mira cómo transformamos este espacio comercial en menos de 48 horas.`, onScreenText: '✨ ANTES VS DESPUÉS', visualDirection: 'Transición rápida de antes y después' },
-          { id: 'C', type: 'Exclusividad & Lujo', spokenScript: `Si buscas que tu proyecto luzca como una mansión en Miami Beach, necesitas esto.`, onScreenText: '💎 LUJO ARQUITECTÓNICO', visualDirection: 'Paneo lento con iluminación cálida' }
-        ]
-      });
     }
   });
 
@@ -584,7 +307,7 @@ Return JSON:
         console.warn('Prompt translation note:', transErr?.message || transErr);
       }
 
-      // Step 2: Try Google Gemini Image Generation (gemini-3.1-flash-image)
+      // Step 2: Google Gemini Image Generation (gemini-3.1-flash-image)
       try {
         const ai = getGeminiClient();
         const response = await ai.models.generateContent({
@@ -619,22 +342,17 @@ Return JSON:
             appliedPrompt: englishDiffusionPrompt,
             notice: 'Imagen generada con alta fidelidad mediante Google Gemini Imagen.'
           });
+        } else {
+           throw new Error("No image data returned from Gemini API");
         }
       } catch (geminiError: any) {
-        console.warn('Gemini Imagen API Notice (falling back to FLUX HD neural engine):', geminiError.message || geminiError);
+        console.error('Gemini Imagen API Error:', geminiError.message || geminiError);
+        return res.status(500).json({ 
+            success: false, 
+            error: `Fallo al generar imagen con Gemini: ${geminiError.message || 'Error desconocido'}`,
+            details: geminiError
+        });
       }
-
-      // Step 3: High-Fidelity FLUX.1 Engine with enhanced English prompt
-      const seed = Math.floor(Math.random() * 10000000);
-      const cleanPrompt = encodeURIComponent(englishDiffusionPrompt.slice(0, 600));
-      const aiGeneratedUrl = `https://image.pollinations.ai/prompt/${cleanPrompt}?width=${width}&height=${height}&seed=${seed}&model=flux&nologo=true&enhance=true`;
-
-      return res.json({
-        success: true,
-        imageUrl: aiGeneratedUrl,
-        appliedPrompt: englishDiffusionPrompt,
-        notice: 'Arte visual de alta fidelidad generado con motor FLUX.1 (8K HDR).'
-      });
     } catch (error: any) {
       console.error('Image generation route error:', error);
       res.status(500).json({ success: false, error: error.message || 'Error generating image' });
