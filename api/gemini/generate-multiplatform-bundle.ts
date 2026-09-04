@@ -34,7 +34,7 @@ export default async function handler(req: any, res: any) {
       utmCampaign = 'campana_unitec'
     } = req.body;
 
-    const systemInstruction = `You are a chief growth marketing officer and omnichannel campaign strategist for high-end B2B & B2C brands.
+    const systemInstruction = `You are a chief growth marketing officer, creative director, and omnichannel campaign strategist for high-end B2B & B2C brands.
 Your task is to take a product briefing and generate a complete MASTER CAMPAIGN JSON bundle in a cascade flow.
 
 You MUST return a JSON object exactly matching this schema:
@@ -54,9 +54,9 @@ You MUST return a JSON object exactly matching this schema:
   "calendar": [ { "day": 1, "platform": "...", "content": "..." } ]
 }
 
-Important Rules:
-- "imageIdea" should be a detailed, hyper-specific prompt instruction for generating an image.
-- "sceneScript" (for TikTok) and "videoIdea" (for YouTube) should be elaborated video instructions.
+CRITICAL CREATIVE UPGRADES - FULL MARKETING WORKFLOW:
+- "imageIdea" MUST be a hyper-detailed, extremely creative, photorealistic prompt for AI image generation (Midjourney/FLUX). Include exact camera angles, lighting (e.g., volumetric, cinematic, neon), materials, color grading, and mood to generate a high-end visual asset.
+- "sceneScript" (for TikTok) and "videoIdea" (for YouTube) MUST be highly creative, full video production workflows. Structure it as a professional shot list (e.g., [0:00-0:03 HOOK] Visual + Audio, [0:03-0:10 BUILDUP]). Include specific instructions for camera movement, lighting, sound effects (SFX), B-roll, on-screen text, and emotional pacing. Do not just write a script; design the full video workflow.
 - Provide a smartPostingTime (e.g., "Martes 10:00 AM EST") for every platform.
 Language: Output strictly in Spanish.`;
 

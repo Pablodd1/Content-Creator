@@ -106,7 +106,7 @@ async function startServer() {
         utmCampaign = 'campana_unitec'
       } = req.body;
 
-      const systemInstruction = `You are a chief growth marketing officer and omnichannel campaign strategist for high-end B2B & B2C brands.
+      const systemInstruction = `You are a chief growth marketing officer, creative director, and omnichannel campaign strategist for high-end B2B & B2C brands.
 Your task is to take a product briefing and generate a complete MASTER CAMPAIGN JSON bundle in a cascade flow.
 
 You MUST return a JSON object exactly matching this schema:
@@ -126,9 +126,9 @@ You MUST return a JSON object exactly matching this schema:
   "calendar": [ { "day": 1, "platform": "...", "content": "..." } ]
 }
 
-Important Rules:
-- "imageIdea" should be a detailed, hyper-specific prompt instruction for generating an image.
-- "sceneScript" (for TikTok) and "videoIdea" (for YouTube) should be elaborated video instructions.
+CRITICAL CREATIVE UPGRADES - FULL MARKETING WORKFLOW:
+- "imageIdea" MUST be a hyper-detailed, extremely creative, photorealistic prompt for AI image generation (Midjourney/FLUX). Include exact camera angles, lighting (e.g., volumetric, cinematic, neon), materials, color grading, and mood to generate a high-end visual asset.
+- "sceneScript" (for TikTok) and "videoIdea" (for YouTube) MUST be highly creative, full video production workflows. Structure it as a professional shot list (e.g., [0:00-0:03 HOOK] Visual + Audio, [0:03-0:10 BUILDUP]). Include specific instructions for camera movement, lighting, sound effects (SFX), B-roll, on-screen text, and emotional pacing. Do not just write a script; design the full video workflow.
 - Provide a smartPostingTime (e.g., "Martes 10:00 AM EST") for every platform.
 Language: Output strictly in Spanish.`;
 
@@ -235,14 +235,14 @@ Language: Output strictly in Spanish.`;
         const ai = getGeminiClient();
         const response = await ai.models.generateContent({
           model: 'gemini-3.7-flash',
-          contents: `You are an expert AI prompt engineer for image generators (Midjourney v6, Google Imagen 3, FLUX.1).
+          contents: `You are an elite creative director and AI prompt engineer (Midjourney v6, Google Imagen 3, FLUX.1) for high-end brands.
 Take this user prompt: "${prompt}".
 Style preset: "${style}".
 Context/Product: "${context}".
 
-Generate two versions of an ultra-detailed, photorealistic prompt that follows the prompt to every specific detail (materials, exact colors, lighting setup, camera focal length, atmosphere, sharp focus):
-1. A rich Spanish description for the user UI.
-2. A master English prompt (max 100 words) optimized for image diffusion models.
+Generate two versions of an ultra-detailed, photorealistic prompt that follows the base prompt but drastically upgrades it into a full creative marketing visual workflow. Specify exact materials, colors, high-end lighting setup (e.g. rim lighting, cinematic volumetrics), camera focal length, atmosphere, sharp focus, and set design composition.
+1. A rich Spanish description (marketing visual workflow) for the creative team.
+2. A master English prompt (max 120 words) perfectly optimized for image diffusion models.
 
 Return JSON:
 {
@@ -279,6 +279,44 @@ Return JSON:
 
   // Google Gemini & AI Image Generation Endpoint (High-Fidelity)
   app.post('/api/gemini/generate-image', async (req, res) => {
+
+  // Independent Video Script Generation Endpoint
+  app.post('/api/gemini/generate-video-script', async (req, res) => {
+    try {
+      const { prompt, platform = 'TikTok' } = req.body;
+      if (!prompt) {
+        return res.status(400).json({ success: false, error: 'Prompt es requerido.' });
+      }
+
+      const ai = getGeminiClient();
+      const systemInstruction = `You are an elite creative director and video producer. 
+Your task is to take the user's prompt and generate a highly creative, full video production workflow/script for ${platform}.
+Structure it as a professional shot list (e.g., [0:00-0:03 HOOK] Visual + Audio, [0:03-0:10 BUILDUP]). 
+Include specific instructions for camera movement, lighting, SFX, B-roll, on-screen text, and emotional pacing. 
+Do not just write a script; design the full video workflow.
+Language: Output strictly in Spanish.`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.7-flash',
+        contents: prompt,
+        config: {
+          systemInstruction,
+          temperature: 0.7,
+        }
+      });
+
+      return res.status(200).json({
+        success: true,
+        script: response.text
+      });
+    } catch (err: any) {
+      console.error('Video Script API error:', err);
+      return res.status(500).json({ 
+         success: false, 
+         error: err.message || 'Error processing video script request' 
+       });
+    }
+  });
     try {
       const { prompt, aspectRatio = '1:1', style = 'Comercial & Producto 8K' } = req.body;
       if (!prompt || !prompt.trim()) {
@@ -514,3 +552,4 @@ Return JSON:
 startServer().catch((err) => {
   console.error('Fatal server startup error:', err);
 });
+// trigger rebuild

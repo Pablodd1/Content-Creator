@@ -27,7 +27,7 @@ export default function WizardBriefing({ onComplete }: BriefingProps) {
     const selected = e.target.files;
     if (!selected || selected.length === 0) return;
     
-    Array.from(selected).forEach(file => {
+    Array.from(selected).forEach((file: File) => {
       const isText = file.type.startsWith('text/') || file.name.endsWith('.txt');
       const isImg = file.type.startsWith('image/');
       

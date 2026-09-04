@@ -3,7 +3,9 @@ import WizardBriefing from './components/WizardBriefing';
 import WizardContent from './components/WizardContent';
 import WizardVisuals from './components/WizardVisuals';
 import WizardStrategy from './components/WizardStrategy';
-import { Loader2, Zap } from 'lucide-react';
+import StandaloneImage from './components/StandaloneImage';
+import StandaloneVideo from './components/StandaloneVideo';
+import { Loader2, Zap, ImageIcon, Video, LayoutTemplate } from 'lucide-react';
 
 export interface AttachedFile {
   id: string;
@@ -16,6 +18,7 @@ export interface AttachedFile {
 }
 
 export default function App() {
+  const [mode, setMode] = useState<'wizard' | 'standalone-image' | 'standalone-video'>('wizard');
   const [step, setStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [masterBundle, setMasterBundle] = useState<any>(null);
@@ -57,6 +60,7 @@ export default function App() {
           tone: data.tone
         })
       });
+
       const result = await res.json();
       if (result.success) {
         setMasterBundle(result.variants);
@@ -71,7 +75,10 @@ export default function App() {
     }
   };
 
-  const renderStep = () => {
+  const renderContent = () => {
+    if (mode === 'standalone-image') return <StandaloneImage />;
+    if (mode === 'standalone-video') return <StandaloneVideo />;
+
     if (isGenerating) {
       return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 animate-in fade-in zoom-in duration-500">
@@ -110,24 +117,49 @@ export default function App() {
               <Zap size={20} />
             </div>
             <div>
-              <h1 className="text-base font-black tracking-tight leading-tight">UNITEC Content Engine</h1>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Flujo de Agencia 100% IA</p>
+              <h1 className="text-base font-black tracking-tight leading-tight hidden md:block">UNITEC Content Engine</h1>
+              <h1 className="text-base font-black tracking-tight leading-tight md:hidden">UNITEC</h1>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider hidden md:block">Flujo de Agencia 100% IA</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2 mx-auto md:mx-0 flex-1 md:flex-none justify-center px-4">
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+              <button 
+                onClick={() => setMode('wizard')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${mode === 'wizard' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+              >
+                <LayoutTemplate size={14} /> <span className="hidden sm:inline">Campaña Completa</span>
+              </button>
+              <button 
+                onClick={() => setMode('standalone-image')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${mode === 'standalone-image' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+              >
+                <ImageIcon size={14} /> <span className="hidden sm:inline">Solo Imagen</span>
+              </button>
+              <button 
+                onClick={() => setMode('standalone-video')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${mode === 'standalone-video' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+              >
+                <Video size={14} /> <span className="hidden sm:inline">Solo Video</span>
+              </button>
             </div>
           </div>
           
           <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-2 text-xs font-bold text-slate-500">
-              <span className={step >= 1 ? 'text-blue-600 dark:text-blue-400' : ''}>1. Brief</span>
-              <span className="opacity-30">&gt;</span>
-              <span className={step >= 2 ? 'text-blue-600 dark:text-blue-400' : ''}>2. Copy</span>
-              <span className="opacity-30">&gt;</span>
-              <span className={step >= 3 ? 'text-blue-600 dark:text-blue-400' : ''}>3. Visual</span>
-              <span className="opacity-30">&gt;</span>
-              <span className={step >= 4 ? 'text-blue-600 dark:text-blue-400' : ''}>4. Estrategia</span>
-            </div>
-
+            {mode === 'wizard' && (
+              <div className="hidden lg:flex items-center gap-2 text-[10px] font-bold text-slate-500">
+                <span className={step >= 1 ? 'text-blue-600 dark:text-blue-400' : ''}>1. Brief</span>
+                <span className="opacity-30">&gt;</span>
+                <span className={step >= 2 ? 'text-blue-600 dark:text-blue-400' : ''}>2. Copy</span>
+                <span className="opacity-30">&gt;</span>
+                <span className={step >= 3 ? 'text-blue-600 dark:text-blue-400' : ''}>3. Visual</span>
+                <span className="opacity-30">&gt;</span>
+                <span className={step >= 4 ? 'text-blue-600 dark:text-blue-400' : ''}>4. Estrategia</span>
+              </div>
+            )}
             <button 
-              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} 
+              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
               className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
             >
               {theme === 'light' ? '🌙' : '☀️'}
@@ -137,7 +169,7 @@ export default function App() {
       </header>
 
       <main className="py-8">
-        {renderStep()}
+        {renderContent()}
       </main>
     </div>
   );

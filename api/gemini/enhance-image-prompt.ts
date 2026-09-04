@@ -30,14 +30,14 @@ export default async function handler(req: any, res: any) {
 
     const response = await ai.models.generateContent({
       model: 'gemini-3.7-flash',
-      contents: `You are an expert AI prompt engineer for image generators (Midjourney v6, Google Imagen 3, FLUX.1).
+      contents: `You are an elite creative director and AI prompt engineer (Midjourney v6, Google Imagen 3, FLUX.1) for high-end brands.
 Take this user prompt: "${prompt}".
 Style preset: "${style}".
 Context/Product: "${context}".
 
-Generate two versions of an ultra-detailed, photorealistic prompt that follows the prompt to every specific detail (materials, exact colors, lighting setup, camera focal length, atmosphere, sharp focus):
-1. A rich Spanish description for the user UI.
-2. A master English prompt (max 100 words) optimized for image diffusion models.
+Generate two versions of an ultra-detailed, photorealistic prompt that follows the base prompt but drastically upgrades it into a full creative marketing visual workflow. Specify exact materials, colors, high-end lighting setup (e.g. rim lighting, cinematic volumetrics), camera focal length, atmosphere, sharp focus, and set design composition.
+1. A rich Spanish description (marketing visual workflow) for the creative team.
+2. A master English prompt (max 120 words) perfectly optimized for image diffusion models.
 
 Return JSON:
 {
