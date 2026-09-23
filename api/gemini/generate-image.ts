@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { promptRefiner } from "../../src/services/promptRefiner";
 
 export default async function handler(req: any, res: any) {
   // CORS configuration for Vercel
@@ -21,7 +22,15 @@ export default async function handler(req: any, res: any) {
       throw new Error("GEMINI_API_KEY no está configurada en las variables de entorno de Vercel.");
     }
 
-    const { prompt, aspectRatio = '1:1', style = 'Comercial & Producto 8K' } = req.body;
+    const { 
+      prompt, 
+      aspectRatio = '1:1', 
+      style = 'Comercial & Producto 8K', 
+      referenceImage,
+      referenceEmailText = '',
+      architecturalTemplateId,
+      architecturalOverrides 
+    } = req.body;
     if (!prompt || !prompt.trim()) {
       return res.status(400).json({ success: false, error: 'Se requiere una descripción (prompt) para generar la imagen.' });
     }
@@ -31,41 +40,85 @@ export default async function handler(req: any, res: any) {
 
     const ai = new GoogleGenAI({ apiKey });
 
-    // Step 1: Translate and enrich prompt to English
-    let englishDiffusionPrompt = prompt.trim();
-    try {
-      const transRes = await ai.models.generateContent({
-        model: 'gemini-3.7-flash',
-        contents: `Translate and optimize this image generation prompt into English for high-end photorealistic image generation (FLUX / Imagen 3). Ensure all specific objects, materials, architectural finishes, colors, textures, and lighting from the prompt are strictly preserved and described with crystal clarity. Style: ${style}. User prompt: "${prompt}". Output ONLY the optimized English prompt string, no quotes, no markdown.`
-      });
-      if (transRes.text && transRes.text.trim().length > 10) {
-        englishDiffusionPrompt = transRes.text.trim();
-      }
-    } catch (transErr: any) {
-      console.warn('Prompt translation fallback:', transErr?.message || transErr);
-    }
+    // Step 1: Intercept raw visual request with Prompt Refiner service
+    const refinerResult = await promptRefiner.refinePromptWithArchitecturalTemplates({
+      rawPrompt: prompt.trim(),
+      templateId: architecturalTemplateId,
+      aspectRatio: finalRatio,
+      style,
+      referenceImage,
+      referenceEmailText,
+      customOverrides: architecturalOverrides
+    }, ai);
+
+    const englishDiffusionPrompt = refinerResult.refinedEnglishPrompt;
 
     // Step 2: Google Gemini Image Generation
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.1-flash-image',
-      contents: {
-        parts: [{ text: englishDiffusionPrompt }]
-      },
-      config: {
-        imageConfig: {
-          aspectRatio: finalRatio as any,
-          imageSize: '1K'
-        }
+    const contentParts: any[] = [];
+    if (referenceImage && typeof referenceImage === 'string') {
+      let mimeType = 'image/png';
+      let base64Data = referenceImage;
+      if (referenceImage.includes(';base64,')) {
+        const splitData = referenceImage.split(';base64,');
+        mimeType = splitData[0].replace('data:', '') || 'image/png';
+        base64Data = splitData[1];
       }
-    });
+      contentParts.push({
+        inlineData: {
+          data: base64Data,
+          mimeType: mimeType
+        }
+      });
+    }
+    contentParts.push({ text: englishDiffusionPrompt });
 
     let foundImageUrl = '';
-    if (response.candidates && response.candidates[0]?.content?.parts) {
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData && part.inlineData.data) {
-          const mime = part.inlineData.mimeType || 'image/png';
-          foundImageUrl = `data:${mime};base64,${part.inlineData.data}`;
-          break;
+    let usedModel = 'gemini-3.1-flash-image';
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.1-flash-image',
+        contents: {
+          parts: contentParts
+        },
+        config: {
+          imageConfig: {
+            aspectRatio: finalRatio as any,
+            imageSize: '1K'
+          }
+        }
+      });
+
+      if (response.candidates && response.candidates[0]?.content?.parts) {
+        for (const part of response.candidates[0].content.parts) {
+          if (part.inlineData && part.inlineData.data) {
+            const mime = part.inlineData.mimeType || 'image/png';
+            foundImageUrl = `data:${mime};base64,${part.inlineData.data}`;
+            break;
+          }
+        }
+      }
+    } catch (primaryErr: any) {
+      console.warn('Fallback to gemini-3.1-flash-lite-image:', primaryErr.message);
+      usedModel = 'gemini-3.1-flash-lite-image';
+      const fallbackRes = await ai.models.generateContent({
+        model: 'gemini-3.1-flash-lite-image',
+        contents: {
+          parts: contentParts
+        },
+        config: {
+          imageConfig: {
+            aspectRatio: finalRatio as any
+          }
+        }
+      });
+      if (fallbackRes.candidates && fallbackRes.candidates[0]?.content?.parts) {
+        for (const part of fallbackRes.candidates[0].content.parts) {
+          if (part.inlineData && part.inlineData.data) {
+            const mime = part.inlineData.mimeType || 'image/png';
+            foundImageUrl = `data:${mime};base64,${part.inlineData.data}`;
+            break;
+          }
         }
       }
     }
@@ -74,9 +127,14 @@ export default async function handler(req: any, res: any) {
       return res.status(200).json({ 
         success: true, 
         imageUrl: foundImageUrl,
-        model: 'gemini-3.1-flash-image',
+        model: usedModel,
         appliedPrompt: englishDiffusionPrompt,
-        notice: 'Imagen generada con alta fidelidad mediante Google Gemini Imagen.'
+        refinedPrompt: refinerResult?.refinedSpanishPrompt,
+        architecturalSpecs: refinerResult?.architecturalSpecs,
+        templateUsed: refinerResult?.templateUsed,
+        promptRefinerActive: true,
+        hasReference: !!referenceImage,
+        notice: `Imagen generada con el servicio Prompt Refiner Arquitectónico (${refinerResult?.templateUsed?.name || 'Profesional'}).`
       });
     } else {
        throw new Error("No image data returned from Gemini API");

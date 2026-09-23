@@ -1,7 +1,15 @@
 import React from 'react';
-import { Copy, Instagram, Linkedin, Video, Mail, CheckCircle2, Facebook, Youtube, Clock } from 'lucide-react';
+import { Copy, Instagram, Linkedin, Video, Mail, CheckCircle2, Facebook, Youtube, Clock, ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
 
-export default function WizardContent({ data, onNext }: { data: any, onNext: () => void }) {
+export default function WizardContent({ 
+  data, 
+  onNext, 
+  onBack 
+}: { 
+  data: any; 
+  onNext: () => void; 
+  onBack?: () => void; 
+}) {
   const [copied, setCopied] = React.useState('');
 
   const handleCopy = (text: string, id: string) => {
@@ -10,7 +18,29 @@ export default function WizardContent({ data, onNext }: { data: any, onNext: () 
     setTimeout(() => setCopied(''), 2000);
   };
 
-  if (!data) return <div className="p-8 text-center">No hay contenido generado.</div>;
+  if (!data) {
+    return (
+      <div className="max-w-xl mx-auto my-12 p-8 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl text-center space-y-4 shadow-sm">
+        <div className="w-12 h-12 bg-blue-50 dark:bg-blue-950/50 rounded-full flex items-center justify-center mx-auto text-blue-600 dark:text-blue-400">
+          <Sparkles size={24} />
+        </div>
+        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+          Aún no se ha generado la campaña
+        </h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Completa los datos en el Paso 1 (Briefing) para que Gemini genere automáticamente todos los copies y conceptos visuales.
+        </p>
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition-colors"
+          >
+            <ArrowLeft size={14} /> Ir al Paso 1: Completar Briefing
+          </button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 animate-in fade-in zoom-in-95 duration-300">
@@ -154,12 +184,20 @@ export default function WizardContent({ data, onNext }: { data: any, onNext: () 
 
       </div>
 
-      <div className="pt-6 flex justify-end">
+      <div className="pt-6 flex items-center justify-between border-t border-gray-100 dark:border-slate-800">
+        {onBack ? (
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-800 font-bold text-xs text-slate-700 dark:text-slate-300 transition-colors"
+          >
+            <ArrowLeft size={14} /> Volver a Paso 1 (Briefing)
+          </button>
+        ) : <div />}
         <button 
           onClick={onNext}
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all"
+          className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2"
         >
-          Ir a Generación Visual (Imagen & Video) &rarr;
+          Ir a Generación Visual (Imagen & Video) <ArrowRight size={16} />
         </button>
       </div>
     </div>

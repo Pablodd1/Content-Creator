@@ -1,8 +1,16 @@
 import React from 'react';
-import { Calendar, Hash, Target, BarChart3, LineChart as LineChartIcon, Activity } from 'lucide-react';
+import { Calendar, Hash, Target, BarChart3, LineChart as LineChartIcon, Activity, ArrowLeft, RefreshCw } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 
-export default function WizardStrategy({ data, onRestart }: { data: any, onRestart: () => void }) {
+export default function WizardStrategy({ 
+  data, 
+  onRestart,
+  onBack
+}: { 
+  data: any; 
+  onRestart: () => void;
+  onBack?: () => void;
+}) {
   if (!data) return <div className="p-8 text-center">No hay estrategia generada.</div>;
 
   // Mock data for visual analytics based on the generative response
@@ -152,12 +160,22 @@ export default function WizardStrategy({ data, onRestart }: { data: any, onResta
         </div>
       </div>
 
-      <div className="pt-8 flex justify-center">
+      <div className="pt-8 flex items-center justify-between border-t border-gray-100 dark:border-slate-800">
+        {onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-800 font-bold text-xs text-slate-700 dark:text-slate-300 transition-colors"
+          >
+            <ArrowLeft size={14} /> Volver a Visuales (Paso 3)
+          </button>
+        ) : <div />}
         <button 
+          type="button"
           onClick={onRestart}
-          className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-8 py-3 rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all"
+          className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-8 py-3 rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2"
         >
-          Finalizar y Crear Nueva Campaña
+          <RefreshCw size={14} /> Finalizar y Crear Nueva Campaña
         </button>
       </div>
     </div>

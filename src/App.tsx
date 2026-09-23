@@ -6,6 +6,7 @@ import WizardStrategy from './components/WizardStrategy';
 import StandaloneImage from './components/StandaloneImage';
 import StandaloneVideo from './components/StandaloneVideo';
 import { Loader2, Zap, ImageIcon, Video, LayoutTemplate } from 'lucide-react';
+import { storage } from './utils/storage';
 
 export interface AttachedFile {
   id: string;
@@ -18,13 +19,28 @@ export interface AttachedFile {
 }
 
 export default function App() {
-  const [mode, setMode] = useState<'wizard' | 'standalone-image' | 'standalone-video'>('wizard');
-  const [step, setStep] = useState(1);
+  const [mode, setModeState] = useState<'wizard' | 'standalone-image' | 'standalone-video'>(() => storage.getMode());
+  const [step, setStepState] = useState<number>(() => storage.getStep());
   const [isGenerating, setIsGenerating] = useState(false);
-  const [masterBundle, setMasterBundle] = useState<any>(null);
+  const [masterBundle, setMasterBundleState] = useState<any>(() => storage.getMasterBundle());
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('unitec_theme') as 'light' | 'dark') || 'light';
   });
+
+  const setMode = (newMode: 'wizard' | 'standalone-image' | 'standalone-video') => {
+    setModeState(newMode);
+    storage.saveMode(newMode);
+  };
+
+  const setStep = (newStep: number) => {
+    setStepState(newStep);
+    storage.saveStep(newStep);
+  };
+
+  const setMasterBundle = (bundle: any) => {
+    setMasterBundleState(bundle);
+    storage.saveMasterBundle(bundle);
+  };
 
   useEffect(() => {
     localStorage.setItem('unitec_theme', theme);
@@ -94,15 +110,37 @@ export default function App() {
       );
     }
 
+    const savedBrief = storage.getBriefingState();
+    const attachedFiles = savedBrief?.files || savedBrief?.attachedFiles || [];
+
     switch (step) {
       case 1:
         return <WizardBriefing onComplete={handleBriefingComplete} />;
       case 2:
-        return <WizardContent data={masterBundle} onNext={() => setStep(3)} />;
+        return (
+          <WizardContent 
+            data={masterBundle} 
+            onNext={() => setStep(3)} 
+            onBack={() => setStep(1)} 
+          />
+        );
       case 3:
-        return <WizardVisuals masterBrief={masterBundle} onNext={() => setStep(4)} />;
+        return (
+          <WizardVisuals 
+            masterBrief={masterBundle} 
+            onNext={() => setStep(4)} 
+            onBack={() => setStep(2)}
+            attachedFiles={attachedFiles}
+          />
+        );
       case 4:
-        return <WizardStrategy data={masterBundle} onRestart={() => setStep(1)} />;
+        return (
+          <WizardStrategy 
+            data={masterBundle} 
+            onRestart={() => setStep(1)} 
+            onBack={() => setStep(3)}
+          />
+        );
       default:
         return <WizardBriefing onComplete={handleBriefingComplete} />;
     }
@@ -148,14 +186,41 @@ export default function App() {
           
           <div className="flex items-center gap-4">
             {mode === 'wizard' && (
-              <div className="hidden lg:flex items-center gap-2 text-[10px] font-bold text-slate-500">
-                <span className={step >= 1 ? 'text-blue-600 dark:text-blue-400' : ''}>1. Brief</span>
-                <span className="opacity-30">&gt;</span>
-                <span className={step >= 2 ? 'text-blue-600 dark:text-blue-400' : ''}>2. Copy</span>
-                <span className="opacity-30">&gt;</span>
-                <span className={step >= 3 ? 'text-blue-600 dark:text-blue-400' : ''}>3. Visual</span>
-                <span className="opacity-30">&gt;</span>
-                <span className={step >= 4 ? 'text-blue-600 dark:text-blue-400' : ''}>4. Estrategia</span>
+              <div className="hidden lg:flex items-center gap-1.5 text-[11px] font-bold">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className={`px-2 py-1 rounded transition-colors ${step === 1 ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-800'}`}
+                >
+                  1. Brief
+                </button>
+                <span className="opacity-30 text-slate-400">&gt;</span>
+                <button
+                  type="button"
+                  onClick={() => masterBundle ? setStep(2) : null}
+                  disabled={!masterBundle}
+                  className={`px-2 py-1 rounded transition-colors ${step === 2 ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400' : masterBundle ? 'text-slate-500 hover:text-slate-800 cursor-pointer' : 'text-slate-300 dark:text-slate-700 cursor-not-allowed'}`}
+                >
+                  2. Copy
+                </button>
+                <span className="opacity-30 text-slate-400">&gt;</span>
+                <button
+                  type="button"
+                  onClick={() => masterBundle ? setStep(3) : null}
+                  disabled={!masterBundle}
+                  className={`px-2 py-1 rounded transition-colors ${step === 3 ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400' : masterBundle ? 'text-slate-500 hover:text-slate-800 cursor-pointer' : 'text-slate-300 dark:text-slate-700 cursor-not-allowed'}`}
+                >
+                  3. Visual
+                </button>
+                <span className="opacity-30 text-slate-400">&gt;</span>
+                <button
+                  type="button"
+                  onClick={() => masterBundle ? setStep(4) : null}
+                  disabled={!masterBundle}
+                  className={`px-2 py-1 rounded transition-colors ${step === 4 ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400' : masterBundle ? 'text-slate-500 hover:text-slate-800 cursor-pointer' : 'text-slate-300 dark:text-slate-700 cursor-not-allowed'}`}
+                >
+                  4. Estrategia
+                </button>
               </div>
             )}
             <button 
