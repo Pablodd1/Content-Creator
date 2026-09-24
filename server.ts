@@ -8,7 +8,7 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import { GoogleGenAI } from '@google/genai';
-import { promptRefiner, ARCHITECTURAL_TEMPLATES } from './src/services/promptRefiner';
+import { promptRefiner, ARCHITECTURAL_TEMPLATES } from './src/services/promptRefiner.ts';
 
 // Lazy-initialized Gemini client following development guidelines
 let aiClient: GoogleGenAI | null = null;
@@ -30,7 +30,26 @@ function getGeminiClient(): GoogleGenAI {
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const args = process.argv.slice(2);
+  const portArgIndex = args.indexOf('--port');
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const candidateDirs = [
+    path.join(process.cwd(), 'dist'),
+    process.cwd()
+  ];
+  let distPath = path.join(process.cwd(), 'dist');
+  for (const dir of candidateDirs) {
+    if (fs.existsSync(path.join(dir, 'index.html'))) {
+      distPath = dir;
+      break;
+    }
+  }
+  const indexPath = path.join(distPath, 'index.html');
+  const hasDist = fs.existsSync(indexPath);
+
+  const PORT = portArgIndex !== -1 && args[portArgIndex + 1]
+    ? parseInt(args[portArgIndex + 1], 10)
+    : parseInt(process.env.PORT || '3000', 10);
 
   // JSON request parsing support
   app.use(express.json());
@@ -992,8 +1011,8 @@ Output ONLY the final optimized English prompt in one single sentence (120-160 w
     }
   });
 
-  // Vite middleware setup
-  if (process.env.NODE_ENV !== 'production') {
+  // In development mode (without pre-built dist), mount Vite middlewares for HMR
+  if (isDevelopment && !hasDist) {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -1001,11 +1020,12 @@ Output ONLY the final optimized English prompt in one single sentence (120-160 w
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    const indexPath = path.join(distPath, 'index.html');
-    
+    // In production or when dist exists, serve static pre-built files
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
+      if (req.path.startsWith('/api')) {
+        return res.status(404).json({ error: `Endpoint not found: ${req.path}` });
+      }
       if (fs.existsSync(indexPath)) {
         res.sendFile(indexPath);
       } else {
@@ -1014,8 +1034,16 @@ Output ONLY the final optimized English prompt in one single sentence (120-160 w
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on http://0.0.0.0:${PORT}`);
+  });
+
+  server.on('error', (err: any) => {
+    if (err.code === 'EADDRINUSE') {
+      console.warn(`Port ${PORT} already in use; a server instance is already running.`);
+    } else {
+      console.error(`Server error on port ${PORT}:`, err);
+    }
   });
 }
 

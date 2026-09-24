@@ -123,6 +123,25 @@ export const storage = {
     } catch {}
   },
 
+  // Active Base Example Cache for Cross-component sharing
+  getActiveBaseExample: () => {
+    try {
+      const data = localStorage.getItem('unitec_active_base_example');
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
+    }
+  },
+  saveActiveBaseExample: (example: any) => {
+    try {
+      if (example) {
+        localStorage.setItem('unitec_active_base_example', JSON.stringify(example));
+      } else {
+        localStorage.removeItem('unitec_active_base_example');
+      }
+    } catch {}
+  },
+
   // Generated Images History
   getGeneratedImages: (): SavedImageItem[] => {
     try {

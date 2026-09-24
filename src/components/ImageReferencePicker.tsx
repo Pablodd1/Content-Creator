@@ -71,7 +71,7 @@ export default function ImageReferencePicker({
           <button
             type="button"
             onClick={() => onSelectReference(null)}
-            className="text-[11px] font-bold text-red-500 hover:text-red-700 flex items-center gap-1"
+            className="text-[11px] font-bold text-red-500 hover:text-red-700 flex items-center gap-1 cursor-pointer"
           >
             <X size={12} /> Quitar referencia
           </button>
@@ -96,7 +96,7 @@ export default function ImageReferencePicker({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="text-xs bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-2.5 py-1.5 rounded-md font-medium text-slate-700 dark:text-slate-300"
+            className="text-xs bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-2.5 py-1.5 rounded-md font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
           >
             Cambiar
           </button>
@@ -114,6 +114,7 @@ export default function ImageReferencePicker({
             </div>
           </div>
 
+          {/* Uploaded User Images if any */}
           {mergedAvailableImages.length > 0 && (
             <div className="space-y-1.5">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ImageIcon, Loader2, Sparkles, Download, FileText, Layers, CheckCircle2, ShieldCheck, Instagram, Video, Monitor, Wand2, Building2, Camera, Compass, Sliders, ChevronDown, ChevronUp } from 'lucide-react';
 import PromptStructureGuide from './PromptStructureGuide';
 import ImageReferencePicker from './ImageReferencePicker';
@@ -498,7 +498,7 @@ export default function StandaloneImage() {
                   >
                     <Download size={15} /> Descargar Imagen HQ ({imageResolution})
                   </button>
-                  <button
+                  <button 
                     type="button"
                     onClick={() => setReferenceImage(generatedImg)}
                     className="px-3 py-2.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"

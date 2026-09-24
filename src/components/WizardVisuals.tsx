@@ -505,13 +505,13 @@ export default function WizardVisuals({
                 <div className="flex gap-2">
                   <button 
                     onClick={() => handleDownloadImage()} 
-                    className="flex-1 py-2.5 bg-slate-900 hover:bg-black dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-sm"
+                    className="flex-1 py-2.5 bg-slate-900 hover:bg-black dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-sm cursor-pointer"
                   >
-                    <Download size={15} /> Descargar Imagen HR
+                    <Download size={15} /> Descargar Imagen HR ({imageResolution})
                   </button>
-                  <button
+                  <button 
                     onClick={() => setReferenceImage(generatedImg)}
-                    className="px-3 py-2.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+                    className="px-3 py-2.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                     title="Usar esta imagen como referencia para variaciones"
                   >
                     <Layers size={14} /> Como Referencia
