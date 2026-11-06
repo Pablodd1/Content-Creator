@@ -112,9 +112,9 @@ export const storage = {
       if (m === 'standalone-image' || m === 'standalone-video' || m === 'wizard') {
         return m;
       }
-      return 'wizard';
+      return 'standalone-image';
     } catch {
-      return 'wizard';
+      return 'standalone-image';
     }
   },
   saveMode: (mode: 'wizard' | 'standalone-image' | 'standalone-video') => {

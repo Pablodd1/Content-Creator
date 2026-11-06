@@ -8,7 +8,7 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import { GoogleGenAI } from '@google/genai';
-import { promptRefiner, ARCHITECTURAL_TEMPLATES } from './src/services/promptRefiner.ts';
+import { promptRefiner, ARCHITECTURAL_TEMPLATES, UNITEC_PRODUCT_CATALOG, SAFE_ZONE_1080X1920_SPEC } from './src/services/promptRefiner.ts';
 
 // Lazy-initialized Gemini client following development guidelines
 let aiClient: GoogleGenAI | null = null;
@@ -32,20 +32,10 @@ async function startServer() {
   const app = express();
   const args = process.argv.slice(2);
   const portArgIndex = args.indexOf('--port');
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  const candidateDirs = [
-    path.join(process.cwd(), 'dist'),
-    process.cwd()
-  ];
-  let distPath = path.join(process.cwd(), 'dist');
-  for (const dir of candidateDirs) {
-    if (fs.existsSync(path.join(dir, 'index.html'))) {
-      distPath = dir;
-      break;
-    }
-  }
-  const indexPath = path.join(distPath, 'index.html');
-  const hasDist = fs.existsSync(indexPath);
+  const isProduction = process.env.NODE_ENV === 'production';
+  const distDir = path.join(process.cwd(), 'dist');
+  const distIndexHtml = path.join(distDir, 'index.html');
+  const hasDist = fs.existsSync(distIndexHtml);
 
   const PORT = portArgIndex !== -1 && args[portArgIndex + 1]
     ? parseInt(args[portArgIndex + 1], 10)
@@ -112,22 +102,25 @@ async function startServer() {
     }
   });
 
-  // Architectural Photography Prompt Refiner Service: List Templates
+  // Architectural Photography Prompt Refiner Service: List Templates & Product Catalog
   app.get('/api/prompt-refiner/templates', (req, res) => {
     res.json({
       success: true,
       count: ARCHITECTURAL_TEMPLATES.length,
-      templates: ARCHITECTURAL_TEMPLATES
+      templates: ARCHITECTURAL_TEMPLATES,
+      catalog: UNITEC_PRODUCT_CATALOG,
+      safeZoneSpec: SAFE_ZONE_1080X1920_SPEC
     });
   });
 
-  // Architectural Photography Prompt Refiner Service: On-demand Refinement
+  // Architectural Photography Prompt Refiner Service: On-demand Unified Refinement
   app.post('/api/prompt-refiner/refine', async (req, res) => {
     try {
       const {
         prompt = '',
         templateId,
-        aspectRatio = '1:1',
+        productCatalogId,
+        aspectRatio = '9:16',
         style = 'Comercial & Producto 8K',
         referenceImage,
         referenceEmailText = '',
@@ -148,6 +141,7 @@ async function startServer() {
       const result = await promptRefiner.refinePromptWithArchitecturalTemplates({
         rawPrompt: prompt.trim(),
         templateId,
+        productCatalogId,
         aspectRatio,
         style,
         referenceImage,
@@ -643,17 +637,18 @@ Language: Output strictly in Spanish.`;
     }
   });
 
-  // Google Gemini & AI Image Generation Endpoint (High-Fidelity 2K/1K with Reference Image & Social Optimization)
+  // Google Gemini & AI Image Generation Endpoint (Unified Pipeline: Product Detection + Technical Datasheet + 1080x1920 Safe Zone)
   app.post('/api/gemini/generate-image', async (req, res) => {
     try {
       const { 
         prompt, 
-        aspectRatio = '1:1', 
+        aspectRatio = '9:16', 
         style = 'Comercial & Producto 8K', 
         referenceImage,
         referenceEmailText = '',
         resolution = '2K',
         architecturalTemplateId,
+        productCatalogId,
         architecturalOverrides
       } = req.body;
 
@@ -662,17 +657,19 @@ Language: Output strictly in Spanish.`;
       }
 
       const validAspectRatios = ['1:1', '3:4', '4:3', '9:16', '16:9'];
-      const finalRatio = validAspectRatios.includes(aspectRatio) ? aspectRatio : '1:1';
+      const finalRatio = validAspectRatios.includes(aspectRatio) ? aspectRatio : '9:16';
 
-      // Step 1: Prompt Refiner Service intercepts raw visual request and enhances it
-      // using the library of professional architectural photography prompt templates
-      // (specifying lighting, lens focal length, camera settings, and material texture settings)
+      // Step 1: Unified Prompt Refiner intercepts raw request:
+      // - Auto-detects product name from prompt (independent of other modules)
+      // - Links exact Ficha Técnica benefits from UNITEC catalog
+      // - Enforces 1080x1920 (central 1080x1350 safe zone) composition
       let refinerResult;
       try {
         const ai = getGeminiClient();
         refinerResult = await promptRefiner.refinePromptWithArchitecturalTemplates({
           rawPrompt: prompt.trim(),
           templateId: architecturalTemplateId,
+          productCatalogId,
           aspectRatio: finalRatio,
           style,
           referenceImage,
@@ -683,6 +680,7 @@ Language: Output strictly in Spanish.`;
         refinerResult = await promptRefiner.refinePromptWithArchitecturalTemplates({
           rawPrompt: prompt.trim(),
           templateId: architecturalTemplateId,
+          productCatalogId,
           aspectRatio: finalRatio,
           style,
           referenceImage,
@@ -718,48 +716,28 @@ Language: Output strictly in Spanish.`;
       // Step 2: Google Gemini Image Generation (Attempt 2K HQ Resolution First)
       const ai = getGeminiClient();
       let foundImageUrl = '';
-      let usedModel = 'gemini-3.1-flash-image';
+      let usedModel = 'gemini-nano-banana-2.1';
       const targetSize = resolution === '1K' ? '1K' : '2K';
 
-      try {
-        const response = await ai.models.generateContent({
-          model: 'gemini-3.1-flash-image',
-          contents: {
-            parts: contentParts
-          },
-          config: {
-            imageConfig: {
-              aspectRatio: finalRatio as any,
-              imageSize: targetSize as any
-            }
-          }
-        });
-
-        if (response.candidates && response.candidates[0]?.content?.parts) {
-          for (const part of response.candidates[0].content.parts) {
-            if (part.inlineData && part.inlineData.data) {
-              const mime = part.inlineData.mimeType || 'image/png';
-              foundImageUrl = `data:${mime};base64,${part.inlineData.data}`;
-              break;
-            }
-          }
-        }
-      } catch (geminiError: any) {
-        console.warn(`Attempting fallback from ${targetSize} to 1K / gemini-3.1-flash-lite-image:`, geminiError.message);
+      const candidateModels = ['gemini-nano-banana-2.1', 'gemini-3.1-flash-lite-image'];
+      for (const modelName of candidateModels) {
+        if (foundImageUrl) break;
         try {
-          // Retry with 1K if 2K failed
-          const retryRes = await ai.models.generateContent({
-            model: 'gemini-3.1-flash-image',
+          usedModel = modelName;
+          const imgConfig: any = {
+            aspectRatio: finalRatio as any
+          };
+          if (modelName === 'gemini-nano-banana-2.1') {
+            imgConfig.imageSize = targetSize as any;
+          }
+          const response = await ai.models.generateContent({
+            model: modelName,
             contents: { parts: contentParts },
-            config: {
-              imageConfig: {
-                aspectRatio: finalRatio as any,
-                imageSize: '1K'
-              }
-            }
+            config: { imageConfig: imgConfig }
           });
-          if (retryRes.candidates && retryRes.candidates[0]?.content?.parts) {
-            for (const part of retryRes.candidates[0].content.parts) {
+
+          if (response.candidates && response.candidates[0]?.content?.parts) {
+            for (const part of response.candidates[0].content.parts) {
               if (part.inlineData && part.inlineData.data) {
                 const mime = part.inlineData.mimeType || 'image/png';
                 foundImageUrl = `data:${mime};base64,${part.inlineData.data}`;
@@ -767,27 +745,8 @@ Language: Output strictly in Spanish.`;
               }
             }
           }
-        } catch (retryError: any) {
-          console.warn('Attempting final fallback to gemini-3.1-flash-lite-image:', retryError.message);
-          usedModel = 'gemini-3.1-flash-lite-image';
-          const fallbackRes = await ai.models.generateContent({
-            model: 'gemini-3.1-flash-lite-image',
-            contents: { parts: contentParts },
-            config: {
-              imageConfig: {
-                aspectRatio: finalRatio as any
-              }
-            }
-          });
-          if (fallbackRes.candidates && fallbackRes.candidates[0]?.content?.parts) {
-            for (const part of fallbackRes.candidates[0].content.parts) {
-              if (part.inlineData && part.inlineData.data) {
-                const mime = part.inlineData.mimeType || 'image/png';
-                foundImageUrl = `data:${mime};base64,${part.inlineData.data}`;
-                break;
-              }
-            }
-          }
+        } catch (err: any) {
+          console.warn(`Image model ${modelName} attempt notice:`, err?.message || err);
         }
       }
 
@@ -800,11 +759,12 @@ Language: Output strictly in Spanish.`;
           refinedPrompt: refinerResult?.refinedSpanishPrompt,
           architecturalSpecs: refinerResult?.architecturalSpecs,
           templateUsed: refinerResult?.templateUsed,
+          parsedProduct: refinerResult?.parsedProduct,
           promptRefinerActive: true,
           hasReference: !!referenceImage,
           aspectRatio: finalRatio,
           resolution: targetSize,
-          notice: `Imagen generada en Alta Calidad (${targetSize}) con el servicio Prompt Refiner Arquitectónico (${refinerResult?.templateUsed?.name || 'Profesional'}).`
+          notice: `Flujo unificado completado: ${refinerResult?.parsedProduct?.detectedProductNameES} (${refinerResult?.parsedProduct?.sku}) en formato 1080×1920 px (Zona Segura 1080×1350 px).`
         });
       } else {
         throw new Error("No image data returned from Gemini API");
@@ -1011,8 +971,8 @@ Output ONLY the final optimized English prompt in one single sentence (120-160 w
     }
   });
 
-  // In development mode (without pre-built dist), mount Vite middlewares for HMR
-  if (isDevelopment && !hasDist) {
+  // In development mode, mount Vite middlewares for HMR
+  if (!isProduction) {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -1020,14 +980,14 @@ Output ONLY the final optimized English prompt in one single sentence (120-160 w
     });
     app.use(vite.middlewares);
   } else {
-    // In production or when dist exists, serve static pre-built files
-    app.use(express.static(distPath));
+    // In production, serve static pre-built files
+    app.use(express.static(distDir));
     app.get('*', (req, res) => {
       if (req.path.startsWith('/api')) {
         return res.status(404).json({ error: `Endpoint not found: ${req.path}` });
       }
-      if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
+      if (fs.existsSync(distIndexHtml)) {
+        res.sendFile(distIndexHtml);
       } else {
         res.status(200).send('<!DOCTYPE html><html><head><title>UNITEC Content Engine</title></head><body><div id="root"></div><p>Loading application...</p></body></html>');
       }

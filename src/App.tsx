@@ -82,10 +82,10 @@ export default function App() {
         setMasterBundle(result.variants);
         setStep(2);
       } else {
-        alert('Error: ' + result.error);
+        console.error('Error:', result.error);
       }
     } catch (err: any) {
-      alert('Error de conexión: ' + err.message);
+      console.error('Error de conexión:', err.message);
     } finally {
       setIsGenerating(false);
     }
@@ -148,86 +148,46 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-blue-500/30">
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-tr from-blue-600 to-indigo-600 text-white p-1.5 rounded-lg shadow-md">
-              <Zap size={20} />
-            </div>
-            <div>
-              <h1 className="text-base font-black tracking-tight leading-tight hidden md:block">UNITEC Content Engine</h1>
-              <h1 className="text-base font-black tracking-tight leading-tight md:hidden">UNITEC</h1>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider hidden md:block">Flujo de Agencia 100% IA</p>
-            </div>
-          </div>
+      <header className="sticky top-0 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border-b border-slate-200 dark:border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-8">
+          {/* Zone 1: Brand Title */}
+          <span className="text-base font-extrabold tracking-tight text-slate-900 dark:text-white whitespace-nowrap shrink-0">
+            UNITEC Content Engine
+          </span>
           
-          <div className="flex items-center gap-2 mx-auto md:mx-0 flex-1 md:flex-none justify-center px-4">
-            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-              <button 
-                onClick={() => setMode('wizard')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${mode === 'wizard' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-              >
-                <LayoutTemplate size={14} /> <span className="hidden sm:inline">Campaña Completa</span>
-              </button>
-              <button 
-                onClick={() => setMode('standalone-image')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${mode === 'standalone-image' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-              >
-                <ImageIcon size={14} /> <span className="hidden sm:inline">Solo Imagen</span>
-              </button>
-              <button 
-                onClick={() => setMode('standalone-video')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${mode === 'standalone-video' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-              >
-                <Video size={14} /> <span className="hidden sm:inline">Solo Video</span>
-              </button>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            {mode === 'wizard' && (
-              <div className="hidden lg:flex items-center gap-1.5 text-[11px] font-bold">
-                <button
-                  type="button"
-                  onClick={() => setStep(1)}
-                  className={`px-2 py-1 rounded transition-colors ${step === 1 ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-800'}`}
-                >
-                  1. Brief
-                </button>
-                <span className="opacity-30 text-slate-400">&gt;</span>
-                <button
-                  type="button"
-                  onClick={() => masterBundle ? setStep(2) : null}
-                  disabled={!masterBundle}
-                  className={`px-2 py-1 rounded transition-colors ${step === 2 ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400' : masterBundle ? 'text-slate-500 hover:text-slate-800 cursor-pointer' : 'text-slate-300 dark:text-slate-700 cursor-not-allowed'}`}
-                >
-                  2. Copy
-                </button>
-                <span className="opacity-30 text-slate-400">&gt;</span>
-                <button
-                  type="button"
-                  onClick={() => masterBundle ? setStep(3) : null}
-                  disabled={!masterBundle}
-                  className={`px-2 py-1 rounded transition-colors ${step === 3 ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400' : masterBundle ? 'text-slate-500 hover:text-slate-800 cursor-pointer' : 'text-slate-300 dark:text-slate-700 cursor-not-allowed'}`}
-                >
-                  3. Visual
-                </button>
-                <span className="opacity-30 text-slate-400">&gt;</span>
-                <button
-                  type="button"
-                  onClick={() => masterBundle ? setStep(4) : null}
-                  disabled={!masterBundle}
-                  className={`px-2 py-1 rounded transition-colors ${step === 4 ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400' : masterBundle ? 'text-slate-500 hover:text-slate-800 cursor-pointer' : 'text-slate-300 dark:text-slate-700 cursor-not-allowed'}`}
-                >
-                  4. Estrategia
-                </button>
-              </div>
-            )}
+          {/* Zone 2: Navigation Mode Controls */}
+          <nav className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
             <button 
-              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-              className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
+              type="button"
+              onClick={() => setMode('standalone-image')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${mode === 'standalone-image' ? 'bg-white dark:bg-slate-700 shadow-xs text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}`}
             >
-              {theme === 'light' ? '🌙' : '☀️'}
+              <ImageIcon size={14} /> <span>Solo Imagen (Unificado)</span>
+            </button>
+            <button 
+              type="button"
+              onClick={() => setMode('wizard')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${mode === 'wizard' ? 'bg-white dark:bg-slate-700 shadow-xs text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}`}
+            >
+              <LayoutTemplate size={14} /> <span>Campaña Completa</span>
+            </button>
+            <button 
+              type="button"
+              onClick={() => setMode('standalone-video')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${mode === 'standalone-video' ? 'bg-white dark:bg-slate-700 shadow-xs text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}`}
+            >
+              <Video size={14} /> <span>Solo Video</span>
+            </button>
+          </nav>
+          
+          {/* Zone 3: Primary Action */}
+          <div className="flex items-center gap-3 shrink-0">
+            <button 
+              type="button"
+              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+              className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              {theme === 'light' ? 'Modo Oscuro' : 'Modo Claro'}
             </button>
           </div>
         </div>
